@@ -1,0 +1,15 @@
+{
+  "device": "pcs100k_a",
+  "description": "Profile for PCS 100kW Series A",
+  "honeypots": {
+    "6006": {
+      "threshold_max": 32767,
+      "description": "Active Power Overflow Detection"
+    }
+  },
+  "truncation": {
+    "fake_length": 35,
+    "dirty_payload_hex": "0320aabbcc",
+    "description": "Truncate control block read (expected length 35)"
+  }
+}
