@@ -41,7 +41,7 @@
 
 ---
 
-## 2. ⚙️ 配置矩阵与测试覆盖范围 (Configuration Matrix) 【必选】
+## 2. 配置矩阵与测试覆盖范围 (Configuration Matrix) 【必选】
 
 > 本章锁定本次测试所验证的系统参数组合。**未在此列明的配置组合，若出现缺陷不视为测试漏测。**
 
@@ -76,7 +76,7 @@
 
 ---
 
-## 3. 🕸️ 交叉影响与依赖模块分析 (Dependency & Impact Analysis) 【必选】
+## 3. 交叉影响与依赖模块分析 (Dependency & Impact Analysis) 【必选】
 
 > 本章要求开发提测时必须填写，作为测试用例选取的核心依据。
 
@@ -100,7 +100,7 @@
 
 ---
 
-## 4. 🎯 测试用例选取与评审机制 (Test Case Selection & Review) 【可选】
+## 4. 测试用例选取与评审机制 (Test Case Selection & Review) 【可选】
 
 > *适用于中大版本更新，若是极小改动可跳过此评审流程。*
 
@@ -122,7 +122,7 @@
 
 ---
 
-## 5. 🚀 自动化测试规划 (Automation Strategy) 【可选】
+## 5. 自动化测试规划 (Automation Strategy) 【可选】
 
 > *适用于长周期的项目级发布，日常小迭代可不填写。*
 
@@ -171,7 +171,7 @@
 
 ---
 
-## 9. 📐 准入/准出标准 (Entry / Exit Criteria) 【必选】
+## 9. 准入/准出标准 (Entry / Exit Criteria) 【必选】
 
 ### 测试准入条件 (Entry Criteria)
 
@@ -199,7 +199,7 @@
 
 ---
 
-## 10. 👥 角色职责 (Roles & Responsibilities) 【必选】
+## 10. 角色职责 (Roles & Responsibilities) 【必选】
 
 | 角色 | 负责人 | 职责说明 |
 | :--- | :--- | :--- |
