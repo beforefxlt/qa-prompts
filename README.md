@@ -41,10 +41,15 @@
 
 ## 模板列表
 
+### 已发布模板
+
 | 模板编号 | 名称 | 适用场景 | 文件路径 |
 | :--- | :--- | :--- | :--- |
+| **REQ-001** | 需求可测试性与歧义审查 | 需求评审、PRD 审计 | `templates/requirement-review-shift-left.md` |
 | **BVA-001** | 边界值分析生成器 | UI 输入框、API 参数校验 | `templates/bva-boundary-value-analysis.md` |
 | **STM-001** | 状态机流转生成器 | 订单系统、审批工作流 | `templates/state-transition-machine.md` |
+| **API-001** | API 契约与业务逻辑测试 | RESTful 接口测试 | `templates/api-contract-testing.md` |
+| **EXP-001** | 五边形人格探索性测试 | Monkey Testing、Charter-based | `templates/exploratory-testing-persona.md` |
 
 ### 计划中模板
 
@@ -102,6 +107,10 @@ cat templates/state-transition-machine.md
 | `{{module_name}}` | 模块名称 | 订单管理系统 |
 | `{{state_list}}` | 状态列表 | 待支付，已支付，已完成 |
 | `{{action_list}}` | 动作列表 | 用户支付，系统超时 |
+| `{{requirement_text}}` | 需求原文 | PRD/用户故事完整文本 |
+| `{{api_spec}}` | API 规范 | Swagger/JSON 格式 |
+| `{{business_rules}}` | 业务规则列表 | Token 有效期、积分规则等 |
+| `{{testing_goal}}` | 测试目标 | 探索性测试的 charter |
 
 ### 输出质量检查
 
@@ -193,11 +202,14 @@ v1.0.1 - 修复 typo
 qa-prompts/
 ├── templates/                  # 模板文件
 │   ├── bva-boundary-value-analysis.md    # BVA 边界值分析
-│   └── state-transition-machine.md       # 状态机流转
+│   ├── state-transition-machine.md       # 状态机流转
+│   ├── requirement-review-shift-left.md  # 需求审查
+│   ├── api-contract-testing.md           # API 契约测试
+│   └── exploratory-testing-persona.md    # 探索性测试
 ├── examples/                   # 使用示例
 │   └── (待添加)
 ├── docs/                       # 文档
-│   └── (待添加)
+│   └── engineering-guide.md    # 工程化管理指南
 ├── README.md                   # 本文件
 └── .gitignore
 ```
