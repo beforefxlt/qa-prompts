@@ -59,10 +59,20 @@
 | `test_file_permission_denied_handling` | 模拟 `/proc/meminfo` 等核心系统文件无权访问。 | Status: False, Actual: "读取错误" | Infra Error |
 | `test_logger_initialization_failure` | 模拟日志目录只读，无法创建 `inspection.log`。 | 引擎正常启动，提示警告，不崩溃 | Infra Error |
 
+| `test_logger_initialization_failure` | 模拟日志目录只读，无法创建 `inspection.log`。 | 引擎正常启动，提示警告，不崩溃 | Infra Error |
+
+### 2.7 UT 有效性校验 (Quality Gate - `tests/test_ut_quality.py`)
+| 用例名称 | 测试点 | 预期结果 | 类型 |
+| :--- | :--- | :--- | :--- |
+| `test_intentional_logic_failure` | **防过拟合测试**：故意在单测中对已知失败的结果断言为 True。 | **必须报错** (AssertionError) | Quality Gate |
+
+> [!TIP]
+> 上述用例在全量回归时默认跳过。开发人员可手动执行以验证测试套件是否具备识别逻辑错误的能力。
+
 ---
 
 ## 3. 回归测试执行
-目前共有 **21** 个自动化测试用例。可以通过以下指令运行全量回归：
+目前共有 **22** 个自动化测试用例。可以通过以下指令运行全量回归：
 ```bash
 python3 run_tests.py --all
 ```
