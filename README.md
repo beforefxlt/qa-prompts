@@ -7,6 +7,7 @@
 - [核心双擎架构](#核心双擎架构)
 - [资产列表：Templates (标准化模板)](#资产列表-templates-标准化模板)
 - [资产列表：Skills (智能组装厂)](#资产列表-skills-智能组装厂)
+- [工作流：Workflows (智能管家 SOP)](#工作流-workflows-智能管家-sop)
 - [快速开始](#快速开始)
 - [目录结构](#目录结构)
 
@@ -48,15 +49,28 @@
 
 在集成后台交互工具内输入触发词，即可秒级产出正规物料：
 
-### 📝 文档自动化流 (Docs Pipeline)
-- 🤖 `@test-plan-copilot`：投喂需求段落，AI 帮你填补“工控配置矩阵”与“系统级依赖重灾区”，产出 `TP-001` 草案。
-- 🤖 `@test-case-factory`：投喂接口文档或现象，AI 强拉格式分离稳态环境/激励步骤/抓包证据，产出 `TC-001` 严谨用例。
-- 🤖 `@test-report-reviewer`：投喂流水账战果，自动算硬红线度量（首挂率），套成 `TR-001` 给出无懈可击的技术放行建议。
+### 📝 文档与用例自动化流 (Docs & Test Pipeline)
+- 🤖 `@requirement-reviewer`：侦测产品需求里隐藏的技术逻辑黑洞与控制死区缺失（强制左移）。
+- 🤖 `@test-strategy-planner`：基于需求生成涵盖 P1-P5（基础、异常、基建、边界、交付视角）的全局测试矩阵。
+- 🤖 `@test-case-factory`：自动剥离隔离前提/激励步骤，产出严格遵循 `TC-001` 的严谨用例。
+- 🤖 `@test-report-reviewer`：投喂流水账战果，自动核算放行率，套成 `TR-001` 给出无懈可击的技术放行建议。
+- 🤖 `@issue-reporter`：标准化缺陷追踪，从凌乱的现象推演成 `BUG-001` 隔离单。
 
-### 🔪 深度破坏探索流 (Deep Fuzzing)
-- 🤖 `@requirement-reviewer`：侦测产品需求里隐藏的技术逻辑黑洞与控制死区缺失。
+### 🔪 深度排错与探索流 (Deep Fuzzing & Diagnostics)
+- 🤖 `@nginx-docker-diagnosis`：精准定位容器化 Nginx 的 404/白屏/端口映射 等系统运维故障。
+- 🤖 `@protocol-fuzzing-test`：(工业规约特化) 针对 Modbus/CAN 协议的底层负向注入与模糊测试策略。
+- 🤖 `@code-to-business-doc`：给到遗留烂代码，逆向翻译出可读的业务 PRD。
 - 🤖 `@bva-boundary-value-analysis`：针对 API 发掘出（含超界/非法/越限闭锁）的严密死角组合。
-- 🤖 `@exploratory-testing-persona`：注入极端干涉手段（断网/防孤岛风暴/无应答重试）的自由测试切入点指引。
+- 🤖 `@exploratory-testing-persona`：注入极端干涉手段（断网/风暴/重试）的自由测试切入点指引。
+
+---
+
+## 工作流：Workflows (智能管家 SOP)
+
+告别让 AI “一把梭哈”的幻觉，我们将原子化的 Skill 通过 `.agents/workflows/` 强编排成了流水线。
+
+- 🌊 **`/test-lifecycle` (自动化测试交付流水线)**：输入特性描述，AI 将自动串联【审计 -> 策略 -> 用例】三部曲，期间通过 `/tmp/` 保存中间产物防过拟合，一步步帮您拿到高标准用例。
+  - 📖 参阅指南：[`docs/user_guides/test_lifecycle_guide.md`](./docs/user_guides/test_lifecycle_guide.md)
 
 ---
 
@@ -65,28 +79,23 @@
 如果希望亲手建立你的 AI 测试防线，建议你的第一站是阅读团队的新手教程：
 👉 **[`docs/onboarding.md`](./docs/onboarding.md)** 了解整个外挂工作流的详细串联玩法。
 
-> **架构进阶**：要获取更为宏观的测试质量策略大图及团队管理沉淀，请查阅历史宝藏库 `docs/studyInspire-insights/INDEX.md`。
+> **📚 核心培训资产**：
+> - 想要了解这套 AI 流程是如何重塑出厂检测工程的，请阅读最新案例：**[`docs/training/2026-03-24-factory-inspector-case-study.md`](./docs/training/2026-03-24-factory-inspector-case-study.md)** 及其配套 PPT大纲。
+> - 要获取更宏观的测试架构演进，查阅 `docs/studyInspire-insights/INDEX.md`。
 
 ---
 
 ## 核心目录结构
 
-```text
 qa-prompts/
-├── skills/                     # [智能外挂] AI 调用技能库
-│   ├── test-plan-copilot/      # 自动分析推演 测试计划
-│   ├── test-case-factory/      # 自动剥离隔离 测试用例
-│   ├── test-report-reviewer/   # 自动撰写研判 战报放行单
-│   ├── bva-boundary-value-analysis/
-│   ├── requirement-reviewer/
-│   └── exploratory-testing-persona/
-├── templates/                  # [基石资产] 极度职业化的工控模板
-│   ├── test-plan-template.md
-│   ├── test-case-template.md
-│   ├── test-report-template.md
-│   └── defect-report-template.md
+├── .agents/workflows/          # [核心引擎] AI Agent 自动化作业流水线 (如 test-lifecycle.md)
+├── skills/                     # [智能外挂] AI 原子调用技能库 (如 test-strategy-planner等)
+├── templates/                  # [基石资产] 极度职业化的工控/测试管理模板表单
 ├── docs/                       # [指引沉淀]
 │   ├── onboarding.md           # 团队上岗与系统使用操作手册
+│   ├── user_guides/            # 具体 Workflow 与工具的使用说明
+│   ├── training/               # 实战演练案例与教学 PPT
 │   └── studyInspire-insights/  # 深层次测试架构师经验沉淀
+├── factory_inspector/          # [实战练兵场] Ubuntu 边缘设备模块化出厂检测工具项目实体
 └── README.md                   # 根索引
 ```
