@@ -29,7 +29,9 @@ class InspectionEngine:
         """动态发现并加载插件"""
         for d in plugin_dirs:
             p = Path(d)
+            print(f"正在扫描插件目录: {d} (绝对路径: {p.absolute()})")
             if not p.exists():
+                print(f"⚠️ 警告: 插件目录不存在: {d}")
                 self.logger.warning("插件目录不存在: %s", d)
                 continue
             
@@ -55,8 +57,8 @@ class InspectionEngine:
                         module_path = f"factory_inspector.plugins.{'builtins' if 'builtins' in str(file) else 'custom'}.{file.stem}"
 
                 try:
-                    # 打印调试信息 (可选)
-                    # print(f"尝试加载模块: {module_path}")
+                    # 调试：打印尝试加载的模块路径
+                    print(f"尝试加载插件模块: {module_path}")
                     module = importlib.import_module(module_path)
                     # 查找继承自 BasePlugin 的类
                     for name, obj in inspect.getmembers(module, inspect.isclass):
@@ -65,7 +67,9 @@ class InspectionEngine:
                             print(f"载入插件: {name}")
                             self.logger.info("已加载插件类: %s (来自 %s)", name, module_path)
                 except Exception as e:
-                    print(f"无法加载插件 {module_path}: {e}")
+                    print(f"无法加载插件 {module_path}: 错误详情: {e}")
+                    import traceback
+                    # traceback.print_exc() # 暂时不打印堆栈，以免刷屏
 
     def run_all(self) -> List[CheckResult]:
         """按配置顺序或逻辑顺序运行所有插件"""

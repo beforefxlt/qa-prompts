@@ -14,8 +14,20 @@ def main():
     parser.add_argument("--plugin-dir", action="append", help="Extra plugin directories")
     args = parser.parse_args()
 
-    # 1. 确定运行环境与路径
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # 1. 确定运行环境与路径 (支持 PyInstaller 编译后的环境)
+    if getattr(sys, 'frozen', False):
+        # 如果是编译后的二进制文件，base_dir 为二进制文件所在目录
+        base_dir = os.path.dirname(os.path.abspath(sys.executable))
+        # 确保二进制文件所在目录在 Python 路径中，以便加载外部插件
+        parent_dir = os.path.dirname(base_dir)
+        if base_dir not in sys.path:
+            sys.path.append(base_dir)
+        if parent_dir not in sys.path:
+            sys.path.append(parent_dir)
+    else:
+        # 源码运行
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
     builtin_plugin_dir = os.path.join(base_dir, "plugins", "builtins")
     custom_plugin_dir = os.path.join(base_dir, "plugins", "custom")
 

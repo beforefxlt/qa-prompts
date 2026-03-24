@@ -69,10 +69,19 @@
 > [!TIP]
 > 上述用例在全量回归时默认跳过。开发人员可手动执行以验证测试套件是否具备识别逻辑错误的能力。
 
+### 2.8 二进制打包与分布测试 (Binary Test - M20)
+| 用例名称 | 测试点 | 预期结果 | 类型 |
+| :--- | :--- | :--- | :--- |
+| `binary_compilation_success` | 使用 PyInstaller 将 `main.py` 编译为 single-file 二进制。 | `dist/` 下生成可执行文件 | Packaging |
+| `binary_plugin_discovery` | 验证在二进制模式下能否加载同级目录下的 `plugins/`。 | 成功识别并运行内置/自定义插件 | Packaging |
+
+> [!IMPORTANT]
+> 在出厂环境中分发二进制时，必须保证 `config.yaml` 和 `plugins/` 文件夹与二进制文件处于同一层级。
+
 ---
 
 ## 3. 回归测试执行
-目前共有 **22** 个自动化测试用例。可以通过以下指令运行全量回归：
+目前共有 **23** 个自动化测试项（包含 22 个代码用例 + 1 个打包流程校验）。可以通过以下指令运行全量回归：
 ```bash
 python3 run_tests.py --all
 ```

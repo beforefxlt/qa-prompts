@@ -1,0 +1,5 @@
+2026-03-24 11:09:16,615 - [INFO] - >>> 出厂检测引擎启动，配置路径: ../config.yaml
+2026-03-24 11:09:16,616 - [WARNING] - 插件目录不存在: /Users/shanwu/qa-prompts/factory_inspector/dist/plugins/builtins
+2026-03-24 11:09:16,616 - [WARNING] - 插件目录不存在: /Users/shanwu/qa-prompts/factory_inspector/dist/plugins/custom
+2026-03-24 11:09:16,616 - [WARNING] - 插件目录不存在: ../plugins/builtins
+2026-03-24 11:09:16,616 - [WARNING] - 插件目录不存在: ../plugins/custom
