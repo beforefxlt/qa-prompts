@@ -11,7 +11,7 @@
 在执行任何 `git commit` 操作之前，Agent 必须强制执行以下“文档一致性拦截检查”：
 
 ### 1. 缺陷与工作日志 (Issue & Work Logs)
-- **修复 Bug 时**：必须强制去 `docs/defects/` 或对应的问题跟踪目录更新状态，标注 Root Cause 和最终解决方案。
+- **分析 Bug 时**：产生的 Bug 分析单（如 BUG-001）属于单次应用产物，用于辅助诊断与沟通，**严禁上传至 Git 库**。
 - **开发新特性时**：必须更新相关工作流文档或 `README.md` 中的特性列表。
 
 ### 2. 架构设计图纸的强制对齐 (Architecture Consistency)
