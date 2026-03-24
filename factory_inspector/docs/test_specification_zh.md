@@ -78,10 +78,21 @@
 > [!IMPORTANT]
 > 在出厂环境中分发二进制时，必须保证 `config.yaml` 和 `plugins/` 文件夹与二进制文件处于同一层级。
 
+### 2.9 MES 外部推送测试 (`MesReporter` - P1 到 P5)
+| 用例名称 | 测试点 | 预期结果 | 类型 |
+| :--- | :--- | :--- | :--- |
+| `test_mes_push_happy_path` | 验证标准 JSON 能成功推送至 MES Mock 接口。 | HTTP 200 OK | P1 |
+| `test_mes_auth_failure` | 验证当 Token 错误时检测到 401 并记录错误。 | Status: False, Msg: 401 | P2 |
+| `test_mes_payload_truncation` | 验证当插件输出超长日志时，推送内容被自动截断。 | Payload < 限制值 | P2 |
+| `test_mes_network_timeout` | 模拟网络极慢（3s+），验证引擎在配置的 2s 超时后自动跳过。 | 不阻塞流程, 报错记录 | P3 |
+| `test_mes_dns_error` | 模拟无效的 MES 域名解析失败。 | 报错记录 "DNS 无法解析" | P3 |
+| `test_mes_binary_ssl_bundling`| 验证打包后的程序在无 Python 库环境下运行 HTTPS 推送。 | 无 SSL 握手错误 | P5 |
+| `test_mes_config_ux` | 故意写错 MES URL 协议头（如 `htxp://`），验证报错是否易读。 | 提示 "URL 格式非法" | P5 |
+
 ---
 
 ## 3. 回归测试执行
-目前共有 **23** 个自动化测试项（包含 22 个代码用例 + 1 个打包流程校验）。可以通过以下指令运行全量回归：
+目前共有 **30** 个自动化测试项（包含 29 个代码用例 + 1 个打包流程校验）。可以通过以下指令运行全量回归：
 ```bash
 python3 run_tests.py --all
 ```
