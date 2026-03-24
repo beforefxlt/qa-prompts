@@ -46,7 +46,7 @@ class HardwarePlugin(BasePlugin):
                         ))
                         break
         except Exception as e:
-            results.append(CheckResult("内存总量检测", False, f">= {min_mem} GB", "未知", str(e)))
+            results.append(CheckResult("内存总量检测", False, f">= {min_mem} GB", "读取错误", str(e)))
 
         # 3. 检测硬盘总量 (GB) - 简化逻辑：检查根目录所在的磁盘
         min_disk = config.get("min_disk_gb", 0)

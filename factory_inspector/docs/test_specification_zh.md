@@ -52,10 +52,17 @@
 | `test_config_not_found` | 验证当指定的 `config.yaml` 路径不存在时，引擎能正确抛出 `FileNotFoundError`。 | 抛出 FileNotFoundError | Failure Path |
 | `test_config_invalid_format` | 验证当 `config.yaml` 存在语法错误（非合法 YAML）时，引擎能正确拦截。 | 抛出 YAMLError/Exception | Failure Path |
 
+### 2.6 系统基建异常测试 (P3 - `tests/test_infra_errors.py`)
+| 用例名称 | 测试点 | 预期结果 | 类型 |
+| :--- | :--- | :--- | :--- |
+| `test_command_not_found_handling` | 模拟系统缺失 `ip` 或 `nproc` 等关键命令。 | Status: False, Message 包含 "No such file" | Infra Error |
+| `test_file_permission_denied_handling` | 模拟 `/proc/meminfo` 等核心系统文件无权访问。 | Status: False, Actual: "读取错误" | Infra Error |
+| `test_logger_initialization_failure` | 模拟日志目录只读，无法创建 `inspection.log`。 | 引擎正常启动，提示警告，不崩溃 | Infra Error |
+
 ---
 
 ## 3. 回归测试执行
-目前共有 **18** 个自动化测试用例。可以通过以下指令运行全量回归：
+目前共有 **21** 个自动化测试用例。可以通过以下指令运行全量回归：
 ```bash
 python3 run_tests.py --all
 ```
