@@ -46,10 +46,16 @@
 | `test_engine_run_all_flow` | 验证从配置加载、插件自动发现、按序执行到结果汇总的全透明流程。 | 无 Exception, 结果汇总完整 | Integration |
 | `test_logger_records_raw_data` | 验证 `inspection.log` 的生成，并确保其捕获了插件的原始命令输出。 | 文件存在, 包含 "CPU 核数原始输出" | Logging |
 
+### 2.5 配置文件异常测试 (`tests/test_config.py`)
+| 用例名称 | 测试点 | 预期结果 | 类型 |
+| :--- | :--- | :--- | :--- |
+| `test_config_not_found` | 验证当指定的 `config.yaml` 路径不存在时，引擎能正确抛出 `FileNotFoundError`。 | 抛出 FileNotFoundError | Failure Path |
+| `test_config_invalid_format` | 验证当 `config.yaml` 存在语法错误（非合法 YAML）时，引擎能正确拦截。 | 抛出 YAMLError/Exception | Failure Path |
+
 ---
 
 ## 3. 回归测试执行
-运行全量回归测试指令：
+目前共有 **18** 个自动化测试用例。可以通过以下指令运行全量回归：
 ```bash
 python3 run_tests.py --all
 ```
