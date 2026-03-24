@@ -31,6 +31,7 @@
 1. **单点能力**：存放于 `skills/` 目录下（如 `@test-strategy-planner`）。
 2. **流水线编排**：存放于 `.agents/workflows/` 目录下（如 `/test-lifecycle`，`/bug-diagnostic-flow`）。
 
-**Agent 调度原则**：
+**Agent 调度原则与资产演进**：
 - 当用户提出复杂的连串需求时，Agent **不得自行凭空长对话（防止幻觉）**，而应强制引导用户使用或自动触发对应的 **Workflow 流水线**。
 - 在执行复杂推理时，必须严格遵循**上下文净化原则（Context Sanitization）**，将阶段性推理结果物理存入 `/tmp/`，阻断历史聊天记录的干扰。
+- **[强制] 技能版本化原则 (Skill Versioning)**：在创建或修改任何 `SKILL.md` 时，必须在其顶部的 YAML Metadata 区块中同步维护语义化版本号（`version: vX.Y.Z`）及最后更新日期（`last_updated: YYYY-MM-DD`），确保测试资产演进的可追溯性。

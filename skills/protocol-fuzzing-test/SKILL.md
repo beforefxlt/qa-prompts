@@ -1,5 +1,7 @@
 ---
 name: protocol-fuzzing-test
+version: v1.0.0
+last_updated: 2026-03-24
 description: Guide for executing TDD-based Fuzzing on industrial protocols (Modbus, CAN). Detects parsing vulnerabilities via baseline validation and negative injection (Honeypot, Drop storm, Truncated, Mismatch).
 ---
 

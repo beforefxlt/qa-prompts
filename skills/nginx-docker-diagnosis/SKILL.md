@@ -1,5 +1,7 @@
 ---
 name: nginx-docker-diagnosis
+version: v1.0.0
+last_updated: 2026-03-24
 description: 诊断 Docker 环境下 Nginx Web 页面无法访问的问题（404、白屏、资源加载失败等）。当用户报告 Docker 部署的 Nginx Web 服务出现页面打不开、404 Not Found、CSS/JS 加载失败、白屏等问题时触发。通过逐步收集配置文件和日志，系统化地定位根因并给出修复建议。
 ---
 
