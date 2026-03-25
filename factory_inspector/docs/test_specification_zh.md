@@ -109,10 +109,20 @@
 | `test_docker_error_feedback` | **交付体验**：验证当基础环境失败时，输出的错误信息是否具备自解释性。 | Message 清晰指向根因 | P5 |
 | `test_docker_offline_run` | **交付体验**：验证在完全离线环境下，插件读取本地容器元数据的稳定性。 | 运行正常, 无网络请求依赖 | P5 |
 
+### 2.12 随机网络损伤工具 (`network_impairment_tool`)
+| 用例名称 | 测试点 | 预期结果 | 分类标签 |
+| :--- | :--- | :--- | :--- |
+| `test_apply_success` | 验证 `tc qdisc replace` 命令生成逻辑的正确性。 | 命令格式匹配 netem 规范 | P1 |
+| `test_clean_success` | 验证 `tc qdisc del` 清理逻辑。 | 成功调用删除指令 | P1 |
+| `test_keyboard_interrupt` | 验证 `Ctrl+C` 信号捕获与自动恢复。 | 进程正常退出并触发清理 | P1 |
+| `test_check_privileges` | 验证非 root 用户运行时的安全拦截。 | 提示 sudo 权限要求并退出 | P2 |
+| `test_run_cmd_failure` | 验证 `tc` 命令执行异常时的容错与日志记录。 | 捕获异常并不中断主逻辑 | P3 |
+| `test_loop_success` | 验证随机参数生成的合法性及 `jitter < delay` 的自动修正。 | 参数在配置范围内且合法 | P4 |
+
 ---
 
 ## 3. 回归测试执行
-目前共有 **27** 个自动化测试项。可以通过以下指令运行全量回归：
+目前共有 **33** 个自动化测试项。可以通过以下指令运行全量回归：
 ```bash
 # 推荐从项目根目录执行
 python3 factory_inspector/run_tests.py --all
