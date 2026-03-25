@@ -18,4 +18,5 @@
 
 ### 3. 一致性检查
 - 已更新 `network_impairment_tool/README.md` 中的测试说明。
-- 已同步 P1-P5 测试策略大纲。
+- 已同步 P1-P5 测试策略大纲至 `network_impairment_tool/docs/test_specification_zh.md`。
+- **独立性决策**: 根据要求，`network_impairment_tool` 的测试规格说明书保持独立，不合入 `factory_inspector` 全局文档。
