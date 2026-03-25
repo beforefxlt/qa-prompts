@@ -2,7 +2,7 @@
 
 > 从零开始，用 AI 专属 Skills 高效生成高质量测试用例与分析报告
 
-**版本**: v2.3 (已加入测试代码简化收口能力)
+**版本**: v2.4 (已纳入测试 Skills 治理与版本基线)
 **适用对象**: 首次接触探索性测试、自动化边界值与需求评审的测试工程师及 Test Lead
 
 ---
@@ -26,13 +26,21 @@
 | Skill 技能名 | 会话触发场景 | 核心能力说明 |
 | :--- | :--- | :--- |
 | **`requirement-reviewer`** | 需求评审阶段（评审 PRD / 敏捷用户故事） | 找出需求中的歧义词（如“快速”且无指标）、逻辑真空、缺失的边界和异常应对路径，并按高中低风险输出整改建议表。 |
+| **`test-strategy-planner`** | 通用测试策略设计阶段 | 按 P1-P5 全景模型梳理基础路径、业务异常、基建异常、边界条件与交付视角，生成结构化测试矩阵。 |
 | **`bva-boundary-value-analysis`** | 用例设计阶段（输入框、表单、API 参数强校验） | 严格基于“边界值分析法”为你秒速输出包含 min, max, min-1, max+1, 空值, 类型错误等硬核边界的测试矩阵表。 |
 | **`exploratory-testing-persona`** | 发散测试阶段（探索性测试 / Monkey Test） | 模拟 5 种极端人格（小白、极客、弱网、完美主义、急躁），在不看代码的前提下为你提供极具破坏性的手工测试漏洞排查指导。 |
-| **`test-plan-copilot`** | 项目发版前计划阶段 | 丢入模糊需求，自动脑补工控上下游链路关联与环境矩阵，产出正规结构化系统测试大纲。 |
+| **`test-plan-copilot`** | 项目发版前计划阶段（储能/电力垂直场景） | 丢入模糊需求，自动脑补工控上下游链路关联与环境矩阵，按 `TP-001` 产出正规结构化系统测试大纲。 |
 | **`test-case-factory`** | 编写测试执行资产阶段 | 强力重构零散步骤，严格按照物理前置条件、控制测试动作、录波证据隔离等环节量产正规化实例。 |
 | **`test-report-reviewer`** | 执行阶段收尾放行 | 传入跑偏的碎碎念战报，AI秒速剥离出“首次挂测率”和“遗留致命危险域”撰写具有说服力的研判。 |
+| **`issue-reporter`** | 缺陷登记与复现固化阶段 | 将零散现象、日志和复现步骤整理成符合模板的缺陷单草稿。 |
+| **`protocol-fuzzing-test`** | 工业协议专项鲁棒性测试阶段 | 基于 Modbus 测试经验提炼分层故障注入方法论，覆盖靶机设计、异常设计、观测指标和失败判定。 |
 | **`test-code-simplifier`** | 测试代码开发收口阶段 | 仅对测试代码做低扰动整理，优先收紧重复断言、fixture 职责和命名噪音；不是默认每轮都要启用。 |
 | **`reviewer-agent`** | Workflow 最终收口与提交前复核 | 对当前仓库或本轮变更执行最小扰动复核，优先结合 `vibe-tools repo` 进行整仓上下文审查，并明确要求 “Minimalist Refactor” 风格输出。 |
+
+补充说明：
+- `bva-boundary-value-analysis` 适合字段级快刀式出表，不替代 `test-case-factory` 的正式 TCS 用例集。
+- `test-plan-copilot` 是行业专版计划技能；若只是梳理通用测试点，优先调用 `test-strategy-planner`。
+- `verify-requirements`、`webapp-testing`、`test-driven-development` 属于工程验证辅助能力，不属于测试设计主链；其中后两者当前仅建议在用户明确要求时按需启用。
 
 ---
 
@@ -88,6 +96,8 @@
 
 | 版本 | 日期 | 作者 | 变更说明 |
 | :--- | :--- | :--- | :--- |
+| **v2.5** | 2026-03-25 | QA Team | 将 `webapp-testing` 与 `test-driven-development` 收敛为按需辅助 Skill，去除外来模板痕迹，明确其暂不纳入推荐主线。 |
+| **v2.4** | 2026-03-25 | QA Team | 新增测试 Skills 治理与版本基线说明，补齐 `test-strategy-planner`、`issue-reporter`、`protocol-fuzzing-test` 等技能入口，并明确 `test-plan-copilot` / `bva-boundary-value-analysis` 的边界；同时将 `protocol-fuzzing-test` 定位收敛为包含靶机设计的方法论型 Skill。 |
 | **v2.3** | 2026-03-25 | QA Team | 新增 `test-code-simplifier`，用于测试代码开发过程中的低扰动简化收口，明确其为按需调用而非默认步骤。 |
 | **v2.2** | 2026-03-25 | QA Team | 新增 `reviewer-agent` 收口复核能力，并引入基于 `vibe-tools repo` 的整仓上下文审查建议，工作流升级为四段式。 |
 | **v2.1** | 2026-03-24 | QA Team | **文档自动化套件收拢**：全量加入 TP-001/TCS-001/TR-001/BUG-001 标准体系工控基石模板，重构对应的 3 项一键自动化 Skills。剔除全系列 Emoji 与非中文翻译干扰冗余，严肃工程标准。 |

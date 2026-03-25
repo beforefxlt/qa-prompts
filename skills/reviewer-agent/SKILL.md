@@ -1,6 +1,6 @@
 ---
 name: reviewer-agent
-version: v1.0.0
+version: v1.0.1
 last_updated: 2026-03-25
 description: 作为工作流中的最终复核关卡，调用 Reviewer Agent 对当前仓库或变更集执行最小化重构审查，优先结合 vibe-tools 的 repo 能力，以“Minimalist Refactor”为原则给出高信噪比改进意见。
 ---
@@ -19,13 +19,13 @@ description: 作为工作流中的最终复核关卡，调用 Reviewer Agent 对
 - 需要基于整仓上下文判断当前变更是否与现有 QA 编排、命名、模板和文档约定一致。
 
 ## 复核边界
-你只关注 QA 仓库最有价值的四类问题：
+你只关注 QA 仓库最有价值的五类问题：
 
 1. **工作流编排一致性**：
    - `.agents/workflows/` 中的步骤是否与实际 Skill 能力匹配。
    - 是否缺少用户确认点、中间产物落盘点、最终回写点。
 2. **测试资产完整性**：
-   - 测试策略、测试用例、测试报告、缺陷单是否仍符合当前模板和 P1-P5 / P0-P4 口径。
+   - 测试策略、测试用例、测试报告、缺陷单是否仍符合当前模板和 P1-P5 口径。
    - 是否遗漏关键的 P3/P5 风险、交付视角或隔离前提。
 3. **文档同步性**：
    - `README.md`、`docs/onboarding.md`、`docs/user_guides/`、`docs/plans/` 是否仍描述旧流程。

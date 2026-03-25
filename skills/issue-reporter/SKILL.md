@@ -1,11 +1,11 @@
 ---
 name: issue-reporter
-version: v1.0.0
-last_updated: 2026-03-24
-description: Generate a structured issue report for software testing. Use this skill when the user wants to report a bug, issue, or test result, or when they provide test steps and results and need a formal report.
+version: v1.0.1
+last_updated: 2026-03-25
+description: 为软件测试场景生成结构化问题单。当用户希望报告缺陷、问题或测试结果，或已经提供复现步骤与实际结果并需要正式问题单时触发。
 ---
 
-# Issue Reporting Skill (问题单生成)
+# 问题单生成 (Issue Reporting Skill)
 
 This skill generates a structured issue report in Chinese based on the provided details.
 

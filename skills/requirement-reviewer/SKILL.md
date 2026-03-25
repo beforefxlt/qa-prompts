@@ -1,6 +1,8 @@
 ---
 name: requirement-reviewer
-description: 评估和审查产品需求文档(PRD)或用户故事，找出需求中的歧义、逻辑漏洞和不可测试的地方。当用户提供一段需求描述，并要求进行需求评审或调用此skill时触发。
+version: v1.0.0
+last_updated: 2026-03-25
+description: 评估和审查产品需求文档（PRD）或用户故事，找出需求中的歧义、逻辑漏洞和不可测试之处。当用户提供一段需求描述，并要求进行需求评审或调用此 Skill 时触发。
 ---
 
 # 需求评审助手 (Requirement Reviewer)

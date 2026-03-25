@@ -1,77 +1,183 @@
 ---
 name: verify-requirements
-description: Verify if software requirements are implemented by analyzing the codebase. Use when the user asks to check if a specific feature, requirement, or document section is implemented in the code.
+version: v1.2.0
+last_updated: 2026-03-25
+description: 通过分析代码库核验某项软件需求是否已经实现。当用户要求检查某个功能、需求条目或文档章节是否落地到代码时触发。
 metadata:
   short-description: Verify requirement implementation
 ---
 
-# Verify Requirements Skill
+# 需求实现核验方法 (Verify Requirements)
 
-This skill helps you verify if specific software requirements are implemented in the codebase. It emphasizes **strict compliance**, **evidence-based verification**, and **precise reporting**.
+本 Skill 的职责是：基于**代码证据**判断某项需求是否已经实现，而不是基于“看起来像”“目录名像”“文档里写了”来猜测。  
+它属于**实现核验辅助能力**，不属于测试设计主链，也不替代 `requirement-reviewer` 或 `test-strategy-planner`。
 
-## Workflow
+## 核心边界
 
-### Phase 1: Requirement Extraction (Crucial)
-**Before searching code, you MUST establish the checklist.**
-1.  **Verbatim Extraction**: Copy the user's requirements *word-for-word* into a numbered list.
-    *   *Rule*: If the user provides a list of 11 items, your checklist MUST have 11 items. Do not merge them.
-    *   *Formatting*: Assign a unique ID to each item if not provided (e.g., [5.6.1.1], [5.6.1.2]).
-2.  **Decomposition**: If a single requirement contains multiple distinct technical assertions (e.g., "Must support TCP AND UDP"), verify both parts.
+- 你做的是“是否已落地到代码”的核验，不是需求补完或方案设计。
+- 你不能预设仓库一定有 `service/`、`dao/`、`router/`、`pb/` 这类目录。
+- 你可以利用仓库现有结构，但必须先观察，再适配，而不是先入为主。
+- 你必须区分“文档声明了”“测试覆盖了”“代码真的实现了”这三件事。
 
-### Phase 2: Targeted Code Search
-Perform targeted searches based on the *type* of requirement:
+## 核心原则
 
-*   **Business Logic / Control**:
-    *   Look in `service/` or `app/`.
-    *   Search for "check", "limit", "lock", "alarm" keywords.
-*   **Data Storage / History**:
-    *   Look in `dao/` (Data Access Objects) or `model/` (Struct definitions).
-    *   Search for "History", "Record", "Save", "DB".
-*   **Interface / HMI / Permission**:
-    *   Look in `router/` (API definitions) or `handler/`.
-    *   Search for "Register", "API", "User", "Auth".
-*   **Communication / Protocol**:
-    *   Look in `pb/` (Protocol Buffers) or `protocol/`.
-    *   Search for "IEC", "104", "Modbus", "Send", "Receive".
+1. **先拆需求，再找证据**  
+   没有核验清单，就没有可靠结论。
+2. **先看仓库实际结构，再决定搜索路径**  
+   目录、模块、命名约定以当前仓库为准，不以经验模板为准。
+3. **证据优先于猜测**  
+   找不到直接证据时，可以给出 `❓` 或 `❌`，不能脑补。
+4. **实现证据优先于测试证据，测试证据优先于文档证据**  
+   最强证据是实际实现代码；测试和文档只能辅助，不应直接替代实现证据。
+5. **输出里必须留下搜索轨迹**  
+   让人知道你看了什么、为什么得出这个判断。
 
-**Advanced Tip: IEC 61850 Logical Nodes**
-For power systems, a "Device" often aggregates multiple Logical Nodes (LNs):
-*   **Control**: `DPCS`, `DBAT`.
-*   **Measurements**: `MMXU` (look here for Voltage, Current, Power).
-*   **Metering**: `MMTR`.
-*   **Status**: `GGIO`.
+## 自适应核验流程
 
-### Phase 3: Evidence-Based Verification
-For each item in your checklist, determine its status based on **code evidence**:
+### 第 1 步：抽取核验清单
 
-| Status | Symbol | Definition |
+在搜索代码前，先把用户需求整理成逐条核验项：
+
+- 尽量保留原文，不随意改写
+- 若一条需求含多个断言，拆成多个核验点
+- 若用户给出章节号、条款号、验收项编号，原样保留
+
+示例：
+
+- “必须支持 TCP 和 UDP” 应拆成两条
+- “告警后需要落库并上报前端” 应拆成“落库”“上报前端”两条
+
+### 第 2 步：识别证据类型
+
+先判断每条需求需要什么类型的证据，而不是先猜它在哪个目录：
+
+| 需求类型 | 应优先寻找的证据 |
+| :--- | :--- |
+| 业务逻辑 / 控制规则 | 状态判断、条件分支、核心函数、调度流程 |
+| 数据持久化 / 历史记录 | 写库、文件落盘、事件记录、模型字段 |
+| 接口 / 权限 / 对外能力 | 路由、handler、controller、schema、权限校验 |
+| 协议 / 通信 / 设备交互 | 编解码、报文结构、协议处理链路、连接管理 |
+| 配置 / 开关 / 部署能力 | 配置项、环境变量、启动参数、构建脚本 |
+| UI / HMI / 前端可见行为 | 页面状态、组件逻辑、前后端接口联动 |
+
+### 第 3 步：观察仓库结构，而不是预设结构
+
+先用最轻量的方式了解仓库：
+
+- 顶层目录结构
+- 主要语言与框架
+- 常见命名风格
+- 入口文件、路由入口、主服务启动点、配置入口、测试入口
+
+然后再决定搜索路径，例如：
+
+- Go 项目可能是 `cmd/`、`internal/`、`pkg/`
+- Python 项目可能是 `app/`、`src/`、模块包、CLI 入口
+- Web 项目可能是 `src/`、`pages/`、`components/`、`api/`
+
+结论必须建立在“仓库里实际存在什么”之上，而不是建立在“我以为项目通常怎么放”之上。
+
+### 第 4 步：执行自适应搜索
+
+对每条需求，按以下顺序收敛搜索：
+
+1. **关键词锚点**  
+   从需求文本中抽出实体词、动作词、状态词、限制词。
+2. **同义表达扩展**  
+   例如“告警”可能对应 `alarm`、`alert`、`warning`、`fault`。
+3. **入口点回溯**  
+   从主流程、API 入口、协议入口、任务入口往下追调用链。
+4. **数据面核对**  
+   查看模型、配置、常量、枚举、事件结构是否支撑该需求。
+5. **测试与文档交叉验证**  
+   用测试、注释、设计文档验证“是否有人声称实现过”，但不能把它们直接当成最终实现证据。
+
+## 推荐搜索策略
+
+默认优先采用以下思路，而不是绑定某些固定目录：
+
+1. **从需求词出发全仓搜索**
+2. **从真实入口文件继续跟踪**
+3. **从状态、模型、配置与日志关键字补证**
+4. **最后再看测试、文档和 TODO**
+
+如果搜索结果很多，应优先保留：
+
+- 被主流程直接调用的实现
+- 与需求实体强相关的结构体、类、函数、枚举、配置键
+- 能形成闭环的证据链：入口 -> 处理 -> 状态/输出
+
+## 判定标准
+
+| 状态 | 符号 | 定义 |
 | :--- | :--- | :--- |
-| **Confirmed** | ✅ | Code explicitly implements the logic. You can point to the File + Function. |
-| **Partial** | ⚠️ | Logic exists but is incomplete, disabled, or relies on frontend/manual steps not in backend. |
-| **Missing** | ❌ | No code found. Search for specific keywords returned 0 results. |
-| **Uncertain** | ❓ | Logic is too complex to verify statically, or depends on external systems (OS/Gateway). |
+| **已实现** | ✅ | 存在明确实现证据，可指出文件、函数或关键逻辑。 |
+| **部分实现** | ⚠️ | 有部分逻辑，但不完整、被禁用、只在部分路径生效，或缺关键闭环。 |
+| **未实现** | ❌ | 未找到可信实现证据；搜索过相关锚点仍无结果。 |
+| **无法静态确认** | ❓ | 需要运行时、外部系统、部署环境或隐藏配置才能确认。 |
 
-### Phase 4: Standardized Reporting
-Generate a report using the **Strict Compliance Table** format.
+## 证据强弱排序
 
-#### Format Template:
+从强到弱：
+
+1. 实现代码
+2. 配置与数据结构
+3. 自动化测试
+4. 注释 / 设计文档 / README
+
+补充规则：
+
+- 只有测试，没有实现入口，不能直接判定为 `✅`
+- 只有文档，没有代码证据，通常应判定为 `❌` 或 `❓`
+- 只有 TODO 或注释，通常意味着“有意图，但未完成”
+
+## 输出格式
+
+请使用统一的严格核验表：
+
 ```markdown
-### Section [X.Y] [Title] ([N] Items)
+## 需求实现核验结果
 
-| ID | Requirement | Status | Evidence / Gap Analysis |
+| ID | 需求条目 | 状态 | 代码证据 / 缺口分析 |
 | :--- | :--- | :--- | :--- |
-| 5.1.1 | [Requirement Text] | ✅ | `file.go`: `FunctionName` checks condition X. |
-| 5.1.2 | [Requirement Text] | ❌ | **Missing**. Search for "Keyword" returned no results in `service/`. |
-| 5.1.3 | [Requirement Text] | ⚠️ | **Partial**. Logic exists in `period_check.go` for locking so-and-so, but **no event record** is written to DB. |
+| R1 | ... | ✅ | `path/file.go` 中的 `FuncName` 明确实现了 ... |
+| R2 | ... | ⚠️ | 存在部分逻辑，但缺少 ... |
+| R3 | ... | ❌ | 已搜索关键词 `...`、`...`，未找到可信实现入口。 |
+| R4 | ... | ❓ | 代码中存在开关/占位，但是否生效依赖运行环境或外部系统。 |
 ```
 
-#### Risk Summary
-After the tables, summarize critical gaps:
-*   **Missing Safety Features**: (e.g., No emergency lock).
-*   **Missing Persistence**: (e.g., Logs not saved).
-*   **Missing Interfaces**: (e.g., No User Mgmt API).
+表格之后补一段简短摘要：
 
-## Tips
--   **Do not guess**. If you can't find it, mark it ❓/❌ and explain what you searched for.
--   **Check for TODOs**. Sometimes requirements are present as comments only.
--   **Verify "Negative" Logic**. If a requirement says "Do NOT do X", check if the code *avoids* doing X (e.g., `if !remote { return }`).
+- **关键缺口**：哪些条目最值得优先修正
+- **证据薄弱点**：哪些条目不能仅靠静态阅读确认
+- **搜索说明**：本轮主要搜索了哪些入口、关键词、模块
+
+## 典型判断示例
+
+### 可以判 `✅`
+
+- 找到了路由入口、处理逻辑、状态更新、持久化写入，证据链完整
+- 找到了协议入口、解码逻辑、校验逻辑、错误处理分支
+
+### 只能判 `⚠️`
+
+- 前端展示有了，但后端权限校验缺失
+- 有告警触发，但没有持久化记录
+- 有接口定义，但核心逻辑仍是空实现或占位
+
+### 应判 `❌`
+
+- 全仓只找到需求文档和测试名，找不到真实实现入口
+- 只有注释说“应该支持”，没有任何落地逻辑
+
+### 应判 `❓`
+
+- 逻辑存在，但由运行时插件、远端网关、闭源 SDK 或外部设备决定
+- 需要真实部署环境、特定配置或联调链路才能确认
+
+## 使用提醒
+
+- 不要因为项目目录很像某种常见结构，就直接套用固定搜索路径。
+- 不要把“名字像”“测试在”“文档写了”当作充分实现证据。
+- 对否定性需求要单独核验，例如“禁止远程控制”应验证系统是否真的阻断了该路径。
+- 若用户给的是标准条文或长文档，先拆成核验条目，再逐项搜索，不要整段笼统下结论。

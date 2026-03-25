@@ -8,6 +8,7 @@
 - [资产列表：Templates (标准化模板)](#资产列表-templates-标准化模板)
 - [资产列表：Skills (智能组装厂)](#资产列表-skills-智能组装厂)
 - [工作流：Workflows (智能管家 SOP)](#工作流-workflows-智能管家-sop)
+- [文档目录指引](#文档目录指引)
 - [快速开始](#快速开始)
 - [目录结构](#目录结构)
 
@@ -16,13 +17,13 @@
 ## 🌟 这个 Toolkit 是什么？能做些什么？
 
 本仓库并非一堆冷冰冰的代码，而是一套**专为“各类复杂工业软件与嵌入式系统”量身定制的【AI 高级测试架构师】**。
-我们摒弃了纯互联网软件“点点点”的测试方法，将**资深测试专家的思想模型（如 P0-P4 维度监控、出厂硬件隔离、通讯规约红线）**硬编码成了随叫随到的 AI 外挂技能 (Skills)。
+我们摒弃了纯互联网软件“点点点”的测试方法，将**资深测试专家的思想模型（如 P1-P5 全景测试建模、出厂硬件隔离、通讯规约红线）**硬编码成了随叫随到的 AI 外挂技能 (Skills)。
 
 ### 💡 它能为您带来什么突破？
 1. 🚀 **消灭零碎操作：一句话完成闭环**
-   - 告别繁琐的手工填表。只要喂给它一段模糊的需求（如：“给厂测程序加个推日志的功能”），它会通过**工作流引擎**自动切分为：【挑刺审查找漏洞】 -> 【输出 P0-P4 策略网】 -> 【直接生成符合 TCS 标准的测试用例集 (TCC)】三部曲。
+   - 告别繁琐的手工填表。只要喂给它一段模糊的需求（如：“给厂测程序加个推日志的功能”），它会通过**工作流引擎**自动切分为：【挑刺审查找漏洞】 -> 【输出 P1-P5 策略网】 -> 【直接生成符合 TCS 标准的测试用例集 (TCC)】三部曲。
 2. 🛡️ **填补毁灭性盲点：“不测理想状态，专死磕绝境”**
-   - 代码里 `pytest` 全绿，一到产线就宕机？本工具箱内置了强大的**负向测试视界（P0: 环境没装这个命令怎么办？磁盘满了怎么办？ / P4: 二进制打包后这行代码还能运行吗？）**。让大模型强迫团队思考边缘问题。
+   - 代码里 `pytest` 全绿，一到产线就宕机？本工具箱内置了强大的**负向测试视界（P3: 环境没装这个命令怎么办？磁盘满了怎么办？ / P5: 二进制打包后这行代码还能运行吗？）**。让大模型强迫团队思考边缘问题。
 3. 🐞 **深度靶向排错：超越简单的代码翻译**
    - Nginx+Docker 上线白屏却查不出日志？工业协议 (Modbus/CAN) 一直解析异常？本工具箱内置了工业特化的报错排查探针（Diagnosis Skills），帮 QA 瞬间读懂报错天书并转为专业隔离单。
 
@@ -61,6 +62,7 @@
 ### 📝 文档与用例自动化流 (Docs & Test Pipeline)
 - 🤖 `@requirement-reviewer`：侦测产品需求里隐藏的技术逻辑黑洞与控制死区缺失（强制左移）。
 - 🤖 `@test-strategy-planner`：基于需求生成涵盖 P1-P5（基础、异常、基建、边界、交付视角）的全局测试矩阵。
+- 🤖 `@test-plan-copilot`：储能/电力系统垂直场景专用，按 `TP-001` 模板补全系统级测试计划大纲。
 - 🤖 `@test-case-factory`：自动剥离隔离前提/激励步骤，产出严格遵循 `TCS` 规范的严谨用例集 (TCC)。
 - 🤖 `@test-report-reviewer`：投喂流水账战果，自动核算放行率，套成 `TR-001` 给出无懈可击的技术放行建议。
 - 🤖 `@test-code-simplifier`：仅在测试代码开发、重构或提交前收口阶段启用，对 pytest 用例、fixture、协议测试脚本做低扰动简化；不是默认每轮都要调用。
@@ -69,10 +71,15 @@
 
 ### 🔪 深度排错与探索流 (Deep Fuzzing & Diagnostics)
 - 🤖 `@nginx-docker-diagnosis`：精准定位容器化 Nginx 的 404/白屏/端口映射 等系统运维故障。
-- 🤖 `@protocol-fuzzing-test`：(工业规约特化) 针对 Modbus/CAN 协议的底层负向注入与模糊测试策略。
+- 🤖 `@protocol-fuzzing-test`：(工业规约特化) 基于 Modbus 工具测试实践提炼协议鲁棒性测试方法论，覆盖靶机设计、异常注入、分层观测与失败判定。
 - 🤖 `@code-to-business-doc`：给到遗留烂代码，逆向翻译出可读的业务 PRD。
 - 🤖 `@bva-boundary-value-analysis`：针对 API 发掘出（含超界/非法/越限闭锁）的严密死角组合。
 - 🤖 `@exploratory-testing-persona`：注入极端干涉手段（断网/风暴/重试）的自由测试切入点指引。
+
+### 🧪 工程验证辅助流 (按需启用)
+- 🤖 `@verify-requirements`：基于代码证据核验某项需求是否真的已经实现，适合做实现符合性核查。
+- 🤖 `@webapp-testing`：对本地 Web 应用执行轻量验证；当前为按需辅助工具，不纳入推荐主线。
+- 🤖 `@test-driven-development`：为功能开发或缺陷修复提供最小 TDD 纪律约束；当前为按需辅助工具，不纳入推荐主线。
 
 ---
 
@@ -82,6 +89,27 @@
 
 - 🌊 **`/test-lifecycle` (自动化测试交付流水线)**：输入特性描述，AI 将自动串联【审计 -> 策略 -> 用例 -> 复核】四段式流程，期间通过 `/tmp/` 保存中间产物防过拟合，并可在收口阶段优先调用 `vibe-tools repo` 做 QA 资产一致性复核。
   - 📖 参阅指南：[`docs/user_guides/test_lifecycle_guide.md`](./docs/user_guides/test_lifecycle_guide.md)
+- 🌊 **`/bug-diagnostic-flow` (缺陷初诊与隔离流水线)**：输入现场现象、日志线索或实施反馈，AI 将自动串联【问诊补证 -> 根因隔离 -> `BUG-001` 草稿】三段式流程；缺陷草稿默认落在 `/tmp/`，不直接进入 Git 仓库。
+  - 📖 参阅指南：[`docs/user_guides/bug_diagnostic_flow_guide.md`](./docs/user_guides/bug_diagnostic_flow_guide.md)
+
+---
+
+## 文档目录指引
+
+如果你不确定该先看哪份文档，可以按目的直接定位：
+
+| 目标 | 建议先看 | 说明 |
+| :--- | :--- | :--- |
+| 浏览全部用户指南入口 | `docs/user_guides/INDEX.md` | 适合先判断该进哪个 guide，再进入具体流程文档 |
+| 浏览全部方案与设计入口 | `docs/plans/INDEX.md` | 适合先判断该看哪份治理方案、设计说明或对齐文档 |
+| 快速上手整个仓库 | `docs/onboarding.md` | 适合第一次接触本仓库时建立整体认知 |
+| 走测试主交付流程 | `docs/user_guides/test_lifecycle_guide.md` | 解释 `/test-lifecycle` 的输入、步骤与收口方式 |
+| 走缺陷初诊流程 | `docs/user_guides/bug_diagnostic_flow_guide.md` | 解释 `/bug-diagnostic-flow` 的补证、隔离与草稿建单边界 |
+| 理解收口复核与测试代码整理边界 | `docs/user_guides/qa_cleanup_principles_zh.md` | 说明 `reviewer-agent` 与 `test-code-simplifier` 的共性原则 |
+| 查看技能与工作流治理方案 | `docs/plans/2026-03-25-test-skills-governance-plan.md` | 说明测试 Skills 的边界、版本与收敛策略 |
+| 查看工作流治理对齐说明 | `docs/plans/2026-03-25-workflow-governance-alignment.md` | 说明 workflow 为什么这样改、改了什么 |
+| 看完整案例与培训材料 | `docs/training/` | 适合做内部分享、培训和案例复盘 |
+| 看测试架构与方法论沉淀 | `docs/studyInspire-insights/INDEX.md` | 适合系统学习测试架构与 AI 测试实践 |
 
 ---
 
@@ -117,6 +145,7 @@
 > **📚 核心培训资产**：
 > - 想要了解这套 AI 流程是如何重塑出厂检测工程的，请阅读最新案例：**[`docs/training/2026-03-24-factory-inspector-case-study.md`](./docs/training/2026-03-24-factory-inspector-case-study.md)** 及其配套 PPT大纲。
 > - 要获取更宏观的测试架构演进，查阅 `docs/studyInspire-insights/INDEX.md`。
+> - 要查看测试 Skills 的治理方案、边界收敛与版本基线，查阅 `docs/plans/2026-03-25-test-skills-governance-plan.md`。
 
 ---
 

@@ -1,12 +1,16 @@
 ---
 name: bva-boundary-value-analysis
-description: 基于边界值分析法(BVA)生成测试用例。当用户需要针对某个输入框、表单字段或 API 参数设计边界值测试，或要求“生成边界值用例”时触发此 skill。
+version: v1.1.0
+last_updated: 2026-03-25
+description: 基于边界值分析法（BVA）生成测试用例。当用户需要针对某个输入框、表单字段或 API 参数设计边界值测试，或要求“生成边界值用例”时触发此 Skill。
 ---
 
 # 边界值分析生成器 (BVA Generator)
 
 当触发此 Skill 时，你需要扮演一位**高级软件测试架构师**。
 你的任务是针对用户提供的目标字段和业务逻辑，利用严格的“边界值分析法”设计测试矩阵，捕捉极端情况下的潜在崩溃或逻辑错误。
+
+本 Skill 适合字段级、参数级的快速出表。若用户要的是符合 `TCS` 规范的完整测试用例集，应改用 `test-case-factory`。
 
 ## 必选约束与分析维度 (Constraints)
 

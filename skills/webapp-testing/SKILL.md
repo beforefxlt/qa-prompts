@@ -1,96 +1,85 @@
 ---
 name: webapp-testing
-description: Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs.
+version: v1.2.0
+last_updated: 2026-03-25
+description: 使用 Playwright 对本地 Web 应用执行轻量验证。适合在用户明确要求时做页面功能确认、截图留证与浏览器日志采集。
 license: Complete terms in LICENSE.txt
 ---
 
-# Web Application Testing
+# 本地 Web 验证辅助 (webapp-testing)
 
-To test local web applications, write native Python Playwright scripts.
+本 Skill 来自通用自动化测试场景，当前仓库**暂不将其作为推荐主线能力**。  
+它仅在用户明确要求验证本地 Web 应用时启用，属于**按需辅助工具**，不属于 QA 测试设计主链。
 
-**Helper Scripts Available**:
-- `scripts/with_server.py` - Manages server lifecycle (supports multiple servers)
+## 何时使用
 
-**Always run scripts with `--help` first** to see usage. DO NOT read the source until you try running the script first and find that a customized solution is abslutely necessary. These scripts can be very large and thus pollute your context window. They exist to be called directly as black-box scripts rather than ingested into your context window.
+- 用户明确要求“验证本地页面是否可用”
+- 用户需要对本地前端做截图、日志采集、基础交互回归
+- 已经知道目标是 Web UI，而不是需求评审、测试策略或测试用例设计
 
-## Decision Tree: Choosing Your Approach
+## 何时不要使用
 
-```
-User task → Is it static HTML?
-    ├─ Yes → Read HTML file directly to identify selectors
-    │         ├─ Success → Write Playwright script using selectors
-    │         └─ Fails/Incomplete → Treat as dynamic (below)
-    │
-    └─ No (dynamic webapp) → Is the server already running?
-        ├─ No → Run: python scripts/with_server.py --help
-        │        Then use the helper + write simplified Playwright script
-        │
-        └─ Yes → Reconnaissance-then-action:
-            1. Navigate and wait for networkidle
-            2. Take screenshot or inspect DOM
-            3. Identify selectors from rendered state
-            4. Execute actions with discovered selectors
-```
+- 用户要的是测试点梳理、测试计划、测试用例、缺陷分析
+- 只是想确认需求是否已实现，应优先考虑 `verify-requirements`
+- 没有明确的本地 Web 目标，只是泛泛说“帮我测一下”
 
-## Example: Using with_server.py
+## 工作原则
 
-To start a server, run `--help` first, then use the helper:
+1. **只做本地验证，不抢测试设计职责**
+2. **优先使用现有辅助脚本，不先读大段脚本源码**
+3. **先确认页面已加载，再做 DOM 判断**
+4. **输出验证结论时，附带关键截图或日志线索**
 
-**Single server:**
-```bash
-python scripts/with_server.py --server "npm run dev" --port 5173 -- python your_automation.py
-```
+## 推荐流程
 
-**Multiple servers (e.g., backend + frontend):**
-```bash
-python scripts/with_server.py \
-  --server "cd backend && python server.py" --port 3000 \
-  --server "cd frontend && npm run dev" --port 5173 \
-  -- python your_automation.py
-```
+### 第 1 步：确认目标
 
-To create an automation script, include only Playwright logic (servers are managed automatically):
-```python
-from playwright.sync_api import sync_playwright
+先明确：
 
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True) # Always launch chromium in headless mode
-    page = browser.new_page()
-    page.goto('http://localhost:5173') # Server already running and ready
-    page.wait_for_load_state('networkidle') # CRITICAL: Wait for JS to execute
-    # ... your automation logic
-    browser.close()
-```
+- 访问地址或本地端口
+- 需要验证的页面或交互
+- 是否需要截图、控制台日志、网络日志
 
-## Reconnaissance-Then-Action Pattern
+### 第 2 步：优先使用现有脚本
 
-1. **Inspect rendered DOM**:
-   ```python
-   page.screenshot(path='/tmp/inspect.png', full_page=True)
-   content = page.content()
-   page.locator('button').all()
-   ```
+若本 Skill 目录下已有辅助脚本，先查看用法，再决定是否需要自写脚本：
 
-2. **Identify selectors** from inspection results
+- `scripts/with_server.py`
 
-3. **Execute actions** using discovered selectors
+原则：
 
-## Common Pitfall
+- 先跑 `--help`
+- 只在现有脚本不能满足时，再写定制 Playwright 脚本
 
-❌ **Don't** inspect the DOM before waiting for `networkidle` on dynamic apps
-✅ **Do** wait for `page.wait_for_load_state('networkidle')` before inspection
+### 第 3 步：执行页面验证
 
-## Best Practices
+推荐顺序：
 
-- **Use bundled scripts as black boxes** - To accomplish a task, consider whether one of the scripts available in `scripts/` can help. These scripts handle common, complex workflows reliably without cluttering the context window. Use `--help` to see usage, then invoke directly. 
-- Use `sync_playwright()` for synchronous scripts
-- Always close the browser when done
-- Use descriptive selectors: `text=`, `role=`, CSS selectors, or IDs
-- Add appropriate waits: `page.wait_for_selector()` or `page.wait_for_timeout()`
+1. 打开页面
+2. 等待页面稳定加载
+3. 截图或检查 DOM
+4. 定位关键选择器
+5. 执行最小必要交互
+6. 记录截图、日志、报错或异常行为
 
-## Reference Files
+### 第 4 步：输出结果
 
-- **examples/** - Examples showing common patterns:
-  - `element_discovery.py` - Discovering buttons, links, and inputs on a page
-  - `static_html_automation.py` - Using file:// URLs for local HTML
-  - `console_logging.py` - Capturing console logs during automation
+默认输出应包含：
+
+- 验证目标
+- 实际操作
+- 结果结论
+- 证据位置（截图、日志、关键报错）
+
+## 使用提醒
+
+- 动态页面不要在未加载完成前就判断 DOM
+- 不要为了验证一个小交互，先阅读整套自动化脚本源码
+- 不要把这个 Skill 当成前端测试框架设计文档
+
+## 参考资产
+
+- `scripts/with_server.py`
+- `examples/element_discovery.py`
+- `examples/static_html_automation.py`
+- `examples/console_logging.py`

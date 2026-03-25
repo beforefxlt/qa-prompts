@@ -1,4 +1,7 @@
 ---
+name: test-report-reviewer
+version: v1.0.0
+last_updated: 2026-03-25
 description: 解析测试执行反馈与缺陷记录，提取量化指标，生成格式规范、具备参考价值的质量度量报告 (基于 TR-001 模板)
 ---
 

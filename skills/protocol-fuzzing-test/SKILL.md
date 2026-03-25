@@ -1,143 +1,255 @@
 ---
 name: protocol-fuzzing-test
-version: v1.0.0
-last_updated: 2026-03-24
-description: Guide for executing TDD-based Fuzzing on industrial protocols (Modbus, CAN). Detects parsing vulnerabilities via baseline validation and negative injection (Honeypot, Drop storm, Truncated, Mismatch).
+version: v1.2.0
+last_updated: 2026-03-25
+description: 基于 Modbus 等工业协议测试实践提炼的协议鲁棒性测试方法论。通过靶机设计、基线校验、分层故障注入与负向场景设计，系统性发现解析层、交互层与链路层的脆弱点。
 ---
 
-# Protocol Fuzzing Agent Skill
+# 协议鲁棒性测试方法论 (Protocol Fuzzing Methodology)
 
-A layered fault-injection framework for testing the robustness of industrial protocol drivers (Modbus TCP/RTU, CAN) used in PCS, BMS, and other field equipment. Combines a configuration-driven Python simulator with industry-standard tools (Go Native Fuzzing, Toxiproxy) to systematically uncover fatal stability bugs.
+你不是某个具体工具的使用说明书，也不是某个脚本仓库的操作手册。  
+你的职责是把 **Modbus 工具测试经验中可复用的测试思想** 提炼成一套可迁移的方法论，供用户用于 Modbus TCP/RTU、CAN 及其他工业通信协议场景。
 
-## 🧰 Bundled Tools
-The `scripts/` directory of this skill contains:
-- `malicious_simulator.py` — Configuration-driven Modbus TCP protocol responder & injector
-- `pcs_profile.json` / `bms_profile.json` — Sample device anomaly profiles
-- `test_malicious_simulator.py` / `test_bms_fuzzing.py` — TDD test suites
+## 适用场景
 
-## When to Use
-- Testing stability of a new device integration (BMS, PCS, inverter, meter)
-- User asks to "fuzz", "stress test", or "simulate anomalies" against a protocol stack
-- Evaluating boundary conditions or error handling of a data acquisition program
+- 新接入一个设备驱动、协议栈或采集程序，需要评估其鲁棒性。
+- 用户要求“做协议模糊测试”“做异常注入”“做通信稳定性压力验证”。
+- 团队已经有自己的测试工具，但缺少一套系统的负向测试设计框架。
 
-## Core Philosophy
-> **"You must prove the simulator is flawless before claiming the target is broken."**
-> Baseline (Positive) validation is mandatory before any Negative/Malicious campaign.
+## 非目标
 
----
+- 不把某个具体脚本、代理工具或编程语言绑定为唯一方案。
+- 不默认输出大段工具命令清单。
+- 不把“会跑某个工具”误当成“已经完成协议鲁棒性测试设计”。
 
-## 🏗 Layered Testing Architecture
+## 核心原则
 
-All fault injection MUST be organized into three decoupled layers:
+1. **先证伪测试夹具，再证伪目标系统**  
+   任何负向注入前，必须先确认基线链路是通的，避免把测试夹具故障误判成被测系统缺陷。
+2. **先分层，再注入**  
+   协议鲁棒性问题通常分布在解析层、交互层、链路层，不要把所有异常混在一起打。
+3. **先构造“有意义的脏数据”，不要迷信随机字节**  
+   工业协议大多有严格头部与长度约束，纯随机数据往往死在协议入口，进不到真正脆弱的业务路径。
+4. **每个异常都要绑定观测指标**  
+   只描述“发异常包”不够，还要说明看什么、怎么判断、什么算失败。
+5. **靶机是方法论的一部分，不是附属品**  
+   如果一套 Fuzzing 思路无法在可控靶机上稳定复现预埋缺陷，它在真实设备上的结论通常也不可信。
 
-| Layer | Target | What to Break | Recommended Tool |
-|-------|--------|---------------|-----------------|
-| **L1 — Parsing** | Memory safety & decoding | Slice OOB, type overflow, malformed PDU | Go Native Fuzz (`go test -fuzz`), malicious_simulator TRUNCATED mode |
-| **L2 — Interaction** | State machine & transactions | TID mismatch, concurrent request isolation, session pollution | malicious_simulator MISMATCH mode + concurrent goroutine harness |
-| **L3 — Link** | TCP/serial bus resilience | Half-open connections, bandwidth starvation, reconnect deadlocks, **Slave Congestion** | **Toxiproxy** (preferred), malicious_simulator DROP/DELAY mode |
+## 三层测试模型
 
----
+| 层级 | 关注对象 | 典型脆弱点 | 典型观测指标 |
+| :--- | :--- | :--- | :--- |
+| **L1 解析层** | 帧解析、长度校验、类型转换 | 截断包、越界读取、非法长度、类型缩窄、脏负载 | 进程崩溃、异常日志、非法状态写入、解码错误 |
+| **L2 交互层** | 请求-响应对应、事务隔离、并发一致性 | TID 错配、乱序响应、重复响应、会话污染、并发串话 | 响应串话、状态错乱、重复执行、延迟激增 |
+| **L3 链路层** | TCP/串口/总线稳定性、超时与重连 | 半开连接、断连风暴、延迟堆积、连接数限制、重连死锁 | goroutine/线程堆积、重试风暴、资源泄漏、恢复失败 |
 
-## 🛠 Standard Operating Procedure (SOP)
+## 靶机设计方法
 
-### Phase 1: Code Review & Profile Generation
-1. **Analyze Target Source Code** — Look for:
-   - `data[idx:idx+2]` without length guard → L1 Slice OOB
-   - `float64` → `uint16` direct cast with scaling → L1 Type overflow
-   - `mutex.Lock()` inside reconnect retry loop → L3 Deadlock
-   - No `conn.SetDeadline()` on TCP read → L3 Goroutine leak
-2. **Draft Fuzzing Profile** — Create `<device>_profile.json`:
-   - `honeypots`: addresses vulnerable to overflow, with `threshold_max`
-   - `truncation`: fake MBAP length + dirty payload hex for block reads
+靶机不是“随便起一个模拟器”。  
+在协议鲁棒性测试里，靶机的职责是把某类脆弱性**稳定、可控、可重复**地暴露出来，用来验证测试思想本身是否有效。
 
-### Phase 2: Baseline (Positive) Verification
-1. Boot simulator in neutral mode, verify correct responses for valid traffic
-2. Assert: write echo OK, read returns correct register count, zero false alerts
-3. **Do NOT proceed to negative campaigns if Baseline fails**
+### 靶机的定位
 
-### Phase 3: Negative Fuzz Campaign (by Layer)
+靶机至少承担三类职责：
 
-#### L1 — Parsing Layer Attacks
+1. **验证测试方法有效性**  
+   用已知缺陷验证你的异常模型是否真的能打中目标。
+2. **隔离问题层级**  
+   让你知道当前发现的是解析层问题、交互层问题，还是链路恢复问题。
+3. **提供可重复回归样本**  
+   后续每次改工具、改策略、改脚本时，都能回到同一批已知缺陷做回归验证。
 
-**Mode 1: HONEYPOT (Type Overflow)**
-- Python simulator detects when client sends overflow values (> `threshold_max`)
-- Validates that upstream business logic lacks pre-cast boundary checks
+### 靶机设计原则
 
-**Mode 3: TRUNCATED (Slice Out-of-Bounds)**
-- Fabricates MBAP header with inflated length, sends partial payload then FIN
-- For Go targets: **prefer Go Native Fuzzing** — guide user to write:
-  ```go
-  func FuzzModbusDecoder(f *testing.F) {
-      // Seed corpus: valid MBAP header + dirty payload
-      f.Add([]byte{0x00,0x01, 0x00,0x00, 0x00,0x06, 0x01, 0x03, 0x20, 0xAA, 0xBB})
-      f.Fuzz(func(t *testing.T, data []byte) {
-          DecodeModbusFrame(data) // must not panic
-      })
-  }
-  ```
-  This pins crashes to exact source lines, far more precise than network-level injection.
+1. **故意有缺陷，但缺陷边界清晰**  
+   不要做“什么都可能坏”的随机靶机，要做“我明确知道哪里坏、为什么坏”的可控靶机。
+2. **一类缺陷对应一类靶点**  
+   越界、泄漏、乱序、延迟、堆积、重连失控，尽量拆开，不要堆在一个靶机实例里。
+3. **正常路径仍然可运行**  
+   靶机必须既能跑基线，又能在被特定触发条件命中后表现出缺陷，否则无法区分“靶机没起来”和“异常命中”。
+4. **缺陷触发条件要可声明**  
+   明确是由特定寄存器、特定长度字段、特定并发度、特定时序窗口触发。
+5. **缺陷表现要可观测**  
+   每个靶点都要提前定义故障表现，例如崩溃、卡死、脏写、响应错配、连接不释放、恢复失败。
 
-> [!IMPORTANT]
-> **Context-Aware Corpus Strategy**: Pure random byte mutation gets trapped at header validation and never reaches deep business logic (e.g., type casting). Seeds MUST use **"valid Header + dirty Payload"** structure. Use Go Fuzzing's dictionary feature (`-fuzz-dict`) to constrain mutations to payload boundary values and type-overflow ranges, concentrating compute on the code paths that actually matter.
+### 靶机分层设计
 
-#### L2 — Interaction Layer Attacks
+| 层级 | 靶机应模拟的缺陷 | 典型触发方式 | 典型故障表现 |
+| :--- | :--- | :--- | :--- |
+| **L1 解析层** | 长度校验缺失、类型缩窄、寄存器越界、半包处理错误 | 非法长度、截断负载、超限数值、脏字段组合 | 崩溃、异常日志、错误寄存器写入 |
+| **L2 交互层** | 事务号错配、并发串话、旧响应污染新请求 | 乱序、重复响应、共享会话、并发打流 | 响应错配、状态错乱、重复执行 |
+| **L3 链路层** | 重连死锁、连接泄漏、慢响应堆积、连接数耗尽 | 断连风暴、延迟注入、连接上限、长时抖动 | 线程堆积、资源泄漏、恢复失败 |
 
-**Mode 4: MISMATCH (Transaction Decoupling)**
-- Tampers Transaction ID on response (+999 offset)
-- **Enhanced: Concurrent State Machine Test** — spawn N goroutines sending parallel requests through a single Modbus handle; simulator delays/reorders 10% of responses. Assert: no cross-talk (A must never receive B's data).
-- **Bundled Harness**: See `scripts/l2_concurrency_test.go` for a ready-to-adapt Go test scaffold (50 goroutines × 100 requests, TID isolation + latency assertions + pprof Block Profile export). Replace the mock section with your actual `ModbusClient` call.
+### 靶机设计清单
 
-> [!WARNING]
-> **Connection Pool Observability Gap**: Correct TID correlation alone is insufficient. Coarse-grained Mutex in the connection pool may cause goroutine queuing congestion under high-frequency dispatch (e.g., EMS/AGC power commands at 100ms intervals), degrading real-time control responsiveness even without data cross-talk.
->
-> **Required Metrics**: During L2 concurrent tests, enable `go tool pprof` Block Profile and monitor:
-> - Modbus Client internal wait-queue depth
-> - Goroutine blocking duration on Mutex acquisition
-> - P99 round-trip latency per transaction under load
->
-> Assert: blocking time must stay below control-cycle period; queue depth must not grow unbounded.
+在给用户设计协议鲁棒性测试方案时，若需要靶机，应先回答：
 
-#### L3 — Link Layer Attacks
+- 这个靶机是为了验证哪一类脆弱性
+- 该脆弱性属于 L1 / L2 / L3 哪一层
+- 正常流量下它是否可稳定通过基线
+- 异常流量下它由什么条件触发
+- 命中后最小可观察故障是什么
+- 该故障能否被自动化回归验证
 
-**Mode 2: DROP STORM (Connection Thrashing)**
-- Lightweight: Python simulator drops connection after N packets
-- **Production-grade alternative: Toxiproxy**
-  ```bash
-  # Insert proxy between Go client and real/simulated device
-  toxiproxy-cli create modbus_proxy -l 0.0.0.0:5020 -u <device>:502
-  # Inject toxic: reset connection after 5KB transferred
-  toxiproxy-cli toxic add modbus_proxy -t limit_data -a bytes=5000
-  # Inject toxic: 2000ms latency to trigger deadline exceeded
-  toxiproxy-cli toxic add modbus_proxy -t latency -a latency=2000
-  ```
-- **Assertions**: Mutex released within configured timeout; Goroutine count must not grow unbounded; no `panic` in logs.
+### Modbus 靶机的推荐建模方式
 
-**Mode 5: CONGESTION (Sluggish Response)**
-- Use `--delay <seconds>` to simulate a device that takes longer to respond than the polling cycle (e.g., 0.5s cycle vs 1.0s response).
-- Use `--max-conns <N>` to simulate hardware connection limits (e.g., BMS can only handle 1-2 concurrent Modbus sessions).
-- **Assertions**: Client must implement **Cycle-Dropping** (skip new scan if previous is pending) or **Strict Timeouts**. Failure to do so leads to "Task Stacking" and resource exhaustion on the slave.
+对 Modbus 场景，优先把靶机拆成以下几类可插拔缺陷：
 
-> [!CAUTION]
-> **Closed-Loop Deployment Constraint**: When using Toxiproxy with injected latency (e.g., `latency=2000`), physical network jitter between separate hosts compounds on top of the injected delay. This causes `conn.SetDeadline()` triggers to shift unpredictably, producing **flaky test results**.
->
-> **Mandatory**: Deploy the target process, Toxiproxy proxy, and device simulator within the **same loopback network** (same Pod, same host `127.0.0.1`, or same Docker bridge). This guarantees deterministic fault injection timing and eliminates environmental noise from test assertions.
+- **解析型靶点**：MBAP 长度处理错误、寄存器地址越界、数值缩窄/溢出
+- **交互型靶点**：事务号错配、响应乱序、旧包回放、共享状态串话
+- **链路型靶点**：连接不释放、延迟堆积、轮询任务堆叠、重连不收敛
 
-### Phase 4: Protocol-Specific Considerations
+如果要做得更工程化，建议采用“**核心协议引擎 + 可插拔漏洞插件**”的方式，让每个靶点都能单独启停，而不是把所有缺陷写死在一个分支里。
 
-#### Modbus TCP
-- Focus: TCP stream boundary handling (sticky/half packets), `io.ReadFull` edge cases
-- Focus: TCP Keepalive / Reconnect backoff logic
-- Focus: MBAP Transaction ID pool isolation under concurrency
+## 标准工作流
 
-#### CAN Bus
-- Replace Mode 2 (DROP) with **Frame Flood / Bus Load Spiking** (CAN has no TCP connections)
-- Focus: DLC length forgery, arbitration priority spoofing, Bus-Off injection
-- Focus: Broadcast storm causing receiver buffer overflow
+### 第 1 步：建立基线
 
-### Phase 5: Issue Reporting
-- Document exact reproduction steps for any crash/hang/data poisoning
-- Remediation constraints (examples):
-  - _"Add `if len(data) < expected` before slice access"_
-  - _"Validate domain limits before `uint16` narrowing"_
-  - _"Set `conn.SetDeadline()` on every TCP read to prevent goroutine leak"_
-  - _"Wrap reconnect in backoff with mutex timeout guard"_
+先确认正常流量下的最小可行链路：
+
+- 正常读写是否成功
+- 返回长度与内容是否符合预期
+- 日志中是否已存在异常噪音
+- 重试、超时、告警是否在正常场景中误触发
+
+如果基线都不稳定，禁止直接进入负向注入。
+
+### 第 2 步：设计或选定靶机
+
+如果当前目标是验证 Fuzzing 思路本身，而不是直接打真实设备，就需要先设计靶机：
+
+- 按 L1 / L2 / L3 明确本轮要验证的缺陷类型
+- 为每种缺陷准备独立靶点，而不是全堆在一个实例里
+- 确保靶机既能跑正常基线，也能在命中特定条件后稳定暴露缺陷
+- 为每个靶点定义“触发条件 -> 故障表现 -> 观测指标”
+
+如果用户已经有现成靶机，则先审查其是否满足上面的设计要求。
+
+### 第 3 步：拆出协议脆弱面
+
+根据用户给出的设备或程序，先梳理它最可能出问题的点：
+
+- 是否有长度字段与真实负载不一致的风险
+- 是否存在数值缩窄、寄存器映射越界、符号位处理错误
+- 是否在并发下复用连接、复用事务号或共享缓冲区
+- 是否缺少超时、重连节流、积压保护
+
+输出时优先把脆弱面整理成“风险点 -> 建议异常 -> 观测指标”的表。
+
+### 第 4 步：按层设计异常注入
+
+#### L1 解析层
+
+优先设计以下异常：
+
+- **截断包**：头部合法，但负载不完整
+- **长度欺骗**：声明长度大于实际长度，或小于实际长度
+- **类型溢出**：把本该安全收敛的值推到上限外
+- **非法功能码/字段组合**：格式上尽量接近真实请求，但语义上非法
+
+关键要求：
+
+- 脏数据要尽量保持“头部可通过、负载有问题”
+- 不要只用完全随机字节流
+- 预期结果不仅是“不崩溃”，还包括“不写脏状态、不误触发控制”
+
+#### L2 交互层
+
+优先设计以下异常：
+
+- **事务错配**：请求 A 收到请求 B 的响应
+- **乱序响应**：多个请求并发下返回顺序被打乱
+- **重复响应/延迟旧响应**：旧响应在新一轮轮询中被误接收
+- **并发串话**：多个会话共用资源导致数据污染
+
+关键要求：
+
+- 必须关注“看起来没崩，但数据已经错了”的静默错误
+- 必须观测队列积压、锁等待、P99 延迟、重复执行等信号
+
+#### L3 链路层
+
+优先设计以下异常：
+
+- **断连风暴**：建立连接后立即断开，反复抖动
+- **慢响应/阻塞响应**：响应时间大于轮询周期
+- **资源限制**：设备只允许很少的并发连接或缓冲深度
+- **长时间抖动恢复**：多次超时、重连、恢复后是否还能回到稳态
+
+关键要求：
+
+- 不能只验证“会不会报错”，还要验证“能不能恢复”
+- 要明确是否允许丢周期、丢本轮采样、降级重试，避免任务堆积
+
+### 第 5 步：定义观测与判定标准
+
+每条测试建议都要至少包含以下信息：
+
+| 项目 | 要求 |
+| :--- | :--- |
+| 异常注入动作 | 明确到“改什么字段 / 打什么时序 / 制造什么链路状态” |
+| 预期保护行为 | 应拒绝、应超时、应降级、应记录日志、应保持状态不变 |
+| 关键观测点 | 日志、状态机、寄存器值、连接数、延迟、资源占用 |
+| 判定失败条件 | 崩溃、卡死、脏写、串话、无恢复、误控制 |
+
+## 输出模板
+
+默认用以下结构输出：
+
+```markdown
+## 协议鲁棒性测试建议
+
+### 一、基线前提
+- ...
+
+### 二、靶机设计
+| 层级 | 靶点 | 触发条件 | 预期故障表现 |
+| :--- | :--- | :--- | :--- |
+| L1 | ... | ... | ... |
+
+### 三、分层风险矩阵
+| 层级 | 风险点 | 建议异常注入 | 关键观测指标 | 失败判定 |
+| :--- | :--- | :--- | :--- | :--- |
+| L1 | ... | ... | ... | ... |
+
+### 四、优先执行顺序
+1. ...
+2. ...
+3. ...
+```
+
+## 协议特化提示
+
+### Modbus
+
+- 重点关注 MBAP 长度、事务号隔离、寄存器边界、粘包/半包
+- 要特别警惕“解析没崩，但寄存器值错位”的问题
+
+### CAN
+
+- 重点关注 DLC 长度伪造、优先级竞争、总线拥塞、Bus-Off 恢复
+- 链路层异常往往会转化为系统级时序问题，不能只盯单帧格式
+
+## 工具使用原则
+
+若用户已有脚本、代理器、模糊器或仿真器，你可以把它们当作**实现这些测试思想的手段**。  
+但输出时必须坚持以下顺序：
+
+1. 先讲清楚测试目标和异常模型
+2. 再说明观测指标和失败判定
+3. 最后才在必要时补充“可用什么工具实现”
+
+## 参考资产
+
+本 Skill 目录下的 `scripts/` 仅作为历史参考实现，用于帮助理解某些 Modbus 场景如何落地。  
+若需要靶机设计参考，还可对照仓库中的 `modbus_anomaly_test/vulnerable_target.py` 及其相关说明资产：
+
+- `malicious_simulator.py`
+- `pcs_profile.json`
+- `bms_profile.json`
+- 若干测试脚本
+- `modbus_anomaly_test/vulnerable_target.py`
+- `modbus_anomaly_test/docs/TARGET_GUIDE.md`
+- `modbus_anomaly_test/docs/PROTOCOL_TESTING_INSIGHTS_ZH.md`
+
+这些资产是**示例实现**，不是本 Skill 的主体，也不是唯一推荐方案。
