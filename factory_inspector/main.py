@@ -10,7 +10,7 @@ from factory_inspector.core.reporter import ConsoleReporter
 
 def main():
     parser = argparse.ArgumentParser(description="Factory Inspection Tool - Ubuntu 20.04/22.04")
-    parser.add_argument("--config", default="config.yaml", help="Path to config.yaml")
+    parser.add_argument("--config", help="Path to config.yaml")
     parser.add_argument("--plugin-dir", action="append", help="Extra plugin directories")
     args = parser.parse_args()
 
@@ -28,12 +28,13 @@ def main():
         # 源码运行
         base_dir = os.path.dirname(os.path.abspath(__file__))
 
+    config_path = args.config or os.path.join(base_dir, "config.yaml")
     builtin_plugin_dir = os.path.join(base_dir, "plugins", "builtins")
     custom_plugin_dir = os.path.join(base_dir, "plugins", "custom")
 
     # 2. 初始化引擎
     try:
-        engine = InspectionEngine(args.config)
+        engine = InspectionEngine(config_path)
         reporter = ConsoleReporter()
     except Exception as e:
         print(f"初始化失败: {e}")

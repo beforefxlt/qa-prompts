@@ -24,7 +24,7 @@
 我们抛弃了全盘写死的思路，抽象出了：
 - **核心大脑 (`InspectionEngine`)**：只负责解析 YAML、发现插件、串联流程、收集报告。它不知道具体怎么测 CPU。
 - **协议契约 (`BasePlugin`)**：定义了所有检查项必须返回标准化的 `CheckResult` 对象。
-- **配置驱动 (`config.yaml`)**：业务和代码彻底剥离。想测 8 核还是 4 核，修改 yaml 即可。
+- **配置驱动 (`factory_inspector/config.yaml`)**：业务和代码彻底剥离。想测 8 核还是 4 核，修改 yaml 即可。
 
 ### 阶段 2：支持无感侵入的动态扩展
 产线需求瞬息万变，我们设计了**动态插件扫描机制 (`engine.discover_plugins`)**。只要把写好的 `.py` 扔进 `plugins/custom/`，引擎启动时会自动通过反射机制（`inspect` & `importlib`）将它挂载。
@@ -40,7 +40,7 @@
 - **教训**：这只是万里长征第一步，仅仅证明了代码“能跑”。
 
 ### 🟡 P2: 数据与业务异常 (Domain Failure)
-- **动作**：故意在 `config.yaml` 里要求 `min_cpu_cores: 99`、要求 `nginx` 版本极高。
+- **动作**：故意在 `factory_inspector/config.yaml` 里要求 `min_cpu_cores: 99`、要求 `nginx` 版本极高。
 - **产出**：系统精准拦截了不符合规约的参数，输出友好的 `[FAIL]`。它防住了“工厂用错了料”。
 
 ### 🔴 P3: 环境与基建异常 (Infrastructure Error) —— 【最致命的盲区】

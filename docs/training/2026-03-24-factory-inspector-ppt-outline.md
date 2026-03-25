@@ -22,7 +22,7 @@
 - **解药**：解耦 (Decoupling) 与模块化 (Modularity)。
 - **核心大脑 (`InspectionEngine`)**：只管统筹流程，绝不碰具体硬件指令。
 - **协议栈 (`BasePlugin` + Builtins/Custom)**：抽象标准化测试插件能力。
-- **驱动枢纽 (`config.yaml`)**：实现业务逻辑与测试代码的彻底剥离。
+- **驱动枢纽 (`factory_inspector/config.yaml`)**：实现业务逻辑与测试代码的彻底剥离。
 - *(可插入简单的 UML/架构关系图)*
 
 ## 幻灯片 4：转折点 —— 单测套件的虚假繁荣 (The Illusion of Green)

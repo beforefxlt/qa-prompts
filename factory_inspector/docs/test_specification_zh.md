@@ -3,12 +3,13 @@
 本文档详细描述了 `factory_inspector` 项目回归测试套件中的各个测试用例及其测试点，旨在确保工具在不同场景下的稳定性和可靠性。
 
 ## 1. 测试套件概览
-目前共有 **16** 个自动化测试用例，涵盖以下五个维度：
+目前共有 **27** 个自动化测试用例，涵盖以下六个维度：
 - **基础功能 (Basic)**: 典型成功路径验证。
 - **异常场景 (Fallures)**: 典型错误与配置不符场景验证。
 - **边界值 (Boundary)**: 临界条件逻辑验证。
 - **全链路集成 (Integration)**: 核心引擎与多插件协同验证。
-- **日志审计 (Logging)**: 原始数据存证能力验证。
+- **日志审计 (Logging)**: 审计与原始输出记录验证。
+- **容器化检测 (Docker)**: 针对大储控制器的 Docker 服务健康度验证。
 
 ---
 
@@ -93,12 +94,28 @@
 | `test_future_annotations_present` | 验证核心插件文件是否包含 `from __future__ import annotations` 头部。 | 头部存在 | Compatibility |
 | `test_no_incompatible_syntax` | 静态扫描代码中是否存在 Python 3.10+ 的语法（如 `match` 或 `|` 联合类型）。 | 无高版本语法风险 | Compatibility |
 
+### 2.11 Docker 容器化检测 (`DockerPlugin`)
+| 用例名称 | 测试点 | 预期结果 | 分类标签 |
+| :--- | :--- | :--- | :--- |
+| `test_docker_happy_path` | 验证配置中的容器处于 `Up` 状态且镜像标签匹配的黄金路径。 | Status: True, Actual: "Up", "Match" | P1 |
+| `test_docker_container_missing` | 验证当配置的必要容器不存在时的拦截能力。 | Status: False, Message: "缺失" | P2 |
+| `test_docker_container_stopped` | 验证当容器处于 `Exited` 状态时的拦截与状态显示。 | Status: False, Actual: "Exited" | P2 |
+| `test_docker_tag_mismatch` | 验证容器镜像版本不符合 `image_tag` 要求时的拦截能力。 | Status: False, Message: "镜像版本不匹配" | P2 |
+| `test_docker_daemon_down` | **基建容错**：模拟 Docker 服务未启动（Connection Refused）时的异常处理。 | Status: False, Message: "运行失败或未安装" | P3 |
+| `test_docker_no_permission` | **权限风险**：模拟当前用户无权执行 `docker ps` 时的拦截能力。 | Status: False, Message 包含 "Permission denied" | P3 |
+| `test_docker_cmd_not_found` | **依赖缺失**：模拟系统中未安装 Docker CLI 导致命令无法找到。 | Status: False, Message 包含 "not found" | P3 |
+| `test_docker_tag_partial_match` | **边界值**：验证标签子串匹配逻辑（如 `v1.1` 匹配 `myimage:v1.1.2`）。 | Status: True (子串匹配成功) | P4 |
+| `test_docker_empty_config` | **边界值**：验证当 `items` 配置为空列表时，插件应不报错且返回空结果。 | 返回空结果列表, 无 Error | P4 |
+| `test_docker_error_feedback` | **交付体验**：验证当基础环境失败时，输出的错误信息是否具备自解释性。 | Message 清晰指向根因 | P5 |
+| `test_docker_offline_run` | **交付体验**：验证在完全离线环境下，插件读取本地容器元数据的稳定性。 | 运行正常, 无网络请求依赖 | P5 |
+
 ---
 
 ## 3. 回归测试执行
-目前共有 **30** 个自动化测试项（包含 29 个代码用例 + 1 个打包流程校验）。可以通过以下指令运行全量回归：
+目前共有 **27** 个自动化测试项。可以通过以下指令运行全量回归：
 ```bash
-python3 run_tests.py --all
+# 推荐从项目根目录执行
+python3 factory_inspector/run_tests.py --all
 ```
 
 补充说明：

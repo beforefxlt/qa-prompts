@@ -37,7 +37,7 @@ factory_inspector/
 ```
 
 ### 执行数据流向 (Data Flow)
-1. **启动与读取**：执行 `python3 main.py --config config.yaml`。
+1. **启动与读取**：在 `factory_inspector/` 目录内执行 `python3 main.py --config config.yaml`，或在仓库根目录执行 `python3 factory_inspector/main.py`。
 2. **调度分配**：`core.engine` 解析 YAML，发现 `services` 节点，就唤醒 `plugins.service_plugin`；发现 `hardware` 节点，就唤醒 `plugins.hardware_plugin`。
 3. **插件执行**：插件通过 `subprocess` 在本机运行相应 Ubuntu 命令（如 `ip r`, `lscpu`, `systemctl status`），结合传入的 YAML 预期值进行断言。
 4. **结果返回与输出**：插件向引擎返回标准化的结果对象，`core.reporter` 在终端输出最终的 `[PASS]` 或 `[FAIL]` 清单。

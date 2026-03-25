@@ -1,0 +1,25 @@
+# Factory Inspector 默认参考配置
+# 说明：
+# 1. 这是项目自带的参考模板，供用户按具体机型和交付标准修改。
+# 2. 不同产线可复制此文件后调整阈值、网段、服务名和版本要求。
+
+hardware:
+  min_cpu_cores: 4
+  min_memory_gb: 8
+  min_disk_gb: 100
+
+network:
+  interfaces:
+    - name: "eth0"
+      expected_ip_prefix: "192.168.1."
+  default_gateway: "192.168.1.1"
+
+route:
+  max_default_routes: 1
+
+service:
+  items:
+    - name: "nginx"
+      min_version: "1.18.0"
+    - name: "ssh"
+      check_only: true

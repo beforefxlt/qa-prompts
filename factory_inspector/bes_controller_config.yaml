@@ -1,0 +1,74 @@
+# 大储控制器 (BES Controller) 出厂检测配置文件
+# 包含协议网关、核心业务、基础设施及监控服务的 Docker 容器检测
+
+hardware:
+  min_cpu_cores: 8
+  min_memory_gb: 32
+  min_disk_gb: 256
+
+network:
+  interfaces:
+    - name: "eth0"
+      expected_ip_prefix: "192.168.203."
+    - name: "eth1"
+      expected_ip_prefix: "192.168.10."
+  default_gateway: "192.168.203.1"
+
+route:
+  max_default_routes: 1
+
+docker:
+  items:
+    # --- 1. 产品与核心业务 (Core Product & Business) ---
+    - name: "ems"
+      image_tag: "v4.1.2"
+    - name: "ems_web"
+      image_tag: "v4.1.2"
+    - name: "eigw_server"
+      image_tag: "develop"
+    - name: "eigw_web"
+    - name: "eigw_clear_file"
+    - name: "ess_server_ess"
+      image_tag: "develop"
+    - name: "ess_server_web"
+    - name: "ess_server_has"
+      image_tag: "develop"
+    - name: "ess_server_serv"
+      image_tag: "develop"
+    - name: "ess_server_eigw_lw"
+      image_tag: "develop"
+
+    # --- 2. 协议网关层 (Protocol Gateway) ---
+    - name: "eigw_goose"
+      image_tag: "v2.1.5"
+    - name: "eigw_iec104c_1"
+    - name: "eigw_iec104c_2"
+    - name: "eigw_iec104c_3"
+    - name: "eigw_iec61850hub_1"
+    - name: "eigw_iec61850hub_2"
+    - name: "eigw_iec61850hub_3"
+    - name: "ess_server_power_dispatch_iec104s"
+    - name: "ess_server_iec104s"
+    - name: "ems_goose"
+    - name: "eic-repeater"
+
+    # --- 3. 基础设施层 (Data Infrastructure) ---
+    - name: "infra_emqx"
+      image_tag: "4.4.15"
+    - name: "infra_mongodb"
+      image_tag: "5.0.15"
+    - name: "infra_mysql"
+      image_tag: "8.0.44"
+    - name: "infra_redis"
+      image_tag: "8.4"
+    - name: "infra_influxdb"
+      image_tag: "2.7.3"
+    - name: "infra_isc"
+      image_tag: "v1.1.4"
+
+    # --- 4. 监控与常用工具 (Monitoring & Ops) ---
+    - name: "prom_prometheus"
+    - name: "prom_grafana"
+    - name: "prom_node_exporter"
+    - name: "prom_cadvisor"
+    - name: "frpc"

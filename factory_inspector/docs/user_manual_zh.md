@@ -29,15 +29,24 @@ cd factory_inspector
 ```
 
 ### 3.2 安装依赖
+**方式 A: Ubuntu 系统包管理器 (推荐用于生产)**
 ```bash
 sudo apt update
 sudo apt install python3-yaml -y
 ```
 
+**方式 B: Python 虚拟环境 (推荐用于开发与测试)**
+```bash
+python3 -m venv venv
+./venv/bin/pip install pyyaml
+```
+
 ---
 
 ## 4. 配置指南 (`config.yaml`)
-通过修改根目录下的 `config.yaml` 来定义检测标准。
+通过修改 `factory_inspector/` 目录下的 `config.yaml` 来定义检测标准。
+
+项目仓库已提供一份默认参考配置，可在此基础上直接修改，不需要从零手写。
 
 ### 4.1 硬件检测 (`hardware`)
 | 参数名 | 说明 | 示例值 |
@@ -62,8 +71,16 @@ sudo apt install python3-yaml -y
 
 ### 5.1 运行检测
 ```bash
-python3 main.py --config config.yaml
+# 从仓库根目录执行 (推荐)
+python3 factory_inspector/main.py
+
+# 或进入目录后执行
+cd factory_inspector
+python3 main.py
 ```
+
+> [!TIP]
+> 推荐从仓库根目录执行程序，可以有效避免插件加载时的命名空间冲突（如 `factory_inspector.plugins` 与 `plugins` 的冲突）。
 
 ### 5.2 结果判定
 - **[PASS] (绿色)**: 该单项完全符合 `config.yaml` 设定。
@@ -114,7 +131,7 @@ class FileCheckPlugin(BasePlugin):
         return results
 ```
 
-**第二步：更新配置文件** (`config.yaml`)
+**第二步：更新配置文件** (`factory_inspector/config.yaml`)
 在 YAML 中添加一个与类名对应的字段（全部小写且去掉 Plugin 后缀）：
 ```yaml
 filecheck:
@@ -125,6 +142,9 @@ filecheck:
 ```bash
 python3 main.py
 ```
+
+说明：
+- 此处同样假设当前目录为 `factory_inspector/`；若从仓库根目录执行，请使用 `python3 factory_inspector/main.py`。
 框架会自动扫描 `custom/` 目录，加载 `FileCheckPlugin` 并根据配置进行调度。
 
 ---
