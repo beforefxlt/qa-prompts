@@ -63,6 +63,8 @@
 - 🤖 `@test-strategy-planner`：基于需求生成涵盖 P1-P5（基础、异常、基建、边界、交付视角）的全局测试矩阵。
 - 🤖 `@test-case-factory`：自动剥离隔离前提/激励步骤，产出严格遵循 `TCS` 规范的严谨用例集 (TCC)。
 - 🤖 `@test-report-reviewer`：投喂流水账战果，自动核算放行率，套成 `TR-001` 给出无懈可击的技术放行建议。
+- 🤖 `@test-code-simplifier`：仅在测试代码开发、重构或提交前收口阶段启用，对 pytest 用例、fixture、协议测试脚本做低扰动简化；不是默认每轮都要调用。
+- 🤖 `@reviewer-agent`：作为工作流收口关卡，专门复核 QA 工作流编排、测试资产完整性、文档同步性与技能治理合规性；若环境允许，优先结合 `vibe-tools repo` 执行 “Minimalist Refactor” 风格审查。
 - 🤖 `@issue-reporter`：标准化缺陷追踪，从凌乱的现象推演成 `BUG-001` 隔离单。
 
 ### 🔪 深度排错与探索流 (Deep Fuzzing & Diagnostics)
@@ -76,9 +78,9 @@
 
 ## 工作流：Workflows (智能管家 SOP)
 
-告别让 AI “一把梭哈”的幻觉，我们将原子化的 Skill 通过 `.agents/workflows/` 强编排成了流水线。核心原则：**先通 Happy Path（业务价值核心），再挖异常边界**。
+告别让 AI “一把梭哈”的幻觉，我们将原子化的 Skill 通过 `.agents/workflows/` 强编排成了流水线。核心原则：**先通 Happy Path（业务价值核心），再挖异常边界，最后由 Reviewer Agent 做最小扰动复核**。
 
-- 🌊 **`/test-lifecycle` (自动化测试交付流水线)**：输入特性描述，AI 将自动串联【审计 -> 策略 -> 用例】三部曲，期间通过 `/tmp/` 保存中间产物防过拟合，一步步帮您拿到高标准用例。
+- 🌊 **`/test-lifecycle` (自动化测试交付流水线)**：输入特性描述，AI 将自动串联【审计 -> 策略 -> 用例 -> 复核】四段式流程，期间通过 `/tmp/` 保存中间产物防过拟合，并可在收口阶段优先调用 `vibe-tools repo` 做 QA 资产一致性复核。
   - 📖 参阅指南：[`docs/user_guides/test_lifecycle_guide.md`](./docs/user_guides/test_lifecycle_guide.md)
 
 ---
@@ -90,9 +92,20 @@
 这是为一个 **Ubuntu 边缘设备** 打造的模块化出厂检测工具，它完美示范了如何应用本 Toolkit 的核心思想：
 - 🛠️ **插件化架构**：支持通过 Python 脚本快速扩展硬件检测项。
 - 📦 **交付视角 (P5) 实践**：支持 `PyInstaller` 一键打包为二进制单文件，解决生产环境依赖地狱。
-- 🧪 **P1-P5 全自动化用例**：内置了 30 个自动化测试项，从基础 API 到极端环境断网防御，全方位展示了如何保障复杂系统的交付稳定性。
+- 🧪 **P1-P5 全自动化用例**：内置了 30 个自动化测试项，支持高压验证。
 
 👉 **[点击进入 Factory Inspector 项目实体](./factory_inspector/README.md)**
+
+---
+
+## ⚡ 核心演练场：Modbus Anomaly Test (Protocol Fuzzing)
+
+针对工业通信规约安全，本项目包含了一套完整的 **Modbus 协议异常注入与鲁棒性验证框架**：
+- 🛡️ **插件化漏洞靶机**：基于 Hook 架构的 `vulnerable_target.py`，支持动态注入 `OOB` (越界)、`Leak` (泄露) 等 6 类深度协议漏洞。
+- 🔬 **工业特化 Fuzzer**：可模拟超长报文、TCP 分片截断、事务 ID (TID) 篡改等各种非标报文攻击。
+- 📊 **P1-P5 闭环验证**：配套全量自动化测试套件与长时稳定性 (Soak) 监测工具。
+
+👉 **[点击进入 Modbus Anomaly Test 获取工业规约测试能力](./modbus_anomaly_test/README.md)**
 
 ---
 
