@@ -22,5 +22,5 @@ This skill generates a structured issue report in Chinese based on the provided 
 
 ## 输出要求 (Output Format)
 
-1. **严格读取模板**：你的输出格式必须完全参照 `/Users/shanwu/qa-prompts/templates/defect-report-template.md` 的规范。
+1. **严格读取模板**：你的输出格式必须完全参照项目根目录下的 `templates/defect-report-template.md` 的规范。
 2. 依据用户提供的信息，准确填充模板中的各项字段（包括新老问题分类、增量操作、测试用例链接等）。
