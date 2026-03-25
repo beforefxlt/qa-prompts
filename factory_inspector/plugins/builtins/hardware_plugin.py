@@ -1,3 +1,4 @@
+from __future__ import annotations
 import subprocess
 from factory_inspector.plugins.base import BasePlugin, CheckResult
 from factory_inspector.core.logger import get_logger

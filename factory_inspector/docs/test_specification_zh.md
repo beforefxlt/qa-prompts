@@ -89,6 +89,12 @@
 | `test_mes_binary_ssl_bundling`| 验证打包后的程序在无 Python 库环境下运行 HTTPS 推送。 | 无 SSL 握手错误 | P5 |
 | `test_mes_config_ux` | 故意写错 MES URL 协议头（如 `htxp://`），验证报错是否易读。 | 提示 "URL 格式非法" | P5 |
 
+### 2.10 环境兼容性测试 (`tests/test_compatibility.py`)
+| 用例名称 | 测试点 | 预期结果 | 类型 |
+| :--- | :--- | :--- | :--- |
+| `test_future_annotations_present` | 验证核心插件文件是否包含 `from __future__ import annotations` 头部。 | 头部存在 | Compatibility |
+| `test_no_incompatible_syntax` | 静态扫描代码中是否存在 Python 3.10+ 的语法（如 `match` 或 `|` 联合类型）。 | 无高版本语法风险 | Compatibility |
+
 ---
 
 ## 3. 回归测试执行
