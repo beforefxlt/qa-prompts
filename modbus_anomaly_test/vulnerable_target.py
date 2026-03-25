@@ -3,30 +3,81 @@ import struct
 import logging
 import argparse
 import time
+import random
+from vulnerability_base import TargetContext
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s:%(message)s')
 logger = logging.getLogger("VulnerableTarget")
+
+class VulnerabilityPluginManager:
+    def __init__(self, bug_list):
+        self.plugins = []
+        self._load_plugins(bug_list)
+
+    def _load_plugins(self, bug_list):
+        if not bug_list: return
+        
+        mapping = {
+            "BUG_LEAK": ("vulnerabilities.leak_plugin", "LeakPlugin"),
+            "BUG_STACK": ("vulnerabilities.stack_hang_plugin", "StackHangPlugin"),
+            "BUG_OOB": ("vulnerabilities.oob_crash_plugin", "OOBCrashPlugin"),
+            "BUG_HONEYPOT": ("vulnerabilities.honeypot_plugin", "HoneyPotPlugin"),
+            "BUG_MISMATCH": ("vulnerabilities.mismatch_plugin", "MismatchPlugin"),
+            "BUG_DELAY": ("vulnerabilities.delay_plugin", "DelayPlugin"),
+        }
+        
+        for bug in bug_list:
+            if bug in mapping:
+                module_name, class_name = mapping[bug]
+                try:
+                    module = __import__(module_name, fromlist=[class_name])
+                    plugin_class = getattr(module, class_name)
+                    # 针对特定插件可以传入参数，目前保持默认
+                    self.plugins.append(plugin_class())
+                    logger.info(f"Loaded vulnerability plugin: {bug}")
+                except Exception as e:
+                    logger.error(f"Failed to load plugin {bug}: {e}")
+
+    async def apply_on_connect(self, reader, writer, context):
+        for p in self.plugins:
+            await p.on_connect(reader, writer, context)
+
+    async def apply_on_mbap_parsed(self, trans_id, length, context):
+        for p in self.plugins:
+            await p.on_mbap_parsed(trans_id, length, context)
+
+    def apply_on_pdu_received(self, func_code, pdu, context):
+        for p in self.plugins:
+            func_code, pdu = p.on_pdu_received(func_code, pdu, context)
+        return func_code, pdu
+
+    def apply_on_response_prepared(self, response_pdu, context):
+        for p in self.plugins:
+            response_pdu = p.on_response_prepared(response_pdu, context)
+        return response_pdu
+
+    async def apply_on_send(self, mbap, pdu, context):
+        for p in self.plugins:
+            await p.on_send(mbap, pdu, context)
 
 class VulnerableTarget:
     def __init__(self, port=5020, bugs=None):
         self.port = port
         self.bugs = bugs or []
         self.active_conns = 0
-        self.max_allowed_conns = 5 # 故意调低，用于测试 BUG_LEAK
+        self.plugin_manager = VulnerabilityPluginManager(self.bugs)
 
     async def handle_client(self, reader, writer):
         addr = writer.get_extra_info('peername')
-        
-        # --- BUG_LEAK 模拟 ---
-        if "BUG_LEAK" in self.bugs:
-            if self.active_conns >= self.max_allowed_conns:
-                logger.error(f"[BUG_LEAK] Max connections exceeded ({self.active_conns}). FREEZING this handler.")
-                # 故障表现：既不关闭连接，也不处理数据，模拟线程/句柄死锁
-                while True:
-                    await asyncio.sleep(60)
-        
         self.active_conns += 1
+        
+        ctx = TargetContext(addr)
+        ctx.active_conns = self.active_conns
+
+        # --- Hook: on_connect ---
+        await self.plugin_manager.apply_on_connect(reader, writer, ctx)
+        
         logger.info(f"Target: Client connected from {addr} (Active: {self.active_conns})")
 
         try:
@@ -37,35 +88,42 @@ class VulnerableTarget:
                 except: break
                 
                 trans_id, proto_id, length, unit_id = struct.unpack('>HHHB', mbap_raw)
+                ctx.trans_id = trans_id
+                ctx.proto_id = proto_id
+                ctx.unit_id = unit_id
+
+                # --- Hook: on_mbap_parsed ---
+                await self.plugin_manager.apply_on_mbap_parsed(trans_id, length, ctx)
 
                 # 2. 读取 PDU
-                # --- BUG_STACK 模拟 ---
-                if "BUG_STACK" in self.bugs and length > 200:
-                    logger.warning(f"[BUG_STACK] Received illegal length {length}. Parser HANGING.")
-                    # 故意卡死解析器，不读完剩余字节
-                    while True: await asyncio.sleep(10)
-
                 try:
                     pdu_raw = await asyncio.wait_for(reader.readexactly(length - 1), timeout=10.0)
                 except: break
                 
                 func_code = pdu_raw[0]
 
-                # --- BUG_OOB 模拟 ---
-                if "BUG_OOB" in self.bugs and func_code == 0x03:
-                    # 假设我们只预留了 10 个寄存器的内存
-                    # 如果 client 请求读取 > 10 个寄存器，模拟内存溢出或拒绝响应
-                    start_addr, count = struct.unpack('>HH', pdu_raw[1:5])
-                    if count > 10:
-                        logger.error(f"[BUG_OOB] Client requested {count} regs (Limit: 10). CRASHING response.")
-                        # 故障表现：返回完全畸形的报文或直接断开
-                        writer.write(b'\x00\x01\x02\x03\xff\xff\xff\xff\xff') # 垃圾数据
-                        await writer.drain()
-                        break
+                # --- Hook: on_pdu_received ---
+                func_code, pdu_raw = self.plugin_manager.apply_on_pdu_received(func_code, pdu_raw, ctx)
 
-                # 正常响应处理
-                response_pdu = struct.pack('>BBH', func_code, 2, 123) # 默认返回 123
-                mbap_final = struct.pack('>HHHB', trans_id, proto_id, len(response_pdu) + 1, unit_id)
+                # 正常响应处理逻辑 (简化版)
+                # 如果是 BUG_OOB 触发了畸形响应，这里会直接透传
+                if len(pdu_raw) == 5: # 垃圾数据的长度 (BUG_OOB)
+                     response_pdu = pdu_raw 
+                else:
+                    # 获取寄存器值 (演示用，如果是 HoneyPot 插件，它会在 context 里做标记)
+                    reg_value = 123 
+                    response_pdu = struct.pack('>BBH', func_code, 2, reg_value)
+                
+                # --- Hook: on_response_prepared ---
+                response_pdu = self.plugin_manager.apply_on_response_prepared(response_pdu, ctx)
+
+                # 重新计算响应长度并构建 MBAP
+                # 注意：ctx.trans_id 可能已经被 BUG_MISMATCH 修改
+                mbap_final = struct.pack('>HHHB', ctx.trans_id, ctx.proto_id, len(response_pdu) + 1, ctx.unit_id)
+                
+                # --- Hook: on_send ---
+                await self.plugin_manager.apply_on_send(mbap_final, response_pdu, ctx)
+
                 writer.write(mbap_final + response_pdu)
                 await writer.drain()
 
@@ -78,15 +136,16 @@ class VulnerableTarget:
 
     async def start(self):
         server = await asyncio.start_server(self.handle_client, '0.0.0.0', self.port)
-        logger.info(f"Vulnerable Target started on port {self.port} (Active Bugs: {self.bugs})")
+        logger.info(f"Vulnerable Target (Pluggable) started on port {self.port} (Active Bugs: {self.bugs})")
         async with server:
             await server.serve_forever()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Modbus Vulnerable Target (HoneyPot for Testing)")
-    parser.add_argument("--port", type=int, default=5021) # 默认 5021 避免与 fuzzer 冲突
-    parser.add_argument("--bug", action="append", help="Enable specific bug: BUG_LEAK, BUG_OOB, BUG_STACK")
+    parser.add_argument("--port", type=int, default=5021)
+    parser.add_argument("--bug", action="append", help="Enable specific bug: BUG_LEAK, BUG_OOB, BUG_STACK, BUG_HONEYPOT, BUG_MISMATCH, BUG_DELAY")
     
     args = parser.parse_args()
     target = VulnerableTarget(port=args.port, bugs=args.bug)
     asyncio.run(target.start())
+

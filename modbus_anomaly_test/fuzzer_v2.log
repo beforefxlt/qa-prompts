@@ -1,4 +1,0 @@
-INFO:FuzzerEngineV2:Activating Mode: MIXED
-INFO:FuzzerEngineV2:Fuzzer Engine V2 started on 0.0.0.0:5020
-INFO:FuzzerEngineV2:Client connected: ('127.0.0.1', 62407) (Active: 1)
-ERROR:FuzzerEngineV2:Error handling ('127.0.0.1', 62407): Connection lost

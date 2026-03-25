@@ -8,8 +8,9 @@
 本框架采用 **数据驱动 (Data-Driven)** 与 **引擎解耦** 的设计思路。
 
 ### 2.1 架构组件
-*   **仿真引擎 (The Engine)**: `malicious_simulator.py`。基于 Python `asyncio` 异步框架实现，负责 Modbus TCP 的三级解析：MBAP 头部解析、PDU 处理、以及基于模式开关的故障注入。
-*   **点表插件 (The Profile)**: `*.json` 文件。定义了受测设备 (DUT) 的寄存器空间、初始状态以及针对性的脆弱点（蜜罐阈值）。
+*   **仿真引擎 (The Engine)**: `malicious_simulator.py` 与 `vulnerable_target.py`。基于 Python `asyncio` 异步框架实现。其中 `vulnerable_target.py` 采用 **插件化 (Pluggable) 架构**，将漏洞模拟逻辑从主循环中剥离，支持通过 Hook 机制动态注入故障。
+*   **漏洞插件 (The Plugins)**: 位于 `vulnerabilities/` 目录，涵盖 OOB、LEAK、DELAY 等多种工业通信常见漏洞。
+*   **点表插件 (The Profile)**: `*.json` 文件。定义了寄存器空间、初始状态以及蜜罐阈值。
 *   **验证套件 (The Test Suite)**: 基于 `pytest` + `pymodbus` 构建的分层测试脚本，涵盖从基础读写到高并发异常的完整生命周期。
 
 ### 2.2 核心数据模型 (DataStore)
@@ -51,5 +52,5 @@
 *   **可视化**: 自动集成抓包功能，故障发生时直接提供 `.pcap` 证据文件，无需手动抓包。
 
 ---
-*版本: v1.2.0*  
+*版本: v1.3.0*  
 *维护者: QA 团队 / Antigravity*

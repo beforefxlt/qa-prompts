@@ -63,7 +63,7 @@ async def test_detect_bug_leak():
         for i, client in enumerate(clients):
             if client.connected:
                 # 尝试进行一次读取操作
-                res = await client.read_holding_registers(0, 1, device_id=1)
+                res = await client.read_holding_registers(0, count=1, device_id=1)
                 if not res.isError():
                     success_count += 1
                 else:

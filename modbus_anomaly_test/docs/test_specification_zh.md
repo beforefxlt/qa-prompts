@@ -30,6 +30,7 @@
 
 ### 2.4 架构 2.0 混合攻击 (`verify_v2.py`)
 - **TC-V2-001 (Mixed)**: 叠加执行 `OversizedPayload` (512B) 与 `SlowTickling` (1B/Segment)，验证极致网络环境下的协议栈重组能力。
+- **TC-V2-002 (Pluggable Archi)**: 验证 `VulnerableTarget` 的漏洞插件按需加载机制，具备 Hook 注入能力的架构稳定性 (P5)。
 
 ---
 
@@ -39,5 +40,5 @@
 ./run_all_tests.sh
 ```
 
-*版本: v1.0.0*  
+*版本: v1.1.0 (Pluggable Archi)*  
 *最后更新: 2026-03-25*
