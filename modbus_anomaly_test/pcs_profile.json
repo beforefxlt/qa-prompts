@@ -1,0 +1,32 @@
+{
+  "device": "pcs100k_a",
+  "description": "Profile for PCS 100kW Series A",
+  "honeypots": {
+    "6006": {
+      "threshold_max": 32767,
+      "description": "Active Power Overflow Detection"
+    },
+    "309": {
+      "threshold_max": 32767,
+      "description": "Inpower Active Power Overflow Detection"
+    },
+    "6001": {
+      "threshold_max": 1,
+      "description": "Power On Command Invalid Value Detection"
+    }
+  },
+  "truncation": {
+    "fake_length": 35,
+    "dirty_payload_hex": "0320aabbcc",
+    "description": "Truncate control block read (expected length 35)"
+  },
+  "registers_init": {
+    "6001": 0,
+    "6006": 0,
+    "309": 0,
+    "2000": 0
+  },
+  "coils_init": {
+    "100": false
+  }
+}

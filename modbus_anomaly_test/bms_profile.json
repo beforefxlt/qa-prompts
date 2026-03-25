@@ -1,0 +1,19 @@
+{
+  "device": "generic_bms_rack",
+  "description": "Profile for Generic BMS Rack Testing",
+  "honeypots": {
+    "274": {
+      "threshold_max": 200, 
+      "description": "SOC Overflow Detection (Address 0x0112 = 274)"
+    },
+    "272": {
+      "threshold_max": 120,
+      "description": "Max Cell Temp Overflow (Address 0x0110 = 272)"
+    }
+  },
+  "truncation": {
+    "fake_length": 55,
+    "dirty_payload_hex": "0335aabb00",
+    "description": "Truncate block read for telemetry cluster (expected fake length 55)"
+  }
+}

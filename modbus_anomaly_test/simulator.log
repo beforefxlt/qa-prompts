@@ -1,0 +1,6 @@
+INFO:MaliciousSimulator:Malicious Simulator started on 0.0.0.0:5020 in HONEYPOT mode
+INFO:MaliciousSimulator:Press Ctrl+C to stop.
+INFO:MaliciousSimulator:Client connected: ('127.0.0.1', 61685) (Active: 1)
+ERROR:MaliciousSimulator:HONEYPOT TRIGGERED! Address 6006 got overflow value 65535
+WARNING:MaliciousSimulator:MBAP read failed or timeout from 6006
+INFO:MaliciousSimulator:Client disconnected: 6006 (Active: 0)
