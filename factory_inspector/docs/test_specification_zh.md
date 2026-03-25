@@ -19,7 +19,7 @@
 | :--- | :--- | :--- | :--- |
 | `test_hardware_cpu_pass` | 验证当 CPU 核心数满足配置时，插件能正确识别并返回成功。 | Status: True, Actual: 8 | Happy Path |
 | `test_hardware_mem_pass` | 验证对 `/proc/meminfo` 的解析逻辑及其向 GB 的转换精度。 | Status: True, Actual: 15.69 GB | Happy Path |
-| `test_framework_loading` | 验证项目目录结构（核心引擎、主入口）是否存在。 | 文件存在 | Happy Path |
+| `test_framework_core_modules_importable` | 验证核心模块 (`InspectionEngine`, `ConsoleReporter`) 可被稳定导入，测试入口具备最小运行能力。 | 类型可导入 | Happy Path |
 
 ### 2.2 异常/失败场景测试 (`tests/test_failures.py`)
 | 用例名称 | 测试点 | 预期结果 | 类型 |
@@ -43,8 +43,8 @@
 ### 2.4 全链路与日志测试
 | 用例名称 | 测试点 | 预期结果 | 类型 |
 | :--- | :--- | :--- | :--- |
-| `test_engine_run_all_flow` | 验证从配置加载、插件自动发现、按序执行到结果汇总的全透明流程。 | 无 Exception, 结果汇总完整 | Integration |
-| `test_logger_records_raw_data` | 验证 `inspection.log` 的生成，并确保其捕获了插件的原始命令输出。 | 文件存在, 包含 "CPU 核数原始输出" | Logging |
+| `test_engine_run_all_flow` | 验证从配置加载、插件自动发现、按序执行到结果汇总的全透明流程，并通过 mock 隔离宿主机内存/磁盘环境差异。 | 无 Exception, 返回 6 条完整结果 | Integration |
+| `test_logger_records_raw_data` | 验证日志文件的生成，并确保其捕获了插件的原始命令输出；测试使用隔离临时目录，避免全局 logger 污染。 | 文件存在, 包含 "CPU 核数原始输出" | Logging |
 
 ### 2.5 配置文件异常测试 (`tests/test_config.py`)
 | 用例名称 | 测试点 | 预期结果 | 类型 |
@@ -57,8 +57,6 @@
 | :--- | :--- | :--- | :--- |
 | `test_command_not_found_handling` | 模拟系统缺失 `ip` 或 `nproc` 等关键命令。 | Status: False, Message 包含 "No such file" | Infra Error |
 | `test_file_permission_denied_handling` | 模拟 `/proc/meminfo` 等核心系统文件无权访问。 | Status: False, Actual: "读取错误" | Infra Error |
-| `test_logger_initialization_failure` | 模拟日志目录只读，无法创建 `inspection.log`。 | 引擎正常启动，提示警告，不崩溃 | Infra Error |
-
 | `test_logger_initialization_failure` | 模拟日志目录只读，无法创建 `inspection.log`。 | 引擎正常启动，提示警告，不崩溃 | Infra Error |
 
 ### 2.7 UT 有效性校验 (Quality Gate - `tests/test_ut_quality.py`)
@@ -102,3 +100,7 @@
 ```bash
 python3 run_tests.py --all
 ```
+
+补充说明：
+- `python3 run_tests.py --unit` 会顺序执行 `test_basic.py`、`test_failures.py`、`test_boundary.py`，不会因为某一组失败而提前跳过后续组。
+- 日志与集成测试已收紧为“尽量不依赖宿主机真实环境”，用于提升回归信号稳定性。

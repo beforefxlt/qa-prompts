@@ -10,12 +10,12 @@ from factory_inspector.core.logger import setup_logger, get_logger
 class InspectionEngine:
     """核心调度引擎"""
     
-    def __init__(self, config_path: str):
+    def __init__(self, config_path: str, log_file: str = "inspection.log"):
         self.config_path = config_path
         self.config = self._load_config()
         self.plugins: List[BasePlugin] = []
         # 初始化日志
-        self.logger = setup_logger()
+        self.logger = setup_logger(log_file)
         self.logger.info(">>> 出厂检测引擎启动，配置路径: %s", config_path)
 
     def _load_config(self) -> Dict:

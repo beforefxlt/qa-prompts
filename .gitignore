@@ -39,3 +39,4 @@ Thumbs.db
 *.bak
 *.log
 *.pcap
+.repomix-output.txt

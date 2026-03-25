@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch, mock_open
 # 确保可以导入项目模块
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
+from factory_inspector.core.engine import InspectionEngine
+from factory_inspector.core.reporter import ConsoleReporter
 from factory_inspector.plugins.builtins.hardware_plugin import HardwarePlugin
 
 class TestHardwareBasic(unittest.TestCase):
@@ -35,11 +37,10 @@ class TestHardwareBasic(unittest.TestCase):
 class TestFrameworkBasic(unittest.TestCase):
     """框架基础集成测试"""
     
-    def test_framework_loading(self):
-        """验证项目结构是否正确"""
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        self.assertTrue(os.path.exists(os.path.join(project_root, "main.py")))
-        self.assertTrue(os.path.exists(os.path.join(project_root, "core/engine.py")))
+    def test_framework_core_modules_importable(self):
+        """验证核心模块可导入且导出的主类型可实例化/引用"""
+        self.assertTrue(callable(InspectionEngine))
+        self.assertTrue(callable(ConsoleReporter))
 
 if __name__ == "__main__":
     unittest.main()

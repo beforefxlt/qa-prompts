@@ -13,6 +13,14 @@ def run_tests(pattern="test_*.py"):
     result = runner.run(suite)
     return result.wasSuccessful()
 
+
+def run_test_patterns(patterns):
+    """顺序运行多组测试，不因前一组失败而短路。"""
+    success = True
+    for pattern in patterns:
+        success = run_tests(pattern) and success
+    return success
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="出厂检测脚本 - 回归测试管理工具")
     parser.add_argument("--unit", action="store_true", help="只运行单元测试 (基础, 失败, 边界)")
@@ -24,7 +32,11 @@ if __name__ == "__main__":
     # 确定测试模式
     if args.unit:
         print(">>> 启动阶段 1: 单元测试 (Unit Tests)...")
-        success = run_tests("test_f*.py") and run_tests("test_b*.py") # 包含 basic, failures, boundary
+        success = run_test_patterns([
+            "test_basic.py",
+            "test_failures.py",
+            "test_boundary.py",
+        ])
     elif args.integration:
         print(">>> 启动阶段 2: 集成测试 (Integration Tests)...")
         success = run_tests("test_integration.py")

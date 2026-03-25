@@ -1,9 +1,7 @@
 import unittest
-import json
 import os
 import sys
-import logging
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
 
 # 确保可以导入项目模块
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
@@ -48,8 +46,9 @@ class TestInfrastructureErrors(unittest.TestCase):
         self.assertEqual(mem_res.actual, "读取错误")
         self.assertIn("Permission denied", mem_res.message)
 
+    @patch("builtins.print")
     @patch("logging.FileHandler.__init__")
-    def test_logger_initialization_failure(self, mock_handler_init):
+    def test_logger_initialization_failure(self, mock_handler_init, mock_print):
         """P3: 模拟日志文件目录无写权限导致的初始化。预期引擎不崩溃且正常运行。"""
         # 模拟 logging 无法创建文件引发异常
         mock_handler_init.side_effect = PermissionError("Log directory is read-only")
@@ -60,8 +59,11 @@ class TestInfrastructureErrors(unittest.TestCase):
             
         try:
             # 预期：不再抛出 PermissionError，而是打印警告并继续
-            engine = InspectionEngine(config_path)
+            engine = InspectionEngine(config_path, log_file="readonly/inspection.log")
             self.assertIsNotNone(engine.logger)
+            mock_print.assert_called()
+            printed = " ".join(str(arg) for arg in mock_print.call_args[0])
+            self.assertIn("无法创建日志文件", printed)
         finally:
             if os.path.exists(config_path):
                 os.remove(config_path)

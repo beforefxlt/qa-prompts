@@ -22,6 +22,17 @@ pip install pyyaml
 python3 factory_inspector/main.py --config config.yaml
 ```
 
+### 2.1 运行回归测试
+```bash
+python3 factory_inspector/run_tests.py --unit
+python3 factory_inspector/run_tests.py --integration
+python3 factory_inspector/run_tests.py --all
+```
+
+说明：
+- `--unit` 会顺序执行基础、失败与边界三组测试，不会因为前一组失败而提前短路。
+- 日志相关测试会使用隔离的临时日志文件，避免不同测试之间互相污染。
+
 ### 3. (可选) 打包为二进制
 在 Ubuntu 环境下执行：
 ```bash

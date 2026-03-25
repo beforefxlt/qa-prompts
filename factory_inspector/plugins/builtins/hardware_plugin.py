@@ -52,10 +52,11 @@ class HardwarePlugin(BasePlugin):
         # 3. 检测硬盘总量 (GB) - 简化逻辑：检查根目录所在的磁盘
         min_disk = config.get("min_disk_gb", 0)
         try:
-            raw_output = subprocess.check_output(["df", "-BG", "/"]).decode()
-            logger.info("[Hardware] 磁盘空间原始输出 (df -BG /): \n%s", raw_output)
+            raw_output = subprocess.check_output(["df", "-k", "/"]).decode()
+            logger.info("[Hardware] 磁盘空间原始输出 (df -k /): \n%s", raw_output)
             output = raw_output.splitlines()[1]
-            total_disk_gb = int(output.split()[1].replace("G", ""))
+            total_disk_kb = int(output.split()[1])
+            total_disk_gb = round(total_disk_kb / 1024 / 1024)
             results.append(CheckResult(
                 name="硬盘空间检测",
                 status=total_disk_gb >= min_disk,

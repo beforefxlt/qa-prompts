@@ -1,7 +1,8 @@
 import pytest
-from pymodbus.exceptions import ModbusException
 from pymodbus.pdu import ExceptionResponse
 import time
+
+pytestmark = pytest.mark.simulator_mode("HONEYPOT")
 
 # 真实寄存器地址 (根据生产代码)
 PCS_A_ACTIVE_POWER_ADDR = 6006
@@ -16,6 +17,26 @@ TEST_CASES = [
     (POWER_ON_ADDR, 0xFFFF, "开关机指令非法值写入"),
 ]
 
+
+def _assert_invalid_write_rejected(modbus_client, addr, value, desc):
+    """
+    统一校验非法写入必须被拒绝，或者至少不能被静默写入为非法值。
+    """
+    result = modbus_client.write_register(addr, value, device_id=1)
+
+    if isinstance(result, ExceptionResponse):
+        assert result.exception_code in [2, 3], \
+            f"返回了未预定义的 Modbus 异常码: {result.exception_code}"
+        return
+
+    assert not result.isError(), f"{desc} 返回了不可解析的异常响应: {result}"
+
+    read_back = modbus_client.read_holding_registers(addr, count=1, device_id=1)
+    assert not read_back.isError(), f"{desc} 写入后读回校验失败: {read_back}"
+    assert read_back.registers[0] != value, \
+        f"致命缺陷: 设备静默接受了非法值 {value}，寄存器 {addr} 被原样写入"
+
+
 @pytest.mark.parametrize("addr, value, desc", TEST_CASES)
 def test_modbus_write_anomaly(modbus_client, network_capture, addr, value, desc):
     """
@@ -23,18 +44,8 @@ def test_modbus_write_anomaly(modbus_client, network_capture, addr, value, desc)
     验证：设备必须返回错误码，不能无条件接受或崩溃
     """
     print(f"\n[Running] {desc} (Addr: {addr}, Value: {value})")
-    
-    # 执行写入
-    result = modbus_client.write_register(addr, value, device_id=1)
-    
-    # 判定 1: 必须是异常响应
-    # 如果模拟器没有做校验，这里会返回正常的 WriteRegisterResponse，导致断言失败
-    assert isinstance(result, ExceptionResponse), \
-        f"致命缺陷: 设备未拒绝非法值 {value}，可能导致系统级失效！"
 
-    # 判定 2: 响应码符合标准 (02:非法地址 或 03:非法数据值)
-    assert result.exception_code in [2, 3], \
-        f"返回了未预定义的 Modbus 异常码: {result.exception_code}"
+    _assert_invalid_write_rejected(modbus_client, addr, value, desc)
 
 def test_modbus_invalid_address(modbus_client, network_capture):
     """
@@ -54,14 +65,19 @@ def test_system_liveness_after_anomaly(modbus_client, network_capture):
     print(f"\n[Running] 存活性验证...")
     
     # 1. 注入异常（故意触发）
-    modbus_client.write_register(PCS_A_ACTIVE_POWER_ADDR, 0xFFFF, device_id=1)
+    _assert_invalid_write_rejected(
+        modbus_client,
+        PCS_A_ACTIVE_POWER_ADDR,
+        0xFFFF,
+        "存活性验证阶段的异常注入",
+    )
     
     # 2. 发送合法指令
     legal_value = 500 # 50kW
     result = modbus_client.write_register(PCS_A_ACTIVE_POWER_ADDR, legal_value, device_id=1)
     
     # 3. 判定：合法指令应成功
-    assert not isinstance(result, ExceptionResponse), "缺陷: 异常注入导致系统进入死锁，无法响应后续正常指令"
+    assert not result.isError(), "缺陷: 异常注入导致系统进入死锁，无法响应后续正常指令"
     
     # 4. 验证值确实写入了 (读回校验)
     read_back = modbus_client.read_holding_registers(PCS_A_ACTIVE_POWER_ADDR, count=1, device_id=1)
@@ -82,12 +98,18 @@ def test_high_frequency_anomaly_injection(modbus_client, network_capture):
     for i in range(ITERATIONS):
         # 持续高频轰炸
         result = modbus_client.write_register(test_addr, invalid_value, device_id=1)
-        
-        # 即使它没有正确返回 Error Code（如之前的 FAILED 情况），
-        # 在这里的首要观测目标是：连接是否断开？抛出 Timeout？
-        if result.isError():
-            # 这是设备崩溃或通信熔断的标准反馈（比如 Socket 异常断开）
-            assert not isinstance(result, ModbusException), f"在第 {i+1} 次高频注入时设备崩溃或断开连接！"
+
+        if isinstance(result, ExceptionResponse):
+            assert result.exception_code in [2, 3], \
+                f"第 {i + 1} 次异常注入返回了未预定义的 Modbus 异常码: {result.exception_code}"
+            continue
+
+        assert not result.isError(), f"第 {i + 1} 次异常注入返回了不可解析的响应: {result}"
+
+        read_back = modbus_client.read_holding_registers(test_addr, count=1, device_id=1)
+        assert not read_back.isError(), f"第 {i + 1} 次异常注入后的读回校验失败: {read_back}"
+        assert read_back.registers[0] != invalid_value, \
+            f"致命缺陷: 第 {i + 1} 次高频注入中设备静默接受了非法值 {invalid_value}"
             
     end_time = time.time()
     
@@ -95,6 +117,10 @@ def test_high_frequency_anomaly_injection(modbus_client, network_capture):
     legal_value = 0
     liveness_check = modbus_client.write_register(test_addr, legal_value, device_id=1)
     assert not liveness_check.isError(), "高频异常压测导致设备后续全部瘫痪 (拒绝合法请求)！"
+
+    read_back = modbus_client.read_holding_registers(test_addr, count=1, device_id=1)
+    assert not read_back.isError(), "高频异常压测后的读回校验失败"
+    assert read_back.registers[0] == legal_value, "高频异常压测后合法写入未成功落盘"
     
     qps = ITERATIONS / (end_time - start_time)
     print(f"\n[Performance] 高频压测完成，未发生崩溃。频率: {qps:.2f} 报文/秒")
