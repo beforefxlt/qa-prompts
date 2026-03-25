@@ -70,6 +70,9 @@
 
 > **Prompt**: “使用 `test-code-simplifier` 只整理当前测试代码，保持行为不变，不扩大改动范围。”
 
+若你想先理解 `reviewer-agent` 与 `test-code-simplifier` 的共性边界，可先阅读：
+`docs/user_guides/qa_cleanup_principles_zh.md`
+
 ---
 
 ## 四、常见问题
