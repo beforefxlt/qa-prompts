@@ -72,6 +72,7 @@
 ### 🔪 深度排错与探索流 (Deep Fuzzing & Diagnostics)
 - 🤖 `@nginx-docker-diagnosis`：精准定位容器化 Nginx 的 404/白屏/端口映射 等系统运维故障。
 - 🤖 `@protocol-fuzzing-test`：(工业规约特化) 基于 Modbus 工具测试实践提炼协议鲁棒性测试方法论，覆盖靶机设计、异常注入、分层观测与失败判定。
+- 🤖 `@8d-qm-analysis`：把单点事故复盘从“技术失误”提升为“流程与体系失效”分析，重点输出 D3 / D4 / D5 / D7 的防呆与横向展开建议。
 - 🤖 `@code-to-business-doc`：给到遗留烂代码，逆向翻译出可读的业务 PRD。
 - 🤖 `@bva-boundary-value-analysis`：针对 API 发掘出（含超界/非法/越限闭锁）的严密死角组合。
 - 🤖 `@exploratory-testing-persona`：注入极端干涉手段（断网/风暴/重试）的自由测试切入点指引。

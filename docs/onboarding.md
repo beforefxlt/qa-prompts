@@ -34,6 +34,7 @@
 | **`test-report-reviewer`** | 执行阶段收尾放行 | 传入跑偏的碎碎念战报，AI秒速剥离出“首次挂测率”和“遗留致命危险域”撰写具有说服力的研判。 |
 | **`issue-reporter`** | 缺陷登记与复现固化阶段 | 将零散现象、日志和复现步骤整理成符合模板的缺陷单草稿。 |
 | **`protocol-fuzzing-test`** | 工业协议专项鲁棒性测试阶段 | 基于 Modbus 测试经验提炼分层故障注入方法论，覆盖靶机设计、异常设计、观测指标和失败判定。 |
+| **`8d-qm-analysis`** | 事故复盘与体系追责阶段 | 以 QM 视角重构 8D 分析，聚焦 D3 / D4 / D5 / D7，强制把“人的失误”上升为流程、门禁和系统失效问题。 |
 | **`test-code-simplifier`** | 测试代码开发收口阶段 | 仅对测试代码做低扰动整理，优先收紧重复断言、fixture 职责和命名噪音；不是默认每轮都要启用。 |
 | **`reviewer-agent`** | Workflow 最终收口与提交前复核 | 对当前仓库或本轮变更执行最小扰动复核，优先结合 `vibe-tools repo` 进行整仓上下文审查，并明确要求 “Minimalist Refactor” 风格输出。 |
 
@@ -96,6 +97,7 @@
 
 | 版本 | 日期 | 作者 | 变更说明 |
 | :--- | :--- | :--- | :--- |
+| **v2.6** | 2026-03-27 | QA Team | 新增 `8d-qm-analysis` 技能入口，统一纳入 README 与 onboarding 能力目录，定位为事故复盘与体系追责场景的 QM 视角 8D Skill。 |
 | **v2.5** | 2026-03-25 | QA Team | 将 `webapp-testing` 与 `test-driven-development` 收敛为按需辅助 Skill，去除外来模板痕迹，明确其暂不纳入推荐主线。 |
 | **v2.4** | 2026-03-25 | QA Team | 新增测试 Skills 治理与版本基线说明，补齐 `test-strategy-planner`、`issue-reporter`、`protocol-fuzzing-test` 等技能入口，并明确 `test-plan-copilot` / `bva-boundary-value-analysis` 的边界；同时将 `protocol-fuzzing-test` 定位收敛为包含靶机设计的方法论型 Skill。 |
 | **v2.3** | 2026-03-25 | QA Team | 新增 `test-code-simplifier`，用于测试代码开发过程中的低扰动简化收口，明确其为按需调用而非默认步骤。 |
