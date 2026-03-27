@@ -16,7 +16,6 @@
 因此，这个仓库的重点不是“让 AI 多写文档”，而是把测试架构师和质量工程中的关键判断，沉淀成可复用、可组合、可治理的工程资产。
 
 ## 目录
-- [岗位匹配](#岗位匹配)
 - [核心工程贡献](#核心工程贡献)
 - [代表性项目与能力证明](#代表性项目与能力证明)
 - [质量编排架构](#质量编排架构)
@@ -26,19 +25,6 @@
 - [文档导航](#文档导航)
 - [快速开始](#快速开始)
 - [目录结构](#目录结构)
-
----
-
-## 岗位匹配
-
-这个仓库更适合作为以下岗位的作品集或面试材料：
-- 测试架构师
-- 测试开发工程师
-- 质量平台 / QA 工程化
-- 工业软件测试工程师
-- 嵌入式 / 软硬件联调测试工程师
-- 质量经理 / 质量体系建设相关岗位
-
 ---
 
 ## 核心工程贡献
@@ -63,8 +49,6 @@
 ---
 
 ## 代表性项目与能力证明
-
-如果招聘方只看几个重点，我建议优先看下面这些内容：
 
 ### 1. `factory_inspector`
 
@@ -184,8 +168,6 @@ Workflows
 
 ## 文档导航
 
-如果你想从“作品集展示”继续往下看，可按目标进入：
-
 | 目标 | 建议先看 | 说明 |
 | :--- | :--- | :--- |
 | 快速建立整体认知 | `docs/onboarding.md` | 适合第一次进入仓库时看全景 |
@@ -208,11 +190,6 @@ Workflows
 2. 阅读 [`factory_inspector/README.md`](./factory_inspector/README.md)，看一个完整的工程化落地案例
 3. 阅读 [`modbus_anomaly_test/README.md`](./modbus_anomaly_test/README.md)，看协议测试与异常注入能力
 4. 阅读 [`docs/plans/2026-03-25-test-skills-governance-plan.md`](./docs/plans/2026-03-25-test-skills-governance-plan.md)，理解治理思路
-
-如果你是招聘方或面试官，优先建议看：
-- [`factory_inspector/README.md`](./factory_inspector/README.md)
-- [`skills/8d-qm-analysis/SKILL.md`](./skills/8d-qm-analysis/SKILL.md)
-- [`docs/training/2026-03-24-factory-inspector-case-study.md`](./docs/training/2026-03-24-factory-inspector-case-study.md)
 
 ---
 
