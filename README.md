@@ -1,14 +1,14 @@
-# 测试架构与质量工程作品集
+# 工业与复杂系统 QA 工具箱
 
-> QA Architecture & Engineering Portfolio
+> A QA Architecture and Engineering Toolkit for industrial and complex systems
 
 [![领域](https://img.shields.io/badge/领域-工业软件与复杂系统-blue.svg)]()
 [![方向](https://img.shields.io/badge/方向-软硬件联调与质量治理-orange.svg)]()
 [![结构](https://img.shields.io/badge/结构-Skills_%2B_Workflows-success.svg)]()
 
-本仓库用于集中展示我在复杂系统测试架构、质量治理与 AI 测试工程化方向上的方法论沉淀和工程化落地。场景主要覆盖工业软件、边缘设备、协议通信、软硬件联调和交付环境验证。
+本仓库是一套面向工业软件、边缘设备、协议通信、软硬件联调和交付环境验证场景的 QA 工具箱，也承载了我在测试架构、质量治理与 AI 测试工程化方向上的系统沉淀。
 
-它不是单一工具集合，而是一套围绕以下问题展开的质量工程作品集：
+它不是单一工具集合，而是一套围绕以下问题展开的工程化资产库：
 - 需求、策略、用例、缺陷分析长期割裂，缺少统一测试方法
 - 工业软件和软硬件联调场景中，常规互联网测试套路覆盖不住环境异常和交付风险
 - 大模型虽然能生成内容，但如果缺少编排、模板、治理和复核，测试资产很快失控
