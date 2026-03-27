@@ -1,166 +1,235 @@
-#  工业与复杂系统质量保障 AI 工具箱 (QA AI Toolkit)
- 
-> 从“人肉写用例”到“AI 架构赋能”，专注于工业控制、软硬联调与复杂系统质量红线的全自动测试生成体系。
+# 测试架构与质量工程作品集
 
-## 📋 目录
-- [概述](#概述)
-- [核心双擎架构](#核心双擎架构)
-- [资产列表：Templates (标准化模板)](#资产列表-templates-标准化模板)
-- [资产列表：Skills (智能组装厂)](#资产列表-skills-智能组装厂)
-- [工作流：Workflows (智能管家 SOP)](#工作流-workflows-智能管家-sop)
-- [文档目录指引](#文档目录指引)
+> QA Architecture & Engineering Portfolio
+
+[![领域](https://img.shields.io/badge/领域-工业软件与复杂系统-blue.svg)]()
+[![方向](https://img.shields.io/badge/方向-软硬件联调与质量治理-orange.svg)]()
+[![结构](https://img.shields.io/badge/结构-Skills_%2B_Workflows-success.svg)]()
+
+本仓库用于集中展示我在复杂系统测试架构、质量治理与 AI 测试工程化方向上的方法论沉淀和工程化落地。场景主要覆盖工业软件、边缘设备、协议通信、软硬件联调和交付环境验证。
+
+它不是单一工具集合，而是一套围绕以下问题展开的质量工程作品集：
+- 需求、策略、用例、缺陷分析长期割裂，缺少统一测试方法
+- 工业软件和软硬件联调场景中，常规互联网测试套路覆盖不住环境异常和交付风险
+- 大模型虽然能生成内容，但如果缺少编排、模板、治理和复核，测试资产很快失控
+
+因此，这个仓库的重点不是“让 AI 多写文档”，而是把测试架构师和质量工程中的关键判断，沉淀成可复用、可组合、可治理的工程资产。
+
+## 目录
+- [岗位匹配](#岗位匹配)
+- [核心工程贡献](#核心工程贡献)
+- [代表性项目与能力证明](#代表性项目与能力证明)
+- [质量编排架构](#质量编排架构)
+- [标准化模板](#标准化模板)
+- [Skills 能力资产](#skills-能力资产)
+- [Workflows 流程资产](#workflows-流程资产)
+- [文档导航](#文档导航)
 - [快速开始](#快速开始)
 - [目录结构](#目录结构)
 
 ---
 
-## 这个 Toolkit 是什么？能做些什么？
+## 岗位匹配
 
-本仓库并非一堆冷冰冰的代码，而是一套**专为“各类复杂工业软件与嵌入式系统”量身定制的【AI 高级测试架构师】**。
-我们摒弃了纯互联网软件“点点点”的测试方法，将**资深测试专家的思想模型（如 P1-P5 全景测试建模、出厂硬件隔离、通讯规约红线）**硬编码成了随叫随到的 AI 外挂技能 (Skills)。
-
-### 它能为您带来什么突破？
-1. 🚀 **消灭零碎操作：一句话完成闭环**
-   - 告别繁琐的手工填表。只要喂给它一段模糊的需求（如：“给厂测程序加个推日志的功能”），它会通过**工作流引擎**自动切分为：【挑刺审查找漏洞】 -> 【输出 P1-P5 策略网】 -> 【直接生成符合 TCS 标准的测试用例集 (TCC)】三部曲。
-2. 🛡️ **填补毁灭性盲点：“不测理想状态，专死磕绝境”**
-   - 代码里 `pytest` 全绿，一到产线就宕机？本工具箱内置了强大的**负向测试视界（P3: 环境没装这个命令怎么办？磁盘满了怎么办？ / P5: 二进制打包后这行代码还能运行吗？）**。让大模型强迫团队思考边缘问题。
-3. 🐞 **深度靶向排错：超越简单的代码翻译**
-   - Nginx+Docker 上线白屏却查不出日志？工业协议 (Modbus/CAN) 一直解析异常？本工具箱内置了工业特化的报错排查探针（Diagnosis Skills），帮 QA 瞬间读懂报错天书并转为专业隔离单。
-
-**简而言之：它是让 QA 工程师从“写用例的工具人”，升维成在“上帝视角排兵布阵的指挥官”的核心武器库。**
+这个仓库更适合作为以下岗位的作品集或面试材料：
+- 测试架构师
+- 测试开发工程师
+- 质量平台 / QA 工程化
+- 工业软件测试工程师
+- 嵌入式 / 软硬件联调测试工程师
+- 质量经理 / 质量体系建设相关岗位
 
 ---
 
-## 核心双擎架构
+## 核心工程贡献
+
+在这个项目中，我重点展示了以下几类能力：
+
+1. **设计 `Skills + Workflows` 双层编排架构**
+   将质量保障流程拆解成原子化技能，再通过工作流强约束编排，降低大模型在长链路测试分析中的失控与幻觉风险。
+
+2. **抽象 `P1-P5` 复杂系统测试模型**
+   将基础路径、业务异常、环境异常、边界条件和交付视角纳入统一方法，用于需求审计、测试策略设计和用例生成。
+
+3. **重构缺陷分析为 `8D + QM` 体系复盘**
+   将“技术问题追责”上升为“系统与流程失效分析”，强调发生根因、流出根因、防呆机制和横向展开。
+
+4. **推动测试资产与文档代码化治理**
+   通过模板、版本元数据、工作流边界和文档索引，约束测试计划、用例、报告和缺陷单的一致性。
+
+5. **围绕工业与复杂系统场景做工程化落地**
+   通过 `factory_inspector`、`modbus_anomaly_test` 等实例，展示对协议异常、设备交付、环境脆弱性和产线质量风险的关注。
+
+---
+
+## 代表性项目与能力证明
+
+如果招聘方只看几个重点，我建议优先看下面这些内容：
+
+### 1. `factory_inspector`
+
+- **工程场景**：边缘设备和产线机台的出厂检测，重点关注“配置正确但环境脆弱”这类交付问题。
+- **落地方式**：采用 Python 插件化检测架构，支持二进制打包，覆盖配置驱动、插件发现、环境异常兜底和 P1-P5 回归验证。
+- **体现能力**：测试架构设计、交付环境验证、工程化回归体系、文档与测试同步治理。
+- **入口**：[`factory_inspector/README.md`](./factory_inspector/README.md)
+
+### 2. `modbus_anomaly_test`
+
+- **工程场景**：工业通信协议鲁棒性验证，重点关注异常报文、链路干扰、时序错乱和实现脆弱点。
+- **落地方式**：围绕协议异常注入、靶机设计、稳定性验证与观测指标构建测试框架，并沉淀为 `protocol-fuzzing-test` 方法论资产。
+- **体现能力**：协议测试、fuzzing 思路抽象、靶机设计、复杂故障注入与风险建模。
+- **入口**：[`modbus_anomaly_test/README.md`](./modbus_anomaly_test/README.md)
+
+### 3. `8d-qm-analysis`
+
+- **工程场景**：针对跨团队、跨系统、偶发性故障的根因分析和复盘，避免只停留在“谁写错了代码”。
+- **落地方式**：以 QM 视角重构 8D，聚焦 D3、D4、D5、D7，强调发生根因、流出根因、防呆设计和横向排查。
+- **体现能力**：质量治理、RCA 体系化、流程与门禁问责、复盘资产标准化。
+- **入口**：[`skills/8d-qm-analysis/SKILL.md`](./skills/8d-qm-analysis/SKILL.md)
+
+### 4. 测试主流程与治理方案
+
+- **工程场景**：把需求分析、测试策略、用例沉淀和最终复核串成一条可维护的主流程。
+- **落地方式**：通过 `/test-lifecycle` 工作流和技能治理方案，收敛测试资产边界、调用顺序、版本元数据和文档一致性要求。
+- **体现能力**：方法论沉淀、工作流设计、测试资产治理、工程规范建设。
+- **入口**：
+  - [`.agents/workflows/test-lifecycle.md`](./.agents/workflows/test-lifecycle.md)
+  - [`docs/plans/2026-03-25-test-skills-governance-plan.md`](./docs/plans/2026-03-25-test-skills-governance-plan.md)
+
+---
+
+## 质量编排架构
+
+本仓库采用两层结构来组织测试与质量资产：
 
 ```text
-┌─────────────────────┐       自动化解析       ┌─────────────────────┐
-│   原始模糊需求/战报   │ ──────────────────────▶│   标准结构化测试实体   │
-│ (PRD/交接说明/故障截图)│  (唤醒专用的 AI Skill)  │ (计划/用例/度量报告/缺陷)│
-└─────────────────────┘                        └─────────────────────┘
+原始输入
+(需求 / 日志 / 故障现象 / 代码上下文)
+        |
+        v
+Skills
+(单点能力：需求审计、策略设计、协议测试、缺陷复盘)
+        |
+        v
+Workflows
+(多阶段编排：审计 -> 策略 -> 用例 -> 复核 / 问诊 -> 隔离 -> 建单)
+        |
+        v
+标准化输出
+(测试计划 / 用例 / 报告 / 缺陷草稿 / 复盘结论)
 ```
+
+这个结构背后的重点是：
+- `Skills` 负责沉淀单点能力
+- `Workflows` 负责复杂任务拆解与上下文治理
+- `Templates` 负责统一输出格式
+- `Plans / Guides` 负责边界、治理和使用说明
 
 ---
 
-## 资产列表：Templates (标准化模板)
+## 标准化模板
 
-以下模板剔除了所有多余的情绪化词汇和排版干扰（无表情符号/过度翻译），可直接作为各部门流转及项目签字归档的正式文件：
+仓库中的模板用于统一测试资产表达，避免测试过程只停留在口头沟通：
 
 | 模板编号 | 资产名称 | 适用边界 | 存储路径 |
 | :--- | :--- | :--- | :--- |
-| **TP-001** | 测试计划大纲 | 系统架构分析、硬件环境搭建、回归裁剪边界 | `templates/test-plan-template.md` |
-| **TCS-001** | 通用用例规范 | 核心测试标准，涵盖 P1 基础路径（核心业务价值）及各维度证据链 | `templates/test-case-template.md` |
-| **TR-001** | 全量迭代报告 | 提测首挂率计算、安全红线排雷与质量放行信心 | `templates/test-report-template.md` |
-| **BUG-001**| 缺陷排查单 | 缺陷影响面推演、必现条件隔离与核心系统日志溯源 | `templates/defect-report-template.md` |
+| `TP-001` | 测试计划大纲 | 系统架构分析、环境矩阵、范围裁剪 | `templates/test-plan-template.md` |
+| `TCS-001` | 通用用例规范 | 标准测试步骤、前置条件、证据链表达 | `templates/test-case-template.md` |
+| `TR-001` | 测试报告模板 | 首挂率、风险项、放行建议 | `templates/test-report-template.md` |
+| `BUG-001` | 缺陷排查单 | 缺陷影响面、复现条件、日志线索 | `templates/defect-report-template.md` |
 
 ---
 
-## 资产列表：Skills (智能辅助流)
+## Skills 能力资产
 
-在集成后台交互工具内输入触发词，即可秒级产出正规物料：
+### 测试设计与交付主线
+- `@requirement-reviewer`：审查需求中的歧义、逻辑真空和边界缺口
+- `@test-strategy-planner`：按 `P1-P5` 模型生成结构化测试矩阵
+- `@test-plan-copilot`：面向储能 / 电力场景补全系统级测试计划
+- `@test-case-factory`：将测试点整理成符合 `TCS` 规范的正式用例集
+- `@test-report-reviewer`：将执行结果整理为结构化放行报告
+- `@reviewer-agent`：在交付前做最小扰动复核，检查一致性和治理合规
 
-### 📝 文档与用例自动化流 (Docs & Test Pipeline)
-- 🤖 `@requirement-reviewer`：侦测产品需求里隐藏的技术逻辑黑洞与控制死区缺失（强制左移）。
-- 🤖 `@test-strategy-planner`：基于需求生成涵盖 P1-P5（基础、异常、基建、边界、交付视角）的全局测试矩阵。
-- 🤖 `@test-plan-copilot`：储能/电力系统垂直场景专用，按 `TP-001` 模板补全系统级测试计划大纲。
-- 🤖 `@test-case-factory`：自动剥离隔离前提/激励步骤，产出严格遵循 `TCS` 规范的严谨用例集 (TCC)。
-- 🤖 `@test-report-reviewer`：投喂流水账战果，自动核算放行率，套成 `TR-001` 给出无懈可击的技术放行建议。
-- 🤖 `@test-code-simplifier`：仅在测试代码开发、重构或提交前收口阶段启用，对 pytest 用例、fixture、协议测试脚本做低扰动简化；不是默认每轮都要调用。
-- 🤖 `@reviewer-agent`：作为工作流收口关卡，专门复核 QA 工作流编排、测试资产完整性、文档同步性与技能治理合规性；若环境允许，优先结合 `vibe-tools repo` 执行 “Minimalist Refactor” 风格审查。
-- 🤖 `@issue-reporter`：标准化缺陷追踪，从凌乱的现象推演成 `BUG-001` 隔离单。
+### 深度排错与专项方法
+- `@issue-reporter`：将零散现象整理成标准缺陷草稿
+- `@protocol-fuzzing-test`：基于 Modbus 等场景沉淀协议鲁棒性测试方法
+- `@8d-qm-analysis`：以 QM 视角进行 D3 / D4 / D5 / D7 强化版 8D 复盘
+- `@nginx-docker-diagnosis`：针对容器化 Nginx 典型故障进行隔离分析
+- `@bva-boundary-value-analysis`：围绕边界值构建高强度输入矩阵
+- `@exploratory-testing-persona`：提供弱网、误操作、高压切换等探索性视角
 
-### 🔪 深度排错与探索流 (Deep Fuzzing & Diagnostics)
-- 🤖 `@nginx-docker-diagnosis`：精准定位容器化 Nginx 的 404/白屏/端口映射 等系统运维故障。
-- 🤖 `@protocol-fuzzing-test`：(工业规约特化) 基于 Modbus 工具测试实践提炼协议鲁棒性测试方法论，覆盖靶机设计、异常注入、分层观测与失败判定。
-- 🤖 `@8d-qm-analysis`：把单点事故复盘从“技术失误”提升为“流程与体系失效”分析，重点输出 D3 / D4 / D5 / D7 的防呆与横向展开建议。
-- 🤖 `@code-to-business-doc`：给到遗留烂代码，逆向翻译出可读的业务 PRD。
-- 🤖 `@bva-boundary-value-analysis`：针对 API 发掘出（含超界/非法/越限闭锁）的严密死角组合。
-- 🤖 `@exploratory-testing-persona`：注入极端干涉手段（断网/风暴/重试）的自由测试切入点指引。
+### 工程验证辅助能力
+- `@verify-requirements`：基于代码证据判断需求是否真正实现
+- `@webapp-testing`：本地 Web 应用轻量验证
+- `@test-driven-development`：按需启用的最小 TDD 约束
+- `@test-code-simplifier`：测试代码收口时的低扰动整理
 
-### 🧪 工程验证辅助流 (按需启用)
-- 🤖 `@verify-requirements`：基于代码证据核验某项需求是否真的已经实现，适合做实现符合性核查。
-- 🤖 `@webapp-testing`：对本地 Web 应用执行轻量验证；当前为按需辅助工具，不纳入推荐主线。
-- 🤖 `@test-driven-development`：为功能开发或缺陷修复提供最小 TDD 纪律约束；当前为按需辅助工具，不纳入推荐主线。
-
----
-
-## 工作流：Workflows (智能管家 SOP)
-
-告别让 AI “一把梭哈”的幻觉，我们将原子化的 Skill 通过 `.agents/workflows/` 强编排成了流水线。核心原则：**先通 Happy Path（业务价值核心），再挖异常边界，最后由 Reviewer Agent 做最小扰动复核**。
-
-- 🌊 **`/test-lifecycle` (自动化测试交付流水线)**：输入特性描述，AI 将自动串联【审计 -> 策略 -> 用例 -> 复核】四段式流程，期间通过 `/tmp/` 保存中间产物防过拟合，并可在收口阶段优先调用 `vibe-tools repo` 做 QA 资产一致性复核。
-  - 📖 参阅指南：[`docs/user_guides/test_lifecycle_guide.md`](./docs/user_guides/test_lifecycle_guide.md)
-- 🌊 **`/bug-diagnostic-flow` (缺陷初诊与隔离流水线)**：输入现场现象、日志线索或实施反馈，AI 将自动串联【问诊补证 -> 根因隔离 -> `BUG-001` 草稿】三段式流程；缺陷草稿默认落在 `/tmp/`，不直接进入 Git 仓库。
-  - 📖 参阅指南：[`docs/user_guides/bug_diagnostic_flow_guide.md`](./docs/user_guides/bug_diagnostic_flow_guide.md)
+如需看完整入口和边界说明，建议先看 [`docs/onboarding.md`](./docs/onboarding.md)。
 
 ---
 
-## 文档目录指引
+## Workflows 流程资产
 
-如果你不确定该先看哪份文档，可以按目的直接定位：
+为了避免复杂任务完全依赖即时提示词，本仓库把高频流程收敛成了标准工作流：
+
+- `/test-lifecycle`
+  目标：把需求分析、测试策略、正式用例与最终复核串成闭环
+  入口文档：[`docs/user_guides/test_lifecycle_guide.md`](./docs/user_guides/test_lifecycle_guide.md)
+
+- `/bug-diagnostic-flow`
+  目标：把现场问题从“现象描述”推进到“隔离分析 + BUG-001 草稿”
+  入口文档：[`docs/user_guides/bug_diagnostic_flow_guide.md`](./docs/user_guides/bug_diagnostic_flow_guide.md)
+
+---
+
+## 文档导航
+
+如果你想从“作品集展示”继续往下看，可按目标进入：
 
 | 目标 | 建议先看 | 说明 |
 | :--- | :--- | :--- |
-| 浏览全部用户指南入口 | `docs/user_guides/INDEX.md` | 适合先判断该进哪个 guide，再进入具体流程文档 |
-| 浏览全部方案与设计入口 | `docs/plans/INDEX.md` | 适合先判断该看哪份治理方案、设计说明或对齐文档 |
-| 快速上手整个仓库 | `docs/onboarding.md` | 适合第一次接触本仓库时建立整体认知 |
-| 走测试主交付流程 | `docs/user_guides/test_lifecycle_guide.md` | 解释 `/test-lifecycle` 的输入、步骤与收口方式 |
-| 走缺陷初诊流程 | `docs/user_guides/bug_diagnostic_flow_guide.md` | 解释 `/bug-diagnostic-flow` 的补证、隔离与草稿建单边界 |
-| 理解收口复核与测试代码整理边界 | `docs/user_guides/qa_cleanup_principles_zh.md` | 说明 `reviewer-agent` 与 `test-code-simplifier` 的共性原则 |
-| 查看技能与工作流治理方案 | `docs/plans/2026-03-25-test-skills-governance-plan.md` | 说明测试 Skills 的边界、版本与收敛策略 |
-| 查看工作流治理对齐说明 | `docs/plans/2026-03-25-workflow-governance-alignment.md` | 说明 workflow 为什么这样改、改了什么 |
-| 看完整案例与培训材料 | `docs/training/` | 适合做内部分享、培训和案例复盘 |
-| 看测试架构与方法论沉淀 | `docs/studyInspire-insights/INDEX.md` | 适合系统学习测试架构与 AI 测试实践 |
-
----
-
-## 🏗️ 实战演兵：Factory Inspector (Reference Implementation)
-
-本工具箱不仅仅是方法论，我们还随库附带了一个完整的生产级实战案例：**`factory_inspector`**。
-
-这是为一个 **Ubuntu 边缘设备** 打造的模块化出厂检测工具，它完美示范了如何应用本 Toolkit 的核心思想：
-- 🛠️ **插件化架构**：支持通过 Python 脚本快速扩展硬件检测项。
-- 📦 **交付视角 (P5) 实践**：支持 `PyInstaller` 一键打包为二进制单文件，解决生产环境依赖地狱。
-- 🧪 **P1-P5 全自动化用例**：内置了 30 个自动化测试项，支持高压验证。
-
-👉 **[点击进入 Factory Inspector 项目实体](./factory_inspector/README.md)**
-
----
-
-## ⚡ 核心演练场：Modbus Anomaly Test (Protocol Fuzzing)
-
-针对工业通信规约安全，本项目包含了一套完整的 **Modbus 协议异常注入与鲁棒性验证框架**：
-- 🛡️ **插件化漏洞靶机**：基于 Hook 架构的 `vulnerable_target.py`，支持动态注入 `OOB` (越界)、`Leak` (泄露) 等 6 类深度协议漏洞。
-- 🔬 **工业特化 Fuzzer**：可模拟超长报文、TCP 分片截断、事务 ID (TID) 篡改等各种非标报文攻击。
-- 📊 **P1-P5 闭环验证**：配套全量自动化测试套件与长时稳定性 (Soak) 监测工具。
-
-👉 **[点击进入 Modbus Anomaly Test 获取工业规约测试能力](./modbus_anomaly_test/README.md)**
+| 快速建立整体认知 | `docs/onboarding.md` | 适合第一次进入仓库时看全景 |
+| 浏览用户指南索引 | `docs/user_guides/INDEX.md` | 适合按流程挑 guide |
+| 浏览治理方案索引 | `docs/plans/INDEX.md` | 适合按主题找设计说明和治理文档 |
+| 看测试主交付流程 | `docs/user_guides/test_lifecycle_guide.md` | 适合了解完整 QA 主链 |
+| 看缺陷初诊流程 | `docs/user_guides/bug_diagnostic_flow_guide.md` | 适合了解缺陷隔离与建单 |
+| 看技能治理方案 | `docs/plans/2026-03-25-test-skills-governance-plan.md` | 适合看资产边界、版本与收敛策略 |
+| 看 workflow 对齐说明 | `docs/plans/2026-03-25-workflow-governance-alignment.md` | 适合看流程为什么这样设计 |
+| 看案例与培训材料 | `docs/training/` | 适合面试前挑代表性案例 |
+| 看测试架构方法论沉淀 | `docs/studyInspire-insights/INDEX.md` | 适合系统理解方法论来源 |
 
 ---
 
 ## 快速开始
 
-如果希望亲手建立你的 AI 测试防线，建议你的第一站是阅读团队的新手教程：
-👉 **[`docs/onboarding.md`](./docs/onboarding.md)** 了解整个外挂工作流的详细串联玩法。
+如果你是第一次阅读这个仓库，建议按下面顺序进入：
 
-> **📚 核心培训资产**：
-> - 想要了解这套 AI 流程是如何重塑出厂检测工程的，请阅读最新案例：**[`docs/training/2026-03-24-factory-inspector-case-study.md`](./docs/training/2026-03-24-factory-inspector-case-study.md)** 及其配套 PPT大纲。
-> - 要获取更宏观的测试架构演进，查阅 `docs/studyInspire-insights/INDEX.md`。
-> - 要查看测试 Skills 的治理方案、边界收敛与版本基线，查阅 `docs/plans/2026-03-25-test-skills-governance-plan.md`。
+1. 阅读 [`docs/onboarding.md`](./docs/onboarding.md)，了解仓库全景与常用入口
+2. 阅读 [`factory_inspector/README.md`](./factory_inspector/README.md)，看一个完整的工程化落地案例
+3. 阅读 [`modbus_anomaly_test/README.md`](./modbus_anomaly_test/README.md)，看协议测试与异常注入能力
+4. 阅读 [`docs/plans/2026-03-25-test-skills-governance-plan.md`](./docs/plans/2026-03-25-test-skills-governance-plan.md)，理解治理思路
+
+如果你是招聘方或面试官，优先建议看：
+- [`factory_inspector/README.md`](./factory_inspector/README.md)
+- [`skills/8d-qm-analysis/SKILL.md`](./skills/8d-qm-analysis/SKILL.md)
+- [`docs/training/2026-03-24-factory-inspector-case-study.md`](./docs/training/2026-03-24-factory-inspector-case-study.md)
 
 ---
 
-## 核心目录结构
+## 目录结构
 
+```text
 qa-prompts/
-├── .agents/workflows/          # [核心引擎] AI Agent 自动化作业流水线 (如 test-lifecycle.md)
-├── skills/                     # [智能外挂] AI 原子调用技能库 (如 test-strategy-planner等)
-├── templates/                  # [基石资产] 极度职业化的工控/测试管理模板表单
-├── docs/                       # [指引沉淀]
-│   ├── onboarding.md           # 团队上岗与系统使用操作手册
-│   ├── user_guides/            # 具体 Workflow 与工具的使用说明
-│   ├── training/               # 实战演练案例与教学 PPT
-│   └── studyInspire-insights/  # 深层次测试架构师经验沉淀
-├── factory_inspector/          # [实战练兵场] Ubuntu 边缘设备模块化出厂检测工具项目实体
-└── README.md                   # 根索引
+├── .agents/workflows/          # 工作流编排定义
+├── skills/                     # 单点能力技能库
+├── templates/                  # 标准化测试与缺陷模板
+├── docs/
+│   ├── onboarding.md           # 总体上手文档
+│   ├── user_guides/            # 用户指南与流程说明
+│   ├── plans/                  # 治理方案、设计说明、对齐文档
+│   ├── training/               # 案例与培训材料
+│   └── studyInspire-insights/  # 方法论沉淀
+├── factory_inspector/          # 出厂检测工程案例
+├── modbus_anomaly_test/        # 协议异常测试工程案例
+└── README.md                   # 根入口
 ```
