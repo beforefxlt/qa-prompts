@@ -82,6 +82,15 @@
 
 ---
 
+## 资产维护契约 (Maintenance Contract)
+
+> [!IMPORTANT]
+> - **版本强制性**：任何对 `Skills` 或 `Workflows` 的逻辑变更，必须同步更新其头部的 `version` 和 `last_updated`。
+> - **向下兼容性**：Template 的变更（如 `BUG-001`）需同步升级次版本号（Minor Version），并在变更记录中登记。
+> - **文档一致性**：核心资产变更后，必须同步校验并更新对应的 `user_guides`。
+
+---
+
 ## 质量编排架构
 
 本仓库采用两层结构来组织测试与质量资产：

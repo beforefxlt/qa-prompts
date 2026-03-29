@@ -1,5 +1,7 @@
 ---
 description: 缺陷初诊与问题单定级流 (Bug Diagnostic Flow)
+version: v1.1.0
+last_updated: 2026-03-29
 ---
 
 # AI 缺陷初诊与排障隔离流水线 (Bug Diagnostic Flow)
