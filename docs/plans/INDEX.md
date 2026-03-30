@@ -19,6 +19,8 @@
    `docs/plans/2026-03-25-reviewer-agent-workflow-design.md`
 4. 想看更早期的案例型设计背景：
    `docs/plans/2026-03-24-factory-inspection-design.md`
+5. 想看 AI 驱动的家庭检查单管理应用工作流设计：
+   `docs/plans/2026-03-30-family-health-record-app-workflow-design.md`
 
 ## 文档列表
 
@@ -28,6 +30,7 @@
 | `docs/plans/2026-03-25-workflow-governance-alignment.md` | 对齐说明 | 说明 workflow 与最新 Skill 治理方案如何完成对齐 |
 | `docs/plans/2026-03-25-reviewer-agent-workflow-design.md` | 设计说明 | 说明 `reviewer-agent` 接入主工作流的设计动机与影响范围 |
 | `docs/plans/2026-03-24-factory-inspection-design.md` | 架构设计 | 较早期的工厂检测案例设计说明 |
+| `docs/plans/2026-03-30-family-health-record-app-workflow-design.md` | 工作流设计 | 说明家庭检查单管理应用的规格冻结、测试门禁与 Subagent 协作方式 |
 
 ## 与其他文档的关系
 

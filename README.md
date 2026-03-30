@@ -71,7 +71,14 @@
 - **体现能力**：质量治理、RCA 体系化、流程与门禁问责、复盘资产标准化。
 - **入口**：[`skills/8d-qm-analysis/SKILL.md`](./skills/8d-qm-analysis/SKILL.md)
 
-### 4. 测试主流程与治理方案
+### 4. `family_health_record_app`
+
+- **工程场景**：家庭场景下的儿童检查单管理、OCR 结构化、人工审核、趋势分析与风险提示。
+- **落地方式**：以 `Next.js + FastAPI + PostgreSQL + MinIO` 为目标技术基线，先沉淀产品规格、UI 规格、OCR Schema、测试策略与 AI 开发工作流，再进入多 Subagent 协作开发。
+- **体现能力**：AI 驱动产品规格冻结、OCR 风险治理、测试前置、Subagent 并行开发编排。
+- **入口**：[`family_health_record_app/README.md`](./family_health_record_app/README.md)
+
+### 5. 测试主流程与治理方案
 
 - **工程场景**：把需求分析、测试策略、用例沉淀和最终复核串成一条可维护的主流程。
 - **落地方式**：通过 `/test-lifecycle` 工作流和技能治理方案，收敛测试资产边界、调用顺序、版本元数据和文档一致性要求。
@@ -206,6 +213,7 @@ Workflows
 2. 阅读 [`factory_inspector/README.md`](./factory_inspector/README.md)，看一个完整的工程化落地案例
 3. 阅读 [`modbus_anomaly_test/README.md`](./modbus_anomaly_test/README.md)，看协议测试与异常注入能力
 4. 阅读 [`docs/plans/2026-03-25-test-skills-governance-plan.md`](./docs/plans/2026-03-25-test-skills-governance-plan.md)，理解治理思路
+5. 阅读 [`family_health_record_app/README.md`](./family_health_record_app/README.md)，查看一个正在规格冻结阶段的新项目骨架
 
 ---
 
@@ -223,6 +231,7 @@ qa-prompts/
 │   ├── training/               # 案例与培训材料
 │   └── studyInspire-insights/  # 方法论沉淀
 ├── factory_inspector/          # 出厂检测工程案例
+├── family_health_record_app/   # 家庭检查单管理应用项目骨架
 ├── modbus_anomaly_test/        # 协议异常测试工程案例
 └── README.md                   # 根入口
 ```

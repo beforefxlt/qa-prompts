@@ -20,6 +20,7 @@
 | :--- | :--- | :--- |
 | `docs/user_guides/test_lifecycle_guide.md` | 测试主交付流程 | 解释 `/test-lifecycle` 的输入、步骤、主链边界与收口方式 |
 | `docs/user_guides/bug_diagnostic_flow_guide.md` | 缺陷初诊与建单草稿 | 解释 `/bug-diagnostic-flow` 的补证、隔离、`/tmp/` 草稿边界 |
+| `docs/user_guides/health_record_app_delivery_guide.md` | 家庭检查单管理应用交付 | 解释家庭健康数据应用从规格冻结到多 Subagent 开发与回归验收的推进方式 |
 | `docs/user_guides/qa_cleanup_principles_zh.md` | 收口复核与测试代码整理 | 说明 `reviewer-agent` 与 `test-code-simplifier` 的共性原则 |
 
 ## 与其他文档的关系
