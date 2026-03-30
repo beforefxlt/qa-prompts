@@ -1,6 +1,6 @@
 # 家庭检查单管理应用
 
-> 面向家庭场景的儿童健康检查单管理与趋势分析应用，聚焦上传检查单、OCR 结构化、人工审核、指标趋势图与风险提示。
+> 面向家庭场景的全员健康检查单管理与趋势分析应用，聚焦上传检查单、OCR 结构化、人工审核、指标趋势图与风险提示。
 
 ## 当前阶段
 
@@ -8,7 +8,7 @@
 
 已落地的内容：
 - 项目目录骨架
-- 产品、UI、架构、API、OCR、测试策略规格文档
+- 产品、UI、架构、数据库、API、OCR、测试策略规格文档
 - 面向 AI 开发的实施计划
 - OCR Golden Set 与测试资产目录
 
@@ -22,8 +22,9 @@
 1. 先阅读 `docs/specs/PRD.md`
 2. 再阅读 `docs/specs/UI_SPEC.md`
 3. 再阅读 `docs/specs/ARCHITECTURE.md`
-4. 再阅读 `docs/specs/TEST_STRATEGY.md`
-5. 最后执行 `docs/specs/IMPLEMENTATION_PLAN.md`
+4. 再阅读 `docs/specs/DATABASE_SCHEMA.md`
+5. 再阅读 `docs/specs/TEST_STRATEGY.md`
+6. 最后执行 `docs/specs/IMPLEMENTATION_PLAN.md`
 
 ## 目录
 
@@ -41,6 +42,7 @@ family_health_record_app/
         ├── PRD.md
         ├── UI_SPEC.md
         ├── ARCHITECTURE.md
+        ├── DATABASE_SCHEMA.md
         ├── API_CONTRACT.md
         ├── OCR_SCHEMA.md
         ├── TEST_STRATEGY.md

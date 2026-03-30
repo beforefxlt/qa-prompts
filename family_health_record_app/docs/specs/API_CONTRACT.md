@@ -2,7 +2,7 @@
 
 ## 1. 资源对象
 
-- `ChildProfile`
+- `MemberProfile`
 - `DocumentRecord`
 - `ExamRecord`
 - `Observation`
@@ -11,11 +11,11 @@
 
 ## 2. 核心接口
 
-### 2.1 儿童档案
+### 2.1 成员档案
 
-- `POST /api/v1/children`
-- `GET /api/v1/children`
-- `GET /api/v1/children/{child_id}`
+- `POST /api/v1/members`
+- `GET /api/v1/members`
+- `GET /api/v1/members/{member_id}`
 
 ### 2.2 检查单上传
 
@@ -33,9 +33,9 @@
 
 ### 2.4 趋势查询
 
-- `GET /api/v1/children/{child_id}/trends?metric=height&range=3m`
-- `GET /api/v1/children/{child_id}/vision-dashboard?range=12m`
-- `GET /api/v1/children/{child_id}/growth-dashboard?range=12m`
+- `GET /api/v1/members/{member_id}/trends?metric=height&range=3m`
+- `GET /api/v1/members/{member_id}/vision-dashboard?range=12m`
+- `GET /api/v1/members/{member_id}/growth-dashboard?range=12m`
 
 ## 3. 状态流转
 
@@ -55,3 +55,5 @@
 - 所有数值字段必须带单位
 - 审核接口必须保留人工修改痕迹
 - 趋势接口返回原始值、参考区间和报警状态
+- 成员对象必须返回 `member_type`
+- 儿童相关接口返回 `baseline_age_months`，用于图表参考带与增长速度计算

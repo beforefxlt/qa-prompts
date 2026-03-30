@@ -7,9 +7,10 @@
 1. 复核 `PRD.md`
 2. 复核 `UI_SPEC.md`
 3. 复核 `ARCHITECTURE.md`
-4. 复核 `API_CONTRACT.md`
-5. 复核 `OCR_SCHEMA.md`
-6. 复核 `TEST_STRATEGY.md`
+4. 复核 `DATABASE_SCHEMA.md`
+5. 复核 `API_CONTRACT.md`
+6. 复核 `OCR_SCHEMA.md`
+7. 复核 `TEST_STRATEGY.md`
 
 ## 阶段 2：开发准备
 
@@ -17,12 +18,12 @@
 2. 建立 Docker Compose 运行环境
 3. 建立 PostgreSQL 与 MinIO 本地开发依赖
 4. 建立测试框架
-5. 建立 OCR Golden Set 样本规范
+5. 建立 OCR Golden Set 样本规范（包含儿童发育、成人代谢多人群样本）
 
 ## 阶段 3：按域拆解 Subagent
 
 - `Agent-UI`：前端页面、组件、图表、审核工作台
-- `Agent-API`：档案、上传、审核、趋势接口
+- `Agent-API`：成员档案、上传、审核、趋势接口
 - `Agent-OCR`：脱敏、OCR 编排、规则引擎
 - `Agent-Data`：数据库 Schema、派生指标、趋势分析
 - `Agent-QA`：测试脚手架、Golden Set、E2E、门禁
