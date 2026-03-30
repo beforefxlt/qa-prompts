@@ -36,7 +36,7 @@ Thumbs.db
 *.swo
 
 # 临时文件
-*.tmp
+tmp/
 *.bak
 *.log
 *.pcap
