@@ -1,18 +1,18 @@
 # 家庭检查单管理应用 - 每日开发日志 (2026-03-31)
 
-> **最后更新**: 2026-03-31 21:08 (自动同步)
+> **最后更新**: 2026-03-31 21:22 (自动同步)
 > **版本**: v1.3.0
 
 ## 当前状态快照
 
 | 指标 | 数值 |
 |:---|:---|
-| 后端测试 | 32 passed, 0 failed |
+| 后端测试 | 61 passed, 0 failed |
 | 后端源文件 | 19 个 (app/) |
-| 测试文件 | 10 个 (tests/) |
+| 测试文件 | 11 个 (tests/) |
 | 前端源文件 | 4 个 (src/) |
-| Git 工作区 | 0 个已修改, 0 个未跟踪 |
-| Git 暂存区 | 0 个已暂存 |
+| Git 工作区 | 3 个已修改, 5 个未跟踪 |
+| Git 暂存区 | 1 个已暂存 |
 
 ---
 
@@ -34,7 +34,7 @@
 * [x] API 客户端 17 个方法
 
 ### 3. 测试层
-* [x] 32 个测试用例 (32 passed, 0 failed)
+* [x] 61 个测试用例 (61 passed, 0 failed)
 * [x] TypeScript 零错误 (tsc --noEmit)
 * [x] 联调验证 8 个 API 端点
 
@@ -76,9 +76,9 @@
 ## 最近提交记录
 
 ```
-864a97d chore: 自动同步开发日志 21:08 - 代码与文档一致性校验通过
-61534ef chore: 自动同步开发日志 21:08 - 代码与文档一致性校验通过
-e2c1225 docs: 添加当前状态文档和自动同步脚本
+64504ea docs: 更新 CURRENT_STATUS.md - 高优先级任务全部完成
+a15156b feat: 完成高优先级任务 - P5用户体验测试 + MinIO集成
+54d1e17 docs: 更新 CURRENT_STATUS.md - E2E测试已完成
 ```
 
 ---
@@ -86,5 +86,12 @@ e2c1225 docs: 添加当前状态文档和自动同步脚本
 ## 工作区变更文件
 
 ```
-无变更
+M DEVELOPMENT_LOG.md
+ M backend/app/routers/members.py
+ M backend/tests/test_api_contract.py
+?? backend/.coverage
+?? backend/alembic.ini
+?? backend/alembic/
+?? backend/db_config.py
+?? backend/tests/test_routes.py
 ```

@@ -83,7 +83,7 @@ async def test_api_contract_and_status_flow(test_client, monkeypatch):
     trends_resp = await test_client.get(f"/api/v1/members/{member_data['id']}/trends?metric=axial_length")
     assert trends_resp.status_code == 200
     trends_data = trends_resp.json()
-    assert set(trends_data.keys()) == {"metric", "series", "reference_range", "alert_status"}
+    assert set(trends_data.keys()) == {"metric", "series", "reference_range", "alert_status", "comparison"}
     assert trends_data["metric"] == "axial_length"
 
     UUID(member_data["id"])

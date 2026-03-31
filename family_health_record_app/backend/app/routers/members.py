@@ -141,28 +141,3 @@ async def delete_member(member_id: UUID, db: AsyncSession = Depends(get_db)):
 
     member.is_deleted = True
     await db.flush()
-
-
-@router.get("/{member_id}/trends")
-async def get_trends(member_id: UUID, metric: str, db: AsyncSession = Depends(get_db)):
-    member = await db.scalar(select(MemberProfile).where(MemberProfile.id == member_id, MemberProfile.is_deleted.is_(False)))
-    if member is None:
-        raise HTTPException(status_code=404, detail="成员不存在")
-
-    trend_stmt = (
-        select(ExamRecord.exam_date, Observation.value_numeric, Observation.reference_range, Observation.is_abnormal)
-        .join(Observation, Observation.exam_record_id == ExamRecord.id)
-        .where(ExamRecord.member_id == member_id, Observation.metric_code == metric)
-        .order_by(ExamRecord.exam_date.asc())
-    )
-    trend_rows = (await db.execute(trend_stmt)).all()
-    series = [{"date": row.exam_date.isoformat(), "value": row.value_numeric} for row in trend_rows]
-    reference_range = next((row.reference_range for row in trend_rows if row.reference_range), None)
-    alert_status = "warning" if any(row.is_abnormal for row in trend_rows) else "normal"
-
-    return {
-        "metric": metric,
-        "series": series,
-        "reference_range": reference_range,
-        "alert_status": alert_status,
-    }
