@@ -181,7 +181,7 @@ npm run dev
 
 ## 三、自动同步机制
 
-已创建 `auto_sync.py` 脚本，每 5 分钟自动:
+已创建 `auto_sync.py` 脚本，每 15 分钟自动:
 1. 运行 pytest 统计测试结果
 2. 扫描代码文件数量
 3. 检查 git 变更状态
@@ -193,7 +193,7 @@ npm run dev
 # 手动运行
 python auto_sync.py
 
-# Windows 任务计划程序 (每5分钟)
+# Windows 任务计划程序 (每15分钟)
 schtasks /create /tn "DevLogSync" /tr "python C:\Users\Administrator\qa-prompts\family_health_record_app\auto_sync.py" /sc minute /mo 5
 ```
 

@@ -1,6 +1,9 @@
-# 自动同步脚本：每 5 分钟更新开发日志并提交
+# 自动同步脚本：每 15 分钟更新开发日志并提交
 # 用法: python auto_sync.py
 # 可配合 Windows 任务计划程序实现定时执行
+
+#  Windows 任务计划程序配置示例 (每 15 分钟):
+# schtasks /create /tn "DevLogSync" /tr "python C:\Users\Administrator\qa-prompts\family_health_record_app\auto_sync.py" /sc minute /mo 15
 
 import os
 import subprocess
