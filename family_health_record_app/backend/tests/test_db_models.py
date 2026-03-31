@@ -1,14 +1,16 @@
-﻿import pytest
-import asyncio
+import pytest
+import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from backend.app.models.base import Base
 from backend.app.models.member import Account, MemberProfile
+from backend.app.models.document import DocumentRecord, OCRExtractionResult, ReviewTask
+from backend.app.models.observation import ExamRecord, Observation, DerivedMetric
 from datetime import date
 
 # 使用内存 SQLite 测试
 TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def db_session():
     engine = create_async_engine(TEST_DB_URL)
     async with engine.begin() as conn:

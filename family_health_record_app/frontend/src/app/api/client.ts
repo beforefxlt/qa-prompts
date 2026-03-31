@@ -13,9 +13,12 @@ export const apiClient = {
     return res.json();
   },
   
-  uploadDocument: async (file: File) => {
+  uploadDocument: async (file: File, memberId?: string) => {
     const formData = new FormData();
     formData.append('file', file);
+    if (memberId) {
+      formData.append('member_id', memberId);
+    }
     
     const res = await fetch(`${API_BASE_URL}/documents/upload`, {
       method: 'POST',

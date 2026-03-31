@@ -1,6 +1,4 @@
 import pytest
-import asyncio
-from uuid import UUID
 from datetime import date
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from backend.app.models.base import Base
@@ -35,7 +33,7 @@ async def test_full_pipeline_mock():
         
         # 2. 模拟触发 OCR
         # 实际 API 调用在 ocr_orchestrator 中已 Mock
-        result = await ocr_orchestrator.process_document(uuid.uuid4(), "mock_url")
+        result = await ocr_orchestrator.process_document(member.id, "mock_url")
         
         assert result["status"] == "approved"
         

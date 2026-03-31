@@ -1,20 +1,33 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea 
 } from 'recharts';
 import { 
-  Plus, Upload, ShieldAlert, CheckCircle2, ChevronRight, Settings, Camera, User
+  ShieldAlert, Settings, Camera, User
 } from 'lucide-react';
 import { apiClient } from './api/client';
 
+type TrendPoint = {
+  date: string;
+  value: number;
+};
+
+type ChartPoint = {
+  date: string;
+  left: number;
+  right: number;
+};
+
 export default function Dashboard() {
-  const [chartData, setChartData] = useState([]);
+  const searchParams = useSearchParams();
+  const memberId = searchParams.get('memberId') ?? '0';
+  const selectedMember = searchParams.get('memberName') ?? '女儿 (晓萌)';
+  const [chartData, setChartData] = useState<ChartPoint[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [showManualForm, setShowManualForm] = useState(false);
-  const [selectedMember, setSelectedMember] = useState('女儿 (晓萌)');
-  const [memberId, setMemberId] = useState('0'); // 示例 UUID 占位
 
   // 模拟 OCR 宕机容灾状态
   const [isOCRDown, setIsOCRDown] = useState(false);
@@ -24,14 +37,14 @@ export default function Dashboard() {
       try {
         const trends = await apiClient.getTrends(memberId, 'axial_length');
         // 将后端接口格式适配为 Recharts 格式
-        const formatted = trends.series.map((s: any) => ({
+        const formatted = trends.series.map((s: TrendPoint) => ({
           date: s.date.slice(5), // 只保留 MM-DD
           left: s.value, 
           right: s.value - 0.3 // 模拟右眼偏移
         }));
         setChartData(formatted);
-      } catch (err) {
-        console.error('Failed to load trends:', err);
+      } catch {
+        console.error('Failed to load trends');
       }
     }
     loadData();
@@ -119,10 +132,10 @@ export default function Dashboard() {
                setIsUploading(true);
                try {
                  // 模拟文件上传动作
-                 await apiClient.uploadDocument(new File([], 'test.jpg'));
+                 await apiClient.uploadDocument(new File([], 'test.jpg'), memberId);
                  // 延迟模拟状态刷新
                  setTimeout(() => setIsUploading(false), 2000);
-               } catch (err) {
+               } catch {
                  setIsOCRDown(true); // 容灾自动切换
                  setIsUploading(false);
                }

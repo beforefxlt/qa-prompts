@@ -1,10 +1,8 @@
-import json
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from uuid import UUID
 from datetime import datetime
 
-from .storage_client import storage_client
 from .rule_engine import check_ocr_result
 
 logger = logging.getLogger(__name__)
