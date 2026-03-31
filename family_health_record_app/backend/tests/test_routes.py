@@ -547,17 +547,25 @@ async def test_review_full_workflow(route_env, monkeypatch):
     assert detail["status"] == "pending"
     assert detail["ocr_processed_items"] is not None
 
-    # 审核通过
-    resp = await client.post(f"/api/v1/review-tasks/{task_id}/approve")
+    # 审核通过 (带修订项)
+    resp = await client.post(
+        f"/api/v1/review-tasks/{task_id}/approve",
+        json={
+            "revised_items": [
+                {"metric_code": "axial_length", "side": "left", "value_numeric": 24.50, "unit": "mm"}
+            ]
+        },
+    )
     assert resp.status_code == 200
     assert resp.json()["status"] == "approved"
 
-    # 验证数据已入库
+    # 验证数据已入库 (使用修订后的值)
     async with session_factory() as session:
         obs = (await session.scalars(select(Observation))).all()
         assert len(obs) == 1
         assert obs[0].metric_code == "axial_length"
-        assert obs[0].value_numeric == 24.35
+        assert obs[0].value_numeric == 24.50
+        assert obs[0].confidence_score == 1.0  # 人工确认后锁定为 1.0
 
 
 @pytest.mark.asyncio
@@ -700,3 +708,4 @@ async def test_review_reject_already_approved(route_env):
 
     resp = await client.post(f"/api/v1/review-tasks/{task_id}/reject")
     assert resp.status_code == 409
+
