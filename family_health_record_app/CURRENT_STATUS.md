@@ -1,8 +1,9 @@
 # 家庭检查单管理应用 - 当前状态与下一步计划
 
-> **最后更新**: 2026-03-31 21:20
+> **最后更新**: 2026-03-31 21:40
 > **版本**: v1.4.0
-> **Commit**: a15156b
+> **Commit**: 9f0c128
+> **测试状态**: 72 passed, 0 failed, 覆盖率 54%
 
 ---
 
@@ -32,11 +33,14 @@
 ### 3. 测试
 | 类型 | 用例数 | 状态 |
 |:---|:---|:---|
-| 单元测试 | 8 | ✅ 通过 |
+| 单元测试 | 42 | ✅ 通过 |
 | API合约 | 7 | ✅ 通过 |
 | Golden Set | 4 | ✅ 通过 |
 | P3基建容灾 | 10 | ✅ 通过 |
-| **总计** | **32** | **✅ 32 passed, 0 failed** |
+| P5用户体验 | 11 | ✅ 通过 |
+| 路由层测试 | 29 | ✅ 通过 |
+| **总计** | **72** | **✅ 72 passed, 0 failed** |
+| **覆盖率** | **54%** | 见下文ROI分析 |
 
 ### 4. 规格文档 (8个)
 | 文档 | 状态 | 关键变更 |
@@ -84,10 +88,11 @@
    - ✅ 现有 dashboard.spec.ts 已修复 (移除 phone_or_email)
 
 2. **P5 用户体验测试代码** ✅ 已完成
-   - ✅ 空状态引导文案可读性验证 (`ux-experience.spec.ts`)
-   - ✅ 错误提示友好度验证 (`ux-experience.spec.ts`)
-   - ✅ 图表可读性验证 (`ux-experience.spec.ts`)
-   - ✅ OCR失败提示友好度 (`ux-experience.spec.ts`)
+   - ✅ 空状态引导文案可读性验证 (`test_ux_experience.py`)
+   - ✅ 错误提示友好度验证 (`test_ux_experience.py`)
+   - ✅ 图表可读性验证 (`test_ux_experience.py`)
+   - ✅ 审核页数据完整性 (`test_ux_experience.py`)
+   - ✅ 前端交互验证 (`ux-experience.spec.ts`)
    - ✅ 指标切换标签清晰度 (`ux-experience.spec.ts`)
    - ✅ 审核页布局清晰度 (`ux-experience.spec.ts`)
    - ✅ 成员卡片信息完整性 (`ux-experience.spec.ts`)
@@ -100,12 +105,12 @@
    - ✅ 原图和脱敏图分目录存储 (`original/`, `desensitized/`)
 
 ### 中优先级
-4. **CI/CD 流水线**
-   - GitHub Actions / GitLab CI 配置
+4. **CI/CD 流水线** - 下个会话启动
+   - GitHub Actions 配置
    - 自动运行 pytest + tsc
    - 测试覆盖率报告
 
-5. **生产环境 PostgreSQL 迁移**
+5. **生产环境 PostgreSQL 迁移** - 下个会话启动
    - 当前使用 SQLite (开发环境)
    - 需配置 PostgreSQL 连接
    - Alembic 迁移脚本
@@ -115,13 +120,48 @@
    - E2E 测试已覆盖审核流程
 
 ### 低优先级
-7. **测试覆盖率提升**
-   - 当前覆盖核心路径，边缘场景待补充
-   - 目标: 行覆盖率 > 80%
+7. **测试覆盖率提升** - 维持 54%，不再追求 80%
+   - ROI 分析结论：高风险模块(rule_engine 88%, image_processor 95%, models 100%)已充分覆盖
+   - 低覆盖模块(ocr_orchestrator 30%, review 30%)Mock成本高，已有E2E覆盖
+   - 边际效益递减，停止继续投入
 
-8. **性能优化**
+8. **性能优化** - 下个会话评估
    - 趋势查询大数据量分页
    - 图片上传压缩
+
+---
+
+## 三、生产部署准备清单 (下个会话启动)
+
+### 3.1 环境配置
+- [ ] PostgreSQL 数据库创建与配置
+- [ ] Alembic 迁移脚本生成与执行
+- [ ] 环境变量配置文件 (.env.production)
+- [ ] SILICONFLOW_API_KEY 生产密钥获取
+- [ ] MinIO 生产实例部署
+
+### 3.2 安全加固
+- [ ] CORS 白名单限制（移除 localhost:*）
+- [ ] 请求速率限制（防止滥用）
+- [ ] 日志脱敏（不记录原始图片内容）
+- [ ] 数据库连接加密
+
+### 3.3 监控告警
+- [ ] 健康检查端点 `/health` 集成监控
+- [ ] OCR 接口超时告警（>30s）
+- [ ] MinIO 存储空间告警（>80%）
+- [ ] 数据库连接池告警
+
+### 3.4 部署脚本
+- [ ] Docker Compose 配置（后端 + MinIO + PostgreSQL）
+- [ ] 前端构建脚本（next build）
+- [ ] 启动脚本（uvicorn + gunicorn）
+
+### 3.5 验收测试
+- [ ] 全量 pytest 执行（72 测试通过）
+- [ ] TypeScript 编译检查
+- [ ] 手动执行核心流程：创建成员 → 上传 → 审核 → 趋势查看
+- [ ] 性能测试：并发上传 10 张图片
 
 ---
 
