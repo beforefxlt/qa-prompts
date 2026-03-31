@@ -1,8 +1,8 @@
 # 家庭检查单管理应用 - 当前状态与下一步计划
 
-> **最后更新**: 2026-03-31 21:15
-> **版本**: v1.3.0
-> **Commit**: f717d14
+> **最后更新**: 2026-03-31 21:20
+> **版本**: v1.4.0
+> **Commit**: a15156b
 
 ---
 
@@ -83,15 +83,21 @@
    - ✅ 错误态 E2E (`error-states.spec.ts`)
    - ✅ 现有 dashboard.spec.ts 已修复 (移除 phone_or_email)
 
-2. **P5 用户体验测试代码**
-   - 空状态引导文案可读性验证
-   - 错误提示友好度验证
-   - 图表可读性人工验收记录
+2. **P5 用户体验测试代码** ✅ 已完成
+   - ✅ 空状态引导文案可读性验证 (`ux-experience.spec.ts`)
+   - ✅ 错误提示友好度验证 (`ux-experience.spec.ts`)
+   - ✅ 图表可读性验证 (`ux-experience.spec.ts`)
+   - ✅ OCR失败提示友好度 (`ux-experience.spec.ts`)
+   - ✅ 指标切换标签清晰度 (`ux-experience.spec.ts`)
+   - ✅ 审核页布局清晰度 (`ux-experience.spec.ts`)
+   - ✅ 成员卡片信息完整性 (`ux-experience.spec.ts`)
+   - ✅ 成员创建表单标签清晰度 (`ux-experience.spec.ts`)
 
-3. **MinIO 真实集成**
-   - 当前上传存本地 (`uploads/` 目录)
-   - 需接入 `storage_client.py` 到上传流程
-   - 脱敏图需上传到 MinIO 并更新 `desensitized_url`
+3. **MinIO 真实集成** ✅ 已完成
+   - ✅ `documents.py` 已集成 MinIO 上传
+   - ✅ 脱敏图自动上传到 MinIO 并更新 `desensitized_url`
+   - ✅ MinIO 不可用时自动降级到本地存储 (`uploads/`)
+   - ✅ 原图和脱敏图分目录存储 (`original/`, `desensitized/`)
 
 ### 中优先级
 4. **CI/CD 流水线**
