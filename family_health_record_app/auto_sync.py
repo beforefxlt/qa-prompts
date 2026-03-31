@@ -7,6 +7,12 @@ import subprocess
 import sys
 from datetime import datetime
 
+# Fix Windows console encoding
+if sys.platform == 'win32':
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 LOG_PATH = os.path.join(PROJECT_ROOT, "DEVELOPMENT_LOG.md")
 BACKEND_DIR = os.path.join(PROJECT_ROOT, "backend")
@@ -15,9 +21,11 @@ def run_cmd(cmd, cwd=None, timeout=30):
     """执行命令并返回输出"""
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, cwd=cwd or PROJECT_ROOT, timeout=timeout
+            cmd, capture_output=True, cwd=cwd or PROJECT_ROOT, timeout=timeout
         )
-        return result.stdout.strip(), result.stderr.strip(), result.returncode
+        stdout = result.stdout.decode('utf-8', errors='replace').strip()
+        stderr = result.stderr.decode('utf-8', errors='replace').strip()
+        return stdout, stderr, result.returncode
     except Exception as e:
         return "", str(e), 1
 
