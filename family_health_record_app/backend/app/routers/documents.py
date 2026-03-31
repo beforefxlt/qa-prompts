@@ -1,6 +1,7 @@
 import os
 import shutil
 import uuid
+import logging
 from datetime import date
 from uuid import UUID
 from typing import Optional, List, Dict, Any
@@ -15,10 +16,28 @@ from ..models.member import MemberProfile
 from ..models.document import DocumentRecord, OCRExtractionResult, ReviewTask
 from ..models.observation import ExamRecord, Observation, DerivedMetric
 from ..schemas.document import DocumentUploadResponse, DocumentResponse
+from ..services.image_processor import desensitize_image
+
+logger = logging.getLogger(__name__)
 
 UPLOAD_DIR = "uploads"
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
+
+# Lazy-load MinIO client (graceful fallback to local storage)
+_storage_client = None
+
+def get_storage_client():
+    global _storage_client
+    if _storage_client is None:
+        try:
+            from ..services.storage_client import storage_client
+            _storage_client = storage_client
+            logger.info("MinIO storage client initialized")
+        except Exception as e:
+            logger.warning(f"MinIO unavailable, using local storage: {e}")
+            _storage_client = None
+    return _storage_client
 
 router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
 
@@ -89,14 +108,43 @@ async def upload_document(
     original_filename = file.filename or "unknown.jpg"
     ext = os.path.splitext(original_filename)[1] or ".jpg"
     unique_filename = f"{uuid.uuid4().hex}{ext}"
-    file_path = os.path.join(UPLOAD_DIR, unique_filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    
+    # 读取文件内容
+    file_content = file.file.read()
+    
+    # 尝试上传到 MinIO，失败则存本地
+    storage_client = get_storage_client()
+    if storage_client:
+        try:
+            # 上传原图到 MinIO
+            file_url = storage_client.upload_file(file_content, f"original/{unique_filename}", "image/jpeg")
+            
+            # 脱敏后上传
+            desensitized_bytes = desensitize_image(file_content)
+            desensitized_filename = f"{uuid.uuid4().hex}.webp"
+            desensitized_url = storage_client.upload_file(desensitized_bytes, f"desensitized/{desensitized_filename}", "image/webp")
+            
+            logger.info(f"Document {unique_filename} uploaded to MinIO")
+        except Exception as e:
+            logger.error(f"MinIO upload failed, falling back to local: {e}")
+            # Fallback to local storage
+            file_path = os.path.join(UPLOAD_DIR, unique_filename)
+            with open(file_path, "wb") as buffer:
+                buffer.write(file_content)
+            file_url = file_path
+            desensitized_url = None
+    else:
+        # Local storage fallback
+        file_path = os.path.join(UPLOAD_DIR, unique_filename)
+        with open(file_path, "wb") as buffer:
+            buffer.write(file_content)
+        file_url = file_path
+        desensitized_url = None
 
     document = DocumentRecord(
         member_id=target_member_id,
-        file_url=file_path,
-        desensitized_url=None,
+        file_url=file_url,
+        desensitized_url=desensitized_url,
         status="uploaded",
     )
     db.add(document)
