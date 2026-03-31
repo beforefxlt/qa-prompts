@@ -2,7 +2,7 @@ import io
 
 from PIL import Image
 
-from backend.app.services.image_processor import desensitize_image
+from app.services.image_processor import desensitize_image
 
 
 def _make_white_image(width: int = 100, height: int = 100) -> bytes:

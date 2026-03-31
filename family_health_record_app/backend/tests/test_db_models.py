@@ -1,10 +1,10 @@
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from backend.app.models.base import Base
-from backend.app.models.member import Account, MemberProfile
-from backend.app.models.document import DocumentRecord, OCRExtractionResult, ReviewTask
-from backend.app.models.observation import ExamRecord, Observation, DerivedMetric
+from app.models.base import Base
+from app.models.member import Account, MemberProfile
+from app.models.document import DocumentRecord, OCRExtractionResult, ReviewTask
+from app.models.observation import ExamRecord, Observation, DerivedMetric
 from datetime import date
 
 # 使用内存 SQLite 测试

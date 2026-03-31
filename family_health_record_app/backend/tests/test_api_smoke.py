@@ -4,12 +4,12 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.pool import StaticPool
 
-from backend.app.db import get_db
-from backend.app.main import app
-from backend.app.models.base import Base
-from backend.app.models.member import Account, MemberProfile
-from backend.app.models.document import DocumentRecord, OCRExtractionResult, ReviewTask
-from backend.app.models.observation import ExamRecord, Observation, DerivedMetric
+from app.db import get_db
+from app.main import app
+from app.models.base import Base
+from app.models.member import Account, MemberProfile
+from app.models.document import DocumentRecord, OCRExtractionResult, ReviewTask
+from app.models.observation import ExamRecord, Observation, DerivedMetric
 
 
 @pytest_asyncio.fixture

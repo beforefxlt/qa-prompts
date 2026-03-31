@@ -6,12 +6,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.pool import StaticPool
 
-from backend.app.db import get_db
-from backend.app.main import app
-from backend.app.models.base import Base
-from backend.app.models.member import Account, MemberProfile
-from backend.app.models.document import DocumentRecord, OCRExtractionResult, ReviewTask
-from backend.app.models.observation import ExamRecord, Observation, DerivedMetric
+from app.db import get_db
+from app.main import app
+from app.models.base import Base
+from app.models.member import Account, MemberProfile
+from app.models.document import DocumentRecord, OCRExtractionResult, ReviewTask
+from app.models.observation import ExamRecord, Observation, DerivedMetric
 
 
 @pytest_asyncio.fixture
@@ -78,7 +78,7 @@ async def test_rule_conflict_generates_single_review_task(state_client, monkeypa
             },
         }
 
-    from backend.app.services import ocr_orchestrator as ocr_module
+    from app.services import ocr_orchestrator as ocr_module
 
     monkeypatch.setattr(ocr_module.ocr_orchestrator, "process_document", fake_conflict)
 
@@ -132,7 +132,7 @@ async def test_invalid_exam_date_from_ocr_should_not_500(state_client, monkeypat
             },
         }
 
-    from backend.app.services import ocr_orchestrator as ocr_module
+    from app.services import ocr_orchestrator as ocr_module
 
     monkeypatch.setattr(ocr_module.ocr_orchestrator, "process_document", fake_bad_payload)
 

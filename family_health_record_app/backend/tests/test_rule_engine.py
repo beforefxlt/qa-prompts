@@ -1,6 +1,6 @@
 import pytest
 
-from backend.app.services.rule_engine import check_ocr_result, validate_observation
+from app.services.rule_engine import check_ocr_result, validate_observation
 
 
 def test_validate_observation_unit_conflict():

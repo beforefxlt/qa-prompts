@@ -2,12 +2,12 @@
 
 ## 1. 总体架构
 
-推荐采用模块化单体架构：
+采用模块化单体架构：
 - 前端：`Next.js App Router`
 - 后端：`FastAPI`
-- 数据库：`PostgreSQL`
+- 数据库：`SQLite`（开发环境）/ `PostgreSQL`（生产环境）
 - 对象存储：`MinIO`
-- 异步任务：`Redis + Celery`
+- 异步任务：`Redis + Celery`（规划中）
 
 ## 2. 核心模块
 
