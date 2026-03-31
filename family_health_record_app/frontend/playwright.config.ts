@@ -15,7 +15,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'cd .. && . .venv/bin/activate && rm -f /tmp/family_health_e2e.db && DATABASE_URL=sqlite+aiosqlite:////tmp/family_health_e2e.db uvicorn backend.app.main:app --host 127.0.0.1 --port 8000',
+      command: 'cd .. && set DATABASE_URL=sqlite+aiosqlite:///./e2e_test.db && python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000',
       url: 'http://127.0.0.1:8000/health',
       reuseExistingServer: true,
       timeout: 120000,
