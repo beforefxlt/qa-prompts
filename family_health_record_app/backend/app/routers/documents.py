@@ -76,6 +76,9 @@ async def _ensure_review_task(db: AsyncSession, document: DocumentRecord, reason
             audit_trail={"events": [{"action": reason}]},
         )
         db.add(review_task)
+    elif existing_task.status == "rejected":
+        existing_task.status = "pending"
+        existing_task.audit_trail = {"events": [{"action": reason}]}
 
 
 @router.post("/upload", response_model=DocumentUploadResponse, status_code=201)

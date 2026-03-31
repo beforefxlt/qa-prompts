@@ -1,9 +1,8 @@
 # 家庭检查单管理应用 - 当前状态与下一步计划
 
-> **最后更新**: 2026-03-31 21:40
-> **版本**: v1.4.0
-> **Commit**: 9f0c128
-> **测试状态**: 72 passed, 0 failed, 覆盖率 54%
+> **最后更新**: 2026-03-31 22:50
+> **版本**: v1.5.0
+> **测试状态**: 72 passed, 0 failed, 覆盖率 54%, E2E 流程验证通过
 
 ---
 
@@ -17,7 +16,7 @@
 | 文档服务 | ✅ 完成 | `routers/documents.py` (上传/查询/submit-ocr, UUID文件名) |
 | 审核服务 | ✅ 完成 | `routers/review.py` (approve/reject/save-draft) |
 | 趋势服务 | ✅ 完成 | `routers/trends.py` (trends/vision-dashboard/growth-dashboard) |
-| OCR编排 | ✅ 完成 | `services/ocr_orchestrator.py` (含脱敏步骤+TimeoutError处理) |
+| OCR编排 | ✅ 已完成 | `services/ocr_orchestrator.py` (Qwen2.5-VL-32B 模型 + JSON解析增强) |
 | 规则引擎 | ✅ 完成 | `services/rule_engine.py` (单位/范围/左右眼校验) |
 | 图像处理 | ✅ 完成 | `services/image_processor.py` (try/catch兜底) |
 | 存储客户端 | ✅ 完成 | `services/storage_client.py` (MinIO boto3) |
@@ -62,7 +61,7 @@
 | exploratory_testing_scenarios.md | 67个探索性测试场景 |
 | requirements_verification.md | 17项需求核验(6✅/11⚠️) |
 
-### 6. 已修复缺陷 (8个)
+### 6. 已修复缺陷 (11个: BUG-004 ~ BUG-014)
 | 编号 | 问题 | 修复 |
 |:---|:---|:---|
 | BUG-004 | 脱敏未接入OCR | ocr_orchestrator.py新增脱敏步骤 |
@@ -73,65 +72,39 @@
 | BUG-009 | 测试引用已删除Account | 修正3个测试文件 |
 | BUG-010 | 脱敏对非图片崩溃 | try/catch兜底 |
 | BUG-011 | TimeoutError未捕获 | 新增except分支 |
+| BUG-012 | DeepSeek-OCR模型无法输出JSON | 更换为Qwen2.5-VL-32B-Instruct |
+| BUG-013 | JSON解析正则无法处理嵌套 | 重写深度优先JSON提取逻辑 |
+| BUG-014 | 审核通过时exam_date无法修改 | 新增revised_items支持exam_date |
 
 ---
 
-## 二、未完成事项
+## 二、E2E 流程验证 (2026-03-31)
 
-### 高优先级 (阻塞发布)
-1. **前端 E2E 测试扩展** ✅ 已完成
-   - ✅ 空状态引导 E2E (`member-management.spec.ts`)
-   - ✅ 成员 CRUD E2E (`member-management.spec.ts`)
-   - ✅ 审核流程 E2E (`review-workflow.spec.ts`)
-   - ✅ 指标切换 E2E (`error-states.spec.ts`)
-   - ✅ 错误态 E2E (`error-states.spec.ts`)
-   - ✅ 现有 dashboard.spec.ts 已修复 (移除 phone_or_email)
+| 步骤 | 状态 | 详情 |
+|:---|:---|:---|
+| 1. 后端启动 | ✅ | Port 8001, uvicorn 运行中 |
+| 2. 创建成员 | ✅ | TestKid (male, 2020-01-01, child) |
+| 3. 上传文档 | ✅ | 01.jpg (98KB) 上传成功 |
+| 4. OCR处理 | ✅ | Qwen2.5-VL-32B 提取 eye axial_length 数据 |
+| 5. 审核工作流 | ✅ | 支持 exam_date 修正后审核通过 |
+| 6. 数据持久化 | ✅ | exam_records + observations 写入数据库 |
+| 7. 趋势 API | ✅ | `/api/v1/members/{id}/trends?metric=axial_length` 返回时间序列 |
 
-2. **P5 用户体验测试代码** ✅ 已完成
-   - ✅ 空状态引导文案可读性验证 (`test_ux_experience.py`)
-   - ✅ 错误提示友好度验证 (`test_ux_experience.py`)
-   - ✅ 图表可读性验证 (`test_ux_experience.py`)
-   - ✅ 审核页数据完整性 (`test_ux_experience.py`)
-   - ✅ 前端交互验证 (`ux-experience.spec.ts`)
-   - ✅ 指标切换标签清晰度 (`ux-experience.spec.ts`)
-   - ✅ 审核页布局清晰度 (`ux-experience.spec.ts`)
-   - ✅ 成员卡片信息完整性 (`ux-experience.spec.ts`)
-   - ✅ 成员创建表单标签清晰度 (`ux-experience.spec.ts`)
-
-3. **MinIO 真实集成** ✅ 已完成
-   - ✅ `documents.py` 已集成 MinIO 上传
-   - ✅ 脱敏图自动上传到 MinIO 并更新 `desensitized_url`
-   - ✅ MinIO 不可用时自动降级到本地存储 (`uploads/`)
-   - ✅ 原图和脱敏图分目录存储 (`original/`, `desensitized/`)
-
-### 中优先级
-4. **CI/CD 流水线** - 下个会话启动
-   - GitHub Actions 配置
-   - 自动运行 pytest + tsc
-   - 测试覆盖率报告
-
-5. **生产环境 PostgreSQL 迁移** - 下个会话启动
-   - 当前使用 SQLite (开发环境)
-   - 需配置 PostgreSQL 连接
-   - Alembic 迁移脚本
-
-6. **审核页前端联调** ✅ 已完成
-   - `review/page.tsx` 已创建
-   - E2E 测试已覆盖审核流程
-
-### 低优先级
-7. **测试覆盖率提升** - 维持 54%，不再追求 80%
-   - ROI 分析结论：高风险模块(rule_engine 88%, image_processor 95%, models 100%)已充分覆盖
-   - 低覆盖模块(ocr_orchestrator 30%, review 30%)Mock成本高，已有E2E覆盖
-   - 边际效益递减，停止继续投入
-
-8. **性能优化** - 下个会话评估
-   - 趋势查询大数据量分页
-   - 图片上传压缩
+**OCR 提取结果示例**:
+```json
+{
+  "exam_date": "2018-09-21",
+  "institution": "HAAG-STREIT DIAGNOSTICS",
+  "observations": [
+    {"metric_code": "axial_length", "value_numeric": 24.35, "unit": "mm", "side": "right"},
+    {"metric_code": "axial_length", "value_numeric": 23.32, "unit": "mm", "side": "left"}
+  ]
+}
+```
 
 ---
 
-## 三、生产部署准备清单 (下个会话启动)
+## 三、生产部署准备清单
 
 ### 3.1 最小化部署（内网低频使用）
 
@@ -175,7 +148,7 @@ npm run dev
 
 **数据库**: 默认 SQLite，文件名 `health_record.db`，自动创建。
 **存储**: 默认本地 `uploads/` 目录，MinIO 自动降级。
-**OCR**: 需设置 `SILICONFLOW_API_KEY` 环境变量。
+**OCR**: SiliconFlow API + Qwen2.5-VL-32B-Instruct 模型。
 
 ---
 

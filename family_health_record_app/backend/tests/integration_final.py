@@ -2,7 +2,7 @@ import pytest
 from datetime import date
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from backend.app.models.base import Base
-from backend.app.models.member import Account, MemberProfile
+from backend.app.models.member import MemberProfile
 from backend.app.models.observation import ExamRecord, Observation
 from backend.app.services.ocr_orchestrator import ocr_orchestrator
 
@@ -12,7 +12,7 @@ TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
 async def test_full_pipeline_mock():
     """
     全链路集成测试 (Mock OCR 版):
-    1. 注册账号与成员
+    1. 注册成员
     2. 执行 OCR 处理流程
     3. 验证正式指标层 Persistent
     """
@@ -23,11 +23,7 @@ async def test_full_pipeline_mock():
     Session = async_sessionmaker(engine, expire_on_commit=False)
     async with Session() as session:
         # 1. 初始化数据
-        acc = Account(phone_or_email="integration@test.com")
-        session.add(acc)
-        await session.commit()
-        
-        member = MemberProfile(account_id=acc.id, name="Kid A", gender="male", date_of_birth=date(2018, 1, 1), member_type="child")
+        member = MemberProfile(name="Kid A", gender="male", date_of_birth=date(2018, 1, 1), member_type="child")
         session.add(member)
         await session.commit()
         

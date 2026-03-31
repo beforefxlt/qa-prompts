@@ -115,8 +115,14 @@ async def approve_review_task(
 
     if data.revised_items:
         existing_observations = processed_items.get("observations", [])
+        
+        # Handle exam_date revision separately
         for revised in data.revised_items:
             metric_code = revised.get("metric_code")
+            if metric_code == "exam_date" and "value" in revised:
+                processed_items["exam_date"] = revised["value"]
+                continue
+                
             side = revised.get("side")
             for obs in existing_observations:
                 if obs.get("metric_code") == metric_code and obs.get("side") == side:

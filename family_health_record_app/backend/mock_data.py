@@ -3,7 +3,7 @@ from datetime import date
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy import select
 from app.models.base import Base
-from app.models.member import Account, MemberProfile
+from app.models.member import MemberProfile
 from app.models.document import DocumentRecord
 from app.models.observation import ExamRecord, Observation
 
@@ -21,15 +21,8 @@ async def populate_mock_data():
         
         if existing_member:
             member = existing_member
-            account_id = member.account_id
         else:
-            account = Account(phone_or_email="mock@example.com")
-            session.add(account)
-            await session.flush()
-            account_id = account.id
-
             member = MemberProfile(
-                account_id=account.id,
                 name="女儿 (晓萌)",
                 gender="female",
                 date_of_birth=date(2018, 5, 20),

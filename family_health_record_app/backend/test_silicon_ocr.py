@@ -4,10 +4,13 @@ import httpx
 import asyncio
 import json
 import time
+import sys
+
+os.environ['PYTHONIOENCODING'] = 'utf-8'
 
 # 用户提供的配置
 SILICONFLOW_API_KEY = "sk-vxpzocjnvrneofatmmocgahhmhsmpanzrtlwfccxuwnscajd"
-OCR_MODEL_NAME = "deepseek-ai/DeepSeek-OCR"
+OCR_MODEL_NAME = "Qwen/Qwen2.5-VL-32B-Instruct"
 API_URL = "https://api.siliconflow.cn/v1/chat/completions"
 
 async def test_ocr():
@@ -60,8 +63,9 @@ async def test_ocr():
             print(f"Status Code: {response.status_code}")
             
             if response.status_code == 200:
-                print("Success! Response content:")
-                print(json.dumps(response.json(), indent=2, ensure_ascii=False))
+                print("Success! Response content saved to response.json")
+                with open("response.json", "w", encoding="utf-8") as f:
+                    json.dump(response.json(), f, indent=2, ensure_ascii=False)
             else:
                 print(f"Error Response: {response.text}")
                 

@@ -22,25 +22,29 @@ OCR_MODEL_NAME = os.getenv("OCR_MODEL_NAME", "deepseek-ai/DeepSeek-OCR")
 
 PROMPT_TEMPLATE = """
 你是一个专业的医疗检查单据识别专家。
-请从这张图片中提取以下眼科检查指标，并以严格的 JSON 格式输出：
-1. exam_date: 格式为 YYYY-MM-DD。
-2. institution: 检查机构名称。
-3. observations: 这是一个列表，每个项包含：
-   - metric_code: 固定为 "axial_length" (眼轴长度) 或其他识别到的指标（如 vision_acuity）。
-   - value_numeric: 数值（浮点数）。
-   - unit: 单位（如 mm, D）。
-   - side: "left" 或 "right" (如果适用)。
+请从这张图片中提取眼科检查数据，并以严格的 JSON 格式输出。
+注意：只需要输出 JSON，不要输出任何解释性文字，不要使用 markdown 代码块包裹。
 
-如果无法确定，请保持字段为空或 null。不要输出任何解释性文字，只输出符合格式的 JSON 对象。
-示例：
+必须提取的字段：
 {
-  "exam_date": "2026-03-31",
-  "institution": "某某眼科医院",
+  "exam_date": "YYYY-MM-DD 或 null",
+  "institution": "检查机构名称或 null",
   "observations": [
-    {"metric_code": "axial_length", "value_numeric": 23.45, "unit": "mm", "side": "left"},
-    {"metric_code": "axial_length", "value_numeric": 23.21, "unit": "mm", "side": "right"}
+    {"metric_code": "axial_length", "value_numeric": 24.35, "unit": "mm", "side": "right"},
+    {"metric_code": "axial_length", "value_numeric": 23.32, "unit": "mm", "side": "left"}
   ]
 }
+
+metric_code 只能是以下值之一：
+- axial_length (眼轴长度)
+- vision_acuity (视力)
+- height (身高)
+- weight (体重)
+- blood_glucose (血糖)
+- intraocular_pressure (眼压)
+
+如果无法确定某个字段，请使用 null。
+observations 数组至少要有一项有效的观测数据，否则审核会失败。
 """
 
 class OCROrchestrator:
@@ -136,17 +140,53 @@ class OCROrchestrator:
                 llm_text = result_json['choices'][0]['message']['content']
                 logger.debug(f"LLM 原始输出内容: {llm_text}")
                 
-                # 清理内容中的非法部分，通过正则提取最外层 {} 包裹的内容
-                cleaned_text = llm_text
-                match = re.search(r'(\{.*\}|\[.*\])', llm_text, re.DOTALL)
-                if match:
-                    cleaned_text = match.group(0)
-                else:
-                    # 原有的 markdown 处理作为兜底
-                    if "```json" in llm_text:
-                        cleaned_text = llm_text.split("```json")[1].split("```")[0].strip()
-                    elif "```" in llm_text:
-                        cleaned_text = llm_text.split("```")[1].split("```")[0].strip()
+                # 清理内容中的非法部分
+                cleaned_text = llm_text.strip()
+                
+                # 移除 markdown 代码块
+                if "```json" in cleaned_text:
+                    cleaned_text = cleaned_text.split("```json")[1].split("```")[0].strip()
+                elif "```" in cleaned_text:
+                    # 尝试找到 JSON 对象
+                    parts = cleaned_text.split("```")
+                    for part in parts:
+                        part = part.strip()
+                        if part.startswith('{') or part.startswith('['):
+                            cleaned_text = part
+                            break
+                
+                # 确保是有效的 JSON（可能有前后的文字说明）
+                # 查找第一个 { 或 [ 到最后一个 } 或 ] 的内容
+                json_start = min(
+                    cleaned_text.find('{') if '{' in cleaned_text else float('inf'),
+                    cleaned_text.find('[') if '[' in cleaned_text else float('inf')
+                )
+                if json_start != float('inf'):
+                    # 从找到的 { 或 [ 开始
+                    json_str = cleaned_text[json_start:]
+                    
+                    # 尝试找到匹配的结束括号
+                    if json_str.startswith('{'):
+                        # 找到匹配的 }
+                        depth = 0
+                        for i, c in enumerate(json_str):
+                            if c == '{':
+                                depth += 1
+                            elif c == '}':
+                                depth -= 1
+                            if depth == 0:
+                                cleaned_text = json_str[:i+1]
+                                break
+                    elif json_str.startswith('['):
+                        depth = 0
+                        for i, c in enumerate(json_str):
+                            if c == '[':
+                                depth += 1
+                            elif c == ']':
+                                depth -= 1
+                            if depth == 0:
+                                cleaned_text = json_str[:i+1]
+                                break
                 
                 try:
                     extracted_data = json.loads(cleaned_text)

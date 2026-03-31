@@ -1,7 +1,7 @@
 # 家庭检查单管理应用 - 每日开发日志 (2026-03-31)
 
-> **最后更新**: 2026-03-31 22:28 (自动同步)
-> **版本**: v1.3.0
+> **最后更新**: 2026-03-31 22:50
+> **版本**: v1.5.0
 
 ## 当前状态快照
 
@@ -37,6 +37,7 @@
 * [x] 72 个测试用例 (72 passed, 0 failed)
 * [x] TypeScript 零错误 (tsc --noEmit)
 * [x] 联调验证 8 个 API 端点
+* [x] E2E 全流程验证通过 (创建成员 → 上传 → OCR → 审核 → 趋势)
 
 ### 4. 规格文档 (8 个文件)
 * [x] PRD.md / UI_SPEC.md / API_CONTRACT.md / DATABASE_SCHEMA.md
@@ -59,7 +60,7 @@
 
 ---
 
-## 已修复缺陷 (BUG-004 ~ BUG-011)
+## 已修复缺陷 (BUG-004 ~ BUG-014)
 | 编号 | 问题 | 修复 |
 |:---|:---|:---|
 | BUG-004 | 脱敏未接入 OCR | ocr_orchestrator.py 新增脱敏步骤 |
@@ -70,6 +71,9 @@
 | BUG-009 | 测试引用已删除 Account | 修正 3 个测试文件 |
 | BUG-010 | 脱敏对非图片崩溃 | try/catch 兜底 |
 | BUG-011 | TimeoutError 未捕获 | 新增 except 分支 |
+| BUG-012 | DeepSeek-OCR 模型无法输出 JSON | 更换为 Qwen2.5-VL-32B-Instruct |
+| BUG-013 | JSON 解析正则无法处理嵌套 | 重写深度优先 JSON 提取逻辑 |
+| BUG-014 | 审核通过时 exam_date 无法修改 | 新增 revised_items 支持 exam_date |
 
 ---
 
