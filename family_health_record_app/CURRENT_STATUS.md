@@ -133,35 +133,49 @@
 
 ## 三、生产部署准备清单 (下个会话启动)
 
-### 3.1 环境配置
-- [ ] PostgreSQL 数据库创建与配置
-- [ ] Alembic 迁移脚本生成与执行
-- [ ] 环境变量配置文件 (.env.production)
-- [ ] SILICONFLOW_API_KEY 生产密钥获取
-- [ ] MinIO 生产实例部署
+### 3.1 最小化部署（内网低频使用）
 
-### 3.2 安全加固
-- [ ] CORS 白名单限制（移除 localhost:*）
-- [ ] 请求速率限制（防止滥用）
-- [ ] 日志脱敏（不记录原始图片内容）
-- [ ] 数据库连接加密
+**唯一目标**: 让内网同事能用浏览器打开并正常使用全部功能。
 
-### 3.3 监控告警
-- [ ] 健康检查端点 `/health` 集成监控
-- [ ] OCR 接口超时告警（>30s）
-- [ ] MinIO 存储空间告警（>80%）
-- [ ] 数据库连接池告警
+- [ ] PostgreSQL 数据库创建与配置（或继续用 SQLite）
+- [ ] Alembic 迁移脚本生成与执行（如选 PostgreSQL）
+- [ ] 后端启动: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
+- [ ] 前端启动: `npm run dev` 或 `npm run build && npm start`
+- [ ] 确认 72 个测试通过
+- [ ] 手动验证核心流程：创建成员 → 上传 → 审核 → 趋势查看
 
-### 3.4 部署脚本
-- [ ] Docker Compose 配置（后端 + MinIO + PostgreSQL）
-- [ ] 前端构建脚本（next build）
-- [ ] 启动脚本（uvicorn + gunicorn）
+### 3.2 不做（内网场景暂不需要）
 
-### 3.5 验收测试
-- [ ] 全量 pytest 执行（72 测试通过）
-- [ ] TypeScript 编译检查
-- [ ] 手动执行核心流程：创建成员 → 上传 → 审核 → 趋势查看
-- [ ] 性能测试：并发上传 10 张图片
+| 项目 | 原因 |
+|:---|:---|
+| CORS 白名单限制 | 内网安全，无需限制 |
+| 请求速率限制 | 极低频使用，无需限流 |
+| 日志脱敏 | 内网自用，隐私要求低 |
+| 数据库连接加密 | 内网环境，无外部风险 |
+| 监控告警 | 低频使用，人工巡检即可 |
+| Docker 容器化 | 简单直接部署，无需容器 |
+| 性能测试 | 极低频，单用户场景 |
+
+### 3.3 快速启动方式（推荐）
+
+```bash
+# 后端
+cd family_health_record_app/backend
+pip install -r requirements.txt  # 或 poetry install
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# 前端
+cd family_health_record_app/frontend
+npm install
+npm run dev
+
+# 访问
+# 内网同事访问: http://<服务器IP>:3000
+```
+
+**数据库**: 默认 SQLite，文件名 `health_record.db`，自动创建。
+**存储**: 默认本地 `uploads/` 目录，MinIO 自动降级。
+**OCR**: 需设置 `SILICONFLOW_API_KEY` 环境变量。
 
 ---
 
