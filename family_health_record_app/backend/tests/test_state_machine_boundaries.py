@@ -1,47 +1,9 @@
-import pytest
-import pytest_asyncio
 from uuid import UUID
-from httpx import AsyncClient, ASGITransport
+
+import pytest
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy.pool import StaticPool
 
-from app.db import get_db
-from app.main import app
-from app.models.base import Base
-from app.models.member import Account, MemberProfile
-from app.models.document import DocumentRecord, OCRExtractionResult, ReviewTask
-from app.models.observation import ExamRecord, Observation, DerivedMetric
-
-
-@pytest_asyncio.fixture
-async def state_client():
-    engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-
-    async def override_get_db():
-        async with session_factory() as session:
-            try:
-                yield session
-                await session.commit()
-            except Exception:
-                await session.rollback()
-                raise
-            finally:
-                await session.close()
-
-    app.dependency_overrides[get_db] = override_get_db
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
-        yield client, session_factory
-    app.dependency_overrides.clear()
-    await engine.dispose()
+from app.models.document import ReviewTask
 
 
 @pytest.mark.asyncio
@@ -51,7 +13,6 @@ async def test_rule_conflict_generates_single_review_task(state_client, monkeypa
     member_resp = await client.post(
         "/api/v1/members",
         json={
-            "phone_or_email": "rule-conflict@test.com",
             "name": "冲突成员",
             "gender": "female",
             "date_of_birth": "2018-01-01",
@@ -101,7 +62,6 @@ async def test_invalid_exam_date_from_ocr_should_not_500(state_client, monkeypat
     member_resp = await client.post(
         "/api/v1/members",
         json={
-            "phone_or_email": "invalid-date@test.com",
             "name": "日期异常成员",
             "gender": "male",
             "date_of_birth": "2018-01-01",

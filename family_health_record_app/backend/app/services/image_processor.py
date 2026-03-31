@@ -6,8 +6,13 @@ def desensitize_image(image_bytes: bytes, mask_top_percent: float = 0.15, mask_b
     """
     对图像执行脱敏处理，遮盖顶部和底部的敏感区域。
     默认遮盖顶部 15% 和底部 10%。
+    如果输入不是有效图片，直接返回原始字节。
     """
-    img = Image.open(io.BytesIO(image_bytes))
+    try:
+        img = Image.open(io.BytesIO(image_bytes))
+    except Exception:
+        return image_bytes
+
     width, height = img.size
     draw = ImageDraw.Draw(img)
 
