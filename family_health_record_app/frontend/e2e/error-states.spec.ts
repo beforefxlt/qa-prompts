@@ -11,6 +11,10 @@ test('指标切换 - 点击不同指标标签', async ({ page, request }) => {
   // 进入成员 Dashboard
   await page.goto(`/?memberId=${memberData.id}&memberName=指标测试成员`);
   
+  // 等待页面加载完成
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  
   // 验证默认显示眼轴
   await expect(page.getByText('儿童眼轴 (Axial Length)')).toBeVisible();
   
@@ -37,6 +41,10 @@ test('趋势图 - 无数据时显示空状态', async ({ page, request }) => {
 
   await page.goto(`/?memberId=${memberData.id}&memberName=空数据成员`);
   
+  // 等待页面加载完成
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  
   // 应该显示空数据提示
   await expect(page.getByText('暂无数据')).toBeVisible();
 });
@@ -49,6 +57,10 @@ test('错误态 - 网络断开时提示', async ({ page, request }) => {
   const memberData = await memberResp.json();
 
   await page.goto(`/?memberId=${memberData.id}&memberName=网络测试成员`);
+  
+  // 等待页面加载完成
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   
   // 模拟网络断开
   await page.route('**/api/v1/**', route => route.abort('failed'));
@@ -71,6 +83,10 @@ test('OCR 失败 - 显示手工录入表单', async ({ page, request }) => {
   const memberData = await memberResp.json();
 
   await page.goto(`/?memberId=${memberData.id}&memberName=OCR失败成员`);
+  
+  // 等待页面加载完成
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   
   // 点击模拟接口状态按钮切换到 ERROR
   await page.getByRole('button', { name: /模拟接口状态/ }).click();

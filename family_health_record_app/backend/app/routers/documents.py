@@ -291,3 +291,41 @@ async def submit_ocr(document_id: UUID, db: AsyncSession = Depends(get_db)):
         document.status = "persisted"
 
     return {"document_id": str(document.id), "status": document.status}
+
+
+@router.get("/records/{record_id}", response_model=Dict[str, Any])
+async def get_exam_record(record_id: UUID, db: AsyncSession = Depends(get_db)):
+    stmt = (
+        select(ExamRecord)
+        .options(
+            selectinload(ExamRecord.observations),
+            selectinload(ExamRecord.document)
+        )
+        .where(ExamRecord.id == record_id)
+    )
+    record = await db.scalar(stmt)
+    if record is None:
+        raise HTTPException(status_code=404, detail="检查记录不存在")
+    
+    return {
+        "id": str(record.id),
+        "exam_date": record.exam_date.isoformat(),
+        "institution": record.institution_name,
+        "document": {
+            "id": str(record.document.id),
+            "desensitized_url": record.document.desensitized_url,
+            "file_url": record.document.file_url,
+        } if record.document else None,
+        "observations": [
+            {
+                "metric_code": obs.metric_code,
+                "value_numeric": obs.value_numeric,
+                "value_text": obs.value_text,
+                "unit": obs.unit,
+                "side": obs.side,
+                "is_abnormal": obs.is_abnormal,
+            }
+            for obs in record.observations
+        ]
+    }
+

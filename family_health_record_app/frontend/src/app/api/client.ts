@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8001/api/v1';
+const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
 
 async function handleResponse(res: Response) {
   if (!res.ok) {
@@ -127,4 +127,10 @@ export const apiClient = {
     const res = await fetch(`${API_BASE_URL}/members/${memberId}/growth-dashboard`);
     return handleResponse(res);
   },
+
+  getExamRecord: async (recordId: string) => {
+    const res = await fetch(`${API_BASE_URL}/documents/records/${recordId}`);
+    return handleResponse(res);
+  },
 };
+

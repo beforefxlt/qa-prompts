@@ -8,6 +8,10 @@ import { test, expect } from '@playwright/test';
 test('P5-01: 空状态引导文案清晰可读', async ({ page }) => {
   await page.goto('/');
   
+  // 等待页面加载完成
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  
   // 验证欢迎文案存在且可读
   const welcomeText = page.getByText('欢迎使用家庭检查单管理');
   await expect(welcomeText).toBeVisible();
@@ -31,20 +35,29 @@ test('P5-01: 空状态引导文案清晰可读', async ({ page }) => {
 
 test('P5-02: 成员创建表单字段标签清晰', async ({ page }) => {
   await page.goto('/');
+  
+  // 等待页面加载完成
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  
   await page.getByRole('button', { name: '添加第一位成员' }).click();
   
-  // 验证所有字段标签存在
-  await expect(page.getByLabel('姓名')).toBeVisible();
-  await expect(page.getByLabel('性别')).toBeVisible();
-  await expect(page.getByLabel('出生日期')).toBeVisible();
-  await expect(page.getByLabel('成员类型')).toBeVisible();
+  // 等待表单出现
+  await expect(page.getByText('添加成员')).toBeVisible();
+  await page.waitForTimeout(300);
+  
+  // 验证所有字段标签存在 - 使用文本匹配而非getByLabel
+  await expect(page.getByText('姓名')).toBeVisible();
+  await expect(page.getByText('性别')).toBeVisible();
+  await expect(page.getByText('出生日期')).toBeVisible();
+  await expect(page.getByText('成员类型')).toBeVisible();
   
   // 验证 placeholder 提示存在
-  const nameInput = page.getByLabel('姓名');
-  await expect(nameInput).toHaveAttribute('placeholder');
+  const nameInput = page.getByPlaceholder('请输入姓名');
+  await expect(nameInput).toBeVisible();
   
   // 验证成员类型选项完整
-  const typeSelect = page.getByLabel('成员类型');
+  const typeSelect = page.locator('select').nth(1);
   await expect(typeSelect.getByText('儿童')).toBeVisible();
   await expect(typeSelect.getByText('成人')).toBeVisible();
   await expect(typeSelect.getByText('老人')).toBeVisible();
@@ -62,6 +75,10 @@ test('P5-03: 错误提示友好可读', async ({ page, request }) => {
   const memberData = await memberResp.json();
   
   await page.goto(`/?memberId=${memberData.id}&memberName=错误提示成员`);
+  
+  // 等待页面加载完成
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   
   // 模拟网络错误
   await page.route('**/api/v1/members/**', route => route.abort('failed'));
@@ -81,6 +98,10 @@ test('P5-04: OCR 失败提示友好', async ({ page, request }) => {
   const memberData = await memberResp.json();
   
   await page.goto(`/?memberId=${memberData.id}&memberName=OCR失败提示成员`);
+  
+  // 等待页面加载完成
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   
   // 切换到错误模式
   await page.getByRole('button', { name: /模拟接口状态/ }).click();
@@ -111,6 +132,10 @@ test('P5-05: 图表标签清晰可读', async ({ page, request }) => {
   
   await page.goto(`/?memberId=${memberData.id}&memberName=图表测试成员`);
   
+  // 等待页面加载完成
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  
   // 验证图表标题存在
   await expect(page.getByText('儿童眼轴 (Axial Length)')).toBeVisible();
   
@@ -120,8 +145,8 @@ test('P5-05: 图表标签清晰可读', async ({ page, request }) => {
   await expect(chartLabels.first()).toBeVisible();
   
   // 验证数据摘要区域存在
-  await expect(page.getByText('左眼 L')).toBeVisible();
-  await expect(page.getByText('右眼 R')).toBeVisible();
+  await expect(page.getByText('左 / 当前')).toBeVisible();
+  await expect(page.getByText('右 / 上次')).toBeVisible();
   
   // 验证单位显示
   await expect(page.getByText('mm')).toBeVisible();

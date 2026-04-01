@@ -1,8 +1,8 @@
 # 家庭检查单管理应用 - 当前状态与下一步计划
 
-> **最后更新**: 2026-03-31 22:50
-> **版本**: v1.5.0
-> **测试状态**: 72 passed, 0 failed, 覆盖率 54%, E2E 流程验证通过
+> **最后更新**: 2026-04-01 10:05
+> **版本**: v2.0.0 (前端完备性重构版)
+> **测试状态**: 72 passed, 0 failed, 覆盖率 54%, 类型检查通过
 
 ---
 
@@ -21,13 +21,17 @@
 | 图像处理 | ✅ 完成 | `services/image_processor.py` (try/catch兜底) |
 | 存储客户端 | ✅ 完成 | `services/storage_client.py` (MinIO boto3) |
 
-### 2. 前端 (Next.js 15 + TypeScript)
-| 模块 | 状态 | 文件 |
+### 2. 前端 (Next.js 15 + App Router)
+| 模块 | 状态 | 文件/路由 |
 |:---|:---|:---|
-| 首页 | ✅ 完成 | `page.tsx` (空状态/成员列表/指标切换/编辑/删除) |
-| 审核页 | ✅ 完成 | `review/page.tsx` (双栏布局/冲突标红/三色置信度) |
-| API客户端 | ✅ 完成 | `api/client.ts` (17个方法) |
-| TypeScript | ✅ 零错误 | `tsc --noEmit` 通过 |
+| 首页列表 | ✅ 完成 | `src/app/page.tsx` (精简列表页) |
+| 成员看板 | ✅ 完成 | `src/app/members/[id]/page.tsx` (聚合看板) |
+| 成员管理 | ✅ 完成 | `src/app/members/new/page.tsx`, `edit/page.tsx` |
+| 趋势详情 | ✅ 完成 | `src/app/members/[id]/trends/page.tsx` |
+| 记录详情 | ✅ 完成 | `src/app/members/[id]/records/[recordId]/page.tsx` |
+| 审核工作流 | ✅ 完成 | `src/review/page.tsx` (双栏布局/冲突标红) |
+| API 客户端 | ✅ 完成 | `src/app/api/client.ts` (新增详情接口支持) |
+| 工程化 | ✅ 完成 | `tsconfig.json` (@/ 路径别名配置) |
 
 ### 3. 测试
 | 类型 | 用例数 | 状态 |
@@ -61,20 +65,14 @@
 | exploratory_testing_scenarios.md | 67个探索性测试场景 |
 | requirements_verification.md | 17项需求核验(6✅/11⚠️) |
 
-### 6. 已修复缺陷 (11个: BUG-004 ~ BUG-014)
-| 编号 | 问题 | 修复 |
-|:---|:---|:---|
-| BUG-004 | 脱敏未接入OCR | ocr_orchestrator.py新增脱敏步骤 |
-| BUG-005 | 旧DB schema残留 | 删除health_record.db |
-| BUG-006 | 趋势仅覆盖眼轴 | 9指标切换标签 |
-| BUG-007 | 成员编辑无UI | 编辑弹窗+删除按钮 |
-| BUG-008 | 文件名并发覆盖 | UUID唯一文件名 |
-| BUG-009 | 测试引用已删除Account | 修正3个测试文件 |
-| BUG-010 | 脱敏对非图片崩溃 | try/catch兜底 |
-| BUG-011 | TimeoutError未捕获 | 新增except分支 |
-| BUG-012 | DeepSeek-OCR模型无法输出JSON | 更换为Qwen2.5-VL-32B-Instruct |
-| BUG-013 | JSON解析正则无法处理嵌套 | 重写深度优先JSON提取逻辑 |
-| BUG-014 | 审核通过时exam_date无法修改 | 新增revised_items支持exam_date |
+### 6. 缺陷治理 (Defect Governance)
+
+本项目共修复 **17 个** 已知缺陷 (`BUG-001` ~ `BUG-017`)，涵盖架构偏离、隐私合规、模型幻觉及业务闭环四大维度。
+
+> [!NOTE]
+> 详细的根因分析、排查过程与修复方案已归档至 [缺陷与诊断排查记录 (Bug Log)](file:///c:/Users/Administrator/qa-prompts/family_health_record_app/docs/BUG_LOG.md)。
+
+---
 
 ---
 
@@ -143,7 +141,7 @@ npm install
 npm run dev
 
 # 访问
-# 内网同事访问: http://<服务器IP>:3000
+# 内网同事访问: http://<服务器IP>:3001
 ```
 
 **数据库**: 默认 SQLite，文件名 `health_record.db`，自动创建。
@@ -209,10 +207,20 @@ family_health_record_app/
 │   │   └── services/           # 4个服务文件
 │   └── tests/                  # 9个测试文件 (32用例)
 ├── frontend/
-│   └── src/app/
-│       ├── page.tsx            # 首页
-│       ├── review/page.tsx     # 审核页
-│       └── api/client.ts       # API 客户端
+│   ├── tsconfig.json           # 包含 @/ 别名配置
+│   └── src/
+│       ├── components/         # 3个核心提取组件 (TrendChart, MemberForm, UploadOverlay)
+│       └── app/
+│           ├── page.tsx        # 首页引导/列表
+│           ├── api/client.ts   # 集成 vision/growth/record 详情接口
+│           └── members/        # [NEW] 路由解耦层
+│               ├── new/        # 创建成员
+│               └── [id]/       
+│                   ├── page.tsx       # Dashboard 看板
+│                   ├── edit/          # 成员档案管理
+│                   ├── trends/        # 趋势详情页
+│                   └── records/
+│                       └── [recordId]/ # 单次记录详情页
 └── docs/specs/                 # 8个规格文档
 ```
 

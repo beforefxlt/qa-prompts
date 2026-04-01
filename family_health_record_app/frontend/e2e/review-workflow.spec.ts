@@ -22,9 +22,12 @@ test('审核流程 - 创建审核任务并完成审核', async ({ page, request 
   expect(uploadResp.ok()).toBeTruthy();
   const uploadData = await uploadResp.json();
 
-  // 3. 提交 OCR (mock 返回 rule_conflict)
+  // 3. 提交 OCR
   const submitResp = await request.post(`http://127.0.0.1:8000/api/v1/documents/${uploadData.document_id}/submit-ocr`);
   expect(submitResp.ok()).toBeTruthy();
+
+  // 等待OCR处理完成
+  await page.waitForTimeout(2000);
 
   // 4. 检查审核任务列表
   const tasksResp = await request.get('http://127.0.0.1:8000/api/v1/review-tasks');
@@ -34,7 +37,11 @@ test('审核流程 - 创建审核任务并完成审核', async ({ page, request 
   // 5. 访问审核页
   await page.goto('/review');
   
-  // 应该看到审核任务列表或空状态
+  // 等待页面加载完成
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  
+  // 应该看到审核页面标题
   await expect(page.getByText('OCR 识别结果审核')).toBeVisible();
 });
 
@@ -59,8 +66,15 @@ test('审核页 - 查看审核任务详情', async ({ page, request }) => {
 
   await request.post(`http://127.0.0.1:8000/api/v1/documents/${uploadData.document_id}/submit-ocr`);
 
+  // 等待OCR处理完成
+  await page.waitForTimeout(2000);
+
   // 访问审核页
   await page.goto('/review');
+  
+  // 等待页面加载完成
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
   
   // 验证页面基本元素
   await expect(page.getByText('OCR 识别结果审核')).toBeVisible();

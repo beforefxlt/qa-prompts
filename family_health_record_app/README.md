@@ -34,22 +34,17 @@
 family_health_record_app/
 ├── README.md
 ├── backend/                    # FastAPI 服务与 OCR/规则引擎实现入口
-├── frontend/                   # Next.js 前端与图表交互实现入口
+├── frontend/                   # Next.js 15 App Router 实现 (v2.0.0 路由解耦)
+│   ├── src/app/
+│   │   ├── members/            # [NEW] 路由解耦层 (new/edit/trends/records)
+│   │   └── api/client.ts       # 19 个业务接口实现
+│   └── src/components/         # 核心组件 (TrendChart/MemberForm/UploadOverlay)
 ├── infra/                      # Docker Compose 与部署编排
-├── tests/                      # 跨层测试资产说明
-├── datasets/
-│   └── ocr_golden_set/         # OCR 回归样本集说明
 └── docs/
-    └── specs/
-        ├── PRD.md
-        ├── UI_SPEC.md
-        ├── ARCHITECTURE.md
-        ├── DATABASE_SCHEMA.md
-        ├── API_CONTRACT.md
-        ├── OCR_SCHEMA.md
-        ├── TEST_STRATEGY.md
-        └── IMPLEMENTATION_PLAN.md
+    ├── BUG_LOG.md              # [SSOT] 17 个缺陷根因分析
+    └── specs/                  # 8 个规格文档 (已标记 v2.0.0 完备性)
 ```
+
 
 ## 技术基线
 

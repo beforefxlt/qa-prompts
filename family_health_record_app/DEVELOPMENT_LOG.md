@@ -60,20 +60,11 @@
 
 ---
 
-## 已修复缺陷 (BUG-004 ~ BUG-014)
-| 编号 | 问题 | 修复 |
-|:---|:---|:---|
-| BUG-004 | 脱敏未接入 OCR | ocr_orchestrator.py 新增脱敏步骤 |
-| BUG-005 | 旧 DB schema 残留 | 删除 health_record.db |
-| BUG-006 | 趋势仅覆盖眼轴 | 9 指标切换标签 |
-| BUG-007 | 成员编辑无 UI | 编辑弹窗 + 删除按钮 |
-| BUG-008 | 文件名并发覆盖 | UUID 唯一文件名 |
-| BUG-009 | 测试引用已删除 Account | 修正 3 个测试文件 |
-| BUG-010 | 脱敏对非图片崩溃 | try/catch 兜底 |
-| BUG-011 | TimeoutError 未捕获 | 新增 except 分支 |
-| BUG-012 | DeepSeek-OCR 模型无法输出 JSON | 更换为 Qwen2.5-VL-32B-Instruct |
-| BUG-013 | JSON 解析正则无法处理嵌套 | 重写深度优先 JSON 提取逻辑 |
-| BUG-014 | 审核通过时 exam_date 无法修改 | 新增 revised_items 支持 exam_date |
+## 缺陷与治理
+- **累计修复**: 17 个 (BUG-001 ~ BUG-017)
+- **详情归档**: [BUG_LOG.md](file:///c:/Users/Administrator/qa-prompts/family_health_record_app/docs/BUG_LOG.md)
+
+---
 
 ---
 

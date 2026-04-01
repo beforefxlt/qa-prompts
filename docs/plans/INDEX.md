@@ -31,6 +31,7 @@
 | `docs/plans/2026-03-25-reviewer-agent-workflow-design.md` | 设计说明 | 说明 `reviewer-agent` 接入主工作流的设计动机与影响范围 |
 | `docs/plans/2026-03-24-factory-inspection-design.md` | 架构设计 | 较早期的工厂检测案例设计说明 |
 | `docs/plans/2026-03-30-family-health-record-app-workflow-design.md` | 工作流设计 | 说明家庭检查单管理应用的规格冻结、测试门禁与 Subagent 协作方式 |
+| `docs/plans/2026-04-01-workflow-v2-retrospective.md` | 复盘改进 | 基于 v1.5.0 实践的工作流 v2.0.0 升级设计说明（拆分 UI 步骤、硬门禁、页面完整性检查） |
 
 ## 与其他文档的关系
 
