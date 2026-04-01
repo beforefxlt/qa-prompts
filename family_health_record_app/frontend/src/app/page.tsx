@@ -4,25 +4,36 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   User, Plus, ChevronRight, Settings, 
-  FileText, AlertCircle, TrendingUp, Calendar
+  FileText, AlertCircle, TrendingUp, Calendar,
+  RotateCcw
 } from 'lucide-react';
-import { apiClient } from './api/client';
+import { apiClient } from '@/app/api/client';
 
 export default function HomePage() {
   const router = useRouter();
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    loadMembers();
+    setIsMounted(true);
+    // 延迟加载以确保 Hydration 完成
+    const timer = setTimeout(() => {
+      loadMembers();
+    }, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   const loadMembers = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const data = await apiClient.getMembers();
       setMembers(data || []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load members:', err);
+      setError(err.message || '无法连接到服务器，请检查后端状态');
     } finally {
       setLoading(false);
     }
@@ -40,18 +51,56 @@ export default function HomePage() {
     senior: 'bg-amber-100 text-amber-700 border-amber-200',
   };
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="animate-pulse flex flex-col items-center gap-4">
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-           <TrendingUp size={32} />
+  // 严格的 Hydration 保护：挂载前绝对不渲染任何动态内容
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center gap-2">
+          <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-500">
+            <TrendingUp size={24} />
+          </div>
+          <div className="h-2 w-16 bg-slate-200 rounded"></div>
         </div>
-        <p className="text-slate-400 font-bold text-sm tracking-widest uppercase">加载中...</p>
       </div>
-    </div>
-  );
+    );
+  }
 
-  // 1. 空状态 (3.0 规格)
+  if (error) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+        <div className="glass-card rounded-[40px] p-10 max-w-md w-full space-y-6 shadow-2xl">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto text-red-500">
+            <AlertCircle size={40} />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-xl font-bold text-slate-800">服务连接异常</h1>
+            <p className="text-slate-500 text-sm leading-relaxed">{error}</p>
+          </div>
+          <button
+            onClick={loadMembers}
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
+          >
+            <RotateCcw size={20} />
+            <span>重试连接</span>
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+             <TrendingUp size={32} />
+          </div>
+          <p className="text-slate-400 font-bold text-xs tracking-widest uppercase">SYMBOLS LOADING</p>
+        </div>
+      </div>
+    );
+  }
+
   if (members.length === 0) {
     return (
       <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
@@ -61,22 +110,23 @@ export default function HomePage() {
             </div>
             <div className="space-y-4">
               <h1 className="text-2xl font-bold text-slate-800 tracking-tight">欢迎使用家庭检查单管理</h1>
-              <p className="text-slate-500 text-sm leading-relaxed">
-                记录家人健康足迹，从添加第一位成员开始。<br/>我们将为您智能分析眼轴、身高、体重等核心指标趋势。
-              </p>
+              <div className="text-slate-500 text-sm leading-relaxed space-y-1">
+                <p>记录家人健康足迹，从添加第一位成员开始。</p>
+                <p>我们将为您智能分析眼轴、身高、体重等核心指标趋势。</p>
+              </div>
             </div>
             <button
               onClick={() => router.push('/members/new')}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-[24px] font-bold shadow-xl shadow-blue-500/30 active:scale-95 transition-all text-lg flex items-center justify-center gap-2"
             >
-              <Plus size={24} /> 添加第一位成员
+              <Plus size={24} />
+              <span>添加第一位成员</span>
             </button>
          </div>
       </main>
     );
   }
 
-  // 2. 列表态 (3.1 规格)
   return (
     <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 bg-slate-50 min-h-screen pb-20">
       <header className="flex items-center justify-between px-2">

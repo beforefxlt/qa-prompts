@@ -13,7 +13,7 @@ from ..models.member import MemberProfile
 from ..models.document import DocumentRecord, OCRExtractionResult, ReviewTask
 from ..models.observation import ExamRecord, Observation, DerivedMetric
 
-router = APIRouter(prefix="/api/v1/review-tasks", tags=["review"])
+router = APIRouter(prefix="/review-tasks", tags=["review"])
 
 
 class ReviewTaskResponse(BaseModel):

@@ -6,7 +6,7 @@ test('空状态引导 - 首次使用创建成员', async ({ page }) => {
   
   // 应该看到空状态引导页
   await expect(page.getByText('欢迎使用家庭检查单管理')).toBeVisible();
-  await expect(page.getByText('请先添加家庭成员')).toBeVisible();
+  await expect(page.getByText('记录家人健康足迹')).toBeVisible();
   await expect(page.getByRole('button', { name: '添加第一位成员' })).toBeVisible();
   
   // 点击添加成员
@@ -21,14 +21,15 @@ test('空状态引导 - 首次使用创建成员', async ({ page }) => {
   // 性别选择 - 使用select定位
   await page.locator('select').first().selectOption('男');
   
-  // 出生日期 - 使用type=date定位
-  await page.locator('input[type="date"]').first().fill('2018-06-15');
+  // 出生年月 - 选择年份和月份
+  await page.locator('select').nth(1).selectOption('2018');
+  await page.locator('select').nth(2).selectOption('6');
   
-  // 成员类型 - 使用第二个select
-  await page.locator('select').nth(1).selectOption('child');
+  // 成员类型 - 使用第三个select
+  await page.locator('select').nth(3).selectOption('child');
   
   // 提交
-  await page.getByRole('button', { name: '保存' }).click();
+  await page.getByRole('button', { name: '保存并开始记录' }).click();
   
   // 等待页面跳转和加载
   await page.waitForTimeout(1000);
@@ -89,7 +90,7 @@ test('成员编辑 - 修改成员信息', async ({ page, request }) => {
   
   // 修改名称 - 使用placeholder定位
   await page.getByPlaceholder('请输入姓名').fill('已编辑');
-  await page.getByRole('button', { name: '保存修改' }).click();
+  await page.getByRole('button', { name: '保存并开始记录' }).click();
   
   // 等待更新完成
   await page.waitForTimeout(1000);

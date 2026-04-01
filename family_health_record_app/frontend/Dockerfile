@@ -31,6 +31,6 @@ COPY --from=builder /app/tailwind.config.ts ./
 COPY --from=builder /app/postcss.config.mjs ./
 COPY --from=builder /app/tsconfig.json ./
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["npm", "start"]

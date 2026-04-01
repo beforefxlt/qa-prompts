@@ -1,6 +1,4 @@
-'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, User, Heart, Baby, Accessibility } from 'lucide-react';
 
 export type MemberType = 'child' | 'adult' | 'senior';
@@ -26,20 +24,35 @@ export const MemberForm: React.FC<MemberFormProps> = ({
   title,
   submitLabel,
 }) => {
+  const [isMounted, setIsMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     gender: initialData?.gender || '男',
-    date_of_birth: initialData?.date_of_birth || '',
+    birthYear: initialData?.date_of_birth ? initialData.date_of_birth.split('-')[0] : '',
+    birthMonth: initialData?.date_of_birth ? parseInt(initialData.date_of_birth.split('-')[1]).toString() : '',
     member_type: initialData?.member_type || 'child',
   });
 
-  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.birthYear || !formData.birthMonth) {
+      alert('请选择完整的出生年月');
+      return;
+    }
+    
     setLoading(true);
     try {
-      await onSubmit(formData);
+      const formattedDate = `${formData.birthYear}-${formData.birthMonth.padStart(2, '0')}-01`;
+      await onSubmit({
+        ...formData,
+        date_of_birth: formattedDate
+      });
     } catch (err) {
       console.error('Submit failed:', err);
     } finally {
@@ -47,8 +60,20 @@ export const MemberForm: React.FC<MemberFormProps> = ({
     }
   };
 
+  if (!isMounted) {
+    return (
+      <div className="glass-card rounded-3xl p-6 md:p-8 flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 120 }, (_, i) => currentYear - i);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+
   return (
-    <div className="glass-card rounded-3xl p-6 md:p-8 space-y-6">
+    <div className="glass-card rounded-3xl p-6 md:p-8 space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="bg-blue-50 p-2 rounded-xl text-blue-600">
@@ -101,14 +126,27 @@ export const MemberForm: React.FC<MemberFormProps> = ({
         </div>
 
         <div>
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2 px-1">出生日期</label>
-          <input
-            type="date"
-            required
-            value={formData.date_of_birth}
-            onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-            className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 transition-all focus:bg-white focus:border-blue-500/20 outline-none font-medium text-slate-600"
-          />
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2 px-1">出生年月</label>
+          <div className="grid grid-cols-2 gap-4">
+            <select
+              value={formData.birthYear}
+              onChange={(e) => setFormData({ ...formData, birthYear: e.target.value })}
+              className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 transition-all focus:bg-white focus:border-blue-500/20 outline-none font-medium"
+              required
+            >
+              <option value="">年份</option>
+              {years.map(y => <option key={y} value={y}>{y} 年</option>)}
+            </select>
+            <select
+              value={formData.birthMonth}
+              onChange={(e) => setFormData({ ...formData, birthMonth: e.target.value })}
+              className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 transition-all focus:bg-white focus:border-blue-500/20 outline-none font-medium"
+              required
+            >
+              <option value="">月份</option>
+              {months.map(m => <option key={m} value={m}>{m} 月</option>)}
+            </select>
+          </div>
         </div>
 
         <div className="pt-4 flex gap-3">
@@ -124,7 +162,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
             disabled={loading}
             className="flex-[2] bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white py-4 px-8 rounded-2xl font-bold shadow-xl shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
-            {loading ? '正在保存...' : submitLabel}
+            {loading ? <span>正在保存...</span> : <span>保存并开始记录</span>}
           </button>
         </div>
       </form>

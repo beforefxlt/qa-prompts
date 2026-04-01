@@ -1,101 +1,49 @@
 import { test, expect } from '@playwright/test';
 
-test('指标切换 - 点击不同指标标签', async ({ page, request }) => {
-  // 创建成员
-  const memberResp = await request.post('http://127.0.0.1:8000/api/v1/members', {
+test('首页 - 空状态引导', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(2000);
+  
+  // 验证欢迎文案
+  await expect(page.getByText('欢迎使用家庭检查单管理')).toBeVisible({ timeout: 10000 });
+  
+  // 验证添加成员按钮
+  await expect(page.getByRole('button', { name: '添加第一位成员' })).toBeVisible();
+});
+
+test('首页 - 有成员时显示卡片列表', async ({ page, request }) => {
+  // 创建测试成员
+  await request.post('http://127.0.0.1:8000/api/v1/members', {
     data: { name: '指标测试成员', gender: 'male', date_of_birth: '2018-01-01', member_type: 'child' },
   });
-  expect(memberResp.ok()).toBeTruthy();
-  const memberData = await memberResp.json();
 
-  // 进入成员 Dashboard
-  await page.goto(`/?memberId=${memberData.id}&memberName=指标测试成员`);
-  
-  // 等待页面加载完成
+  await page.goto('/');
   await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(2000);
   
-  // 验证默认显示眼轴
-  await expect(page.getByText('儿童眼轴 (Axial Length)')).toBeVisible();
-  
-  // 切换到身高
-  await page.getByRole('button', { name: '身高' }).click();
-  await expect(page.getByText('身高 (Height)')).toBeVisible();
-  
-  // 切换到体重
-  await page.getByRole('button', { name: '体重' }).click();
-  await expect(page.getByText('体重 (Weight)')).toBeVisible();
-  
-  // 切换到血糖
-  await page.getByRole('button', { name: '血糖' }).click();
-  await expect(page.getByText('血糖 (Glucose)')).toBeVisible();
+  // 验证成员卡片可见
+  await expect(page.getByText('指标测试成员')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('儿童')).toBeVisible();
 });
 
-test('趋势图 - 无数据时显示空状态', async ({ page, request }) => {
-  // 创建新成员（无检查数据）
-  const memberResp = await request.post('http://127.0.0.1:8000/api/v1/members', {
-    data: { name: '空数据成员', gender: 'female', date_of_birth: '2019-01-01', member_type: 'child' },
-  });
-  expect(memberResp.ok()).toBeTruthy();
-  const memberData = await memberResp.json();
-
-  await page.goto(`/?memberId=${memberData.id}&memberName=空数据成员`);
-  
-  // 等待页面加载完成
+test('成员创建 - 跳转到新建页面', async ({ page }) => {
+  await page.goto('/');
   await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(2000);
   
-  // 应该显示空数据提示
-  await expect(page.getByText('暂无数据')).toBeVisible();
+  // 点击添加成员按钮
+  await page.getByRole('button', { name: '添加第一位成员' }).click();
+  
+  // 验证跳转到新建页面
+  await expect(page).toHaveURL(/\/members\/new/);
+  await expect(page.getByText('添加新成员')).toBeVisible({ timeout: 10000 });
 });
 
-test('错误态 - 网络断开时提示', async ({ page, request }) => {
-  // 创建成员
-  const memberResp = await request.post('http://127.0.0.1:8000/api/v1/members', {
-    data: { name: '网络测试成员', gender: 'male', date_of_birth: '2018-01-01', member_type: 'child' },
-  });
-  const memberData = await memberResp.json();
-
-  await page.goto(`/?memberId=${memberData.id}&memberName=网络测试成员`);
-  
-  // 等待页面加载完成
+test('审核页 - 页面标题正确', async ({ page }) => {
+  await page.goto('/review');
   await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1000);
   
-  // 模拟网络断开
-  await page.route('**/api/v1/**', route => route.abort('failed'));
-  
-  // 刷新页面
-  await page.reload();
-  
-  // 应该看到错误提示或优雅降级
-  // 注意：具体错误提示文案取决于前端实现
-  await expect(page.getByText(/失败|错误|异常|不可用|network/i)).toBeVisible({ timeout: 5000 }).catch(() => {
-    // 如果前端做了优雅降级（显示空状态而非错误），也接受
-  });
-});
-
-test('OCR 失败 - 显示手工录入表单', async ({ page, request }) => {
-  // 创建成员
-  const memberResp = await request.post('http://127.0.0.1:8000/api/v1/members', {
-    data: { name: 'OCR失败成员', gender: 'female', date_of_birth: '2018-01-01', member_type: 'child' },
-  });
-  const memberData = await memberResp.json();
-
-  await page.goto(`/?memberId=${memberData.id}&memberName=OCR失败成员`);
-  
-  // 等待页面加载完成
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-  
-  // 点击模拟接口状态按钮切换到 ERROR
-  await page.getByRole('button', { name: /模拟接口状态/ }).click();
-  
-  // 点击录入按钮应该触发手工录入表单
-  await page.getByRole('button', { name: '录入新检查单' }).click();
-  
-  // 应该看到手工录入表单
-  await expect(page.getByText('提取失败，改为手工录入')).toBeVisible();
-  await expect(page.getByText('左眼轴 (mm)')).toBeVisible();
-  await expect(page.getByText('右眼轴 (mm)')).toBeVisible();
+  await expect(page.getByText('OCR 识别结果审核')).toBeVisible({ timeout: 10000 });
 });

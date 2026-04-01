@@ -43,7 +43,7 @@ docker-compose down
 ```
 
 ### 4. 访问应用
-- 前端: http://<NAS-IP>:3000
+- 前端: http://<NAS-IP>:3001
 - 后端 API: http://<NAS-IP>:8000
 - MinIO 控制台: http://<NAS-IP>:9001 (minioadmin/minioadmin)
 
@@ -52,7 +52,7 @@ docker-compose down
 | 服务 | 端口 | 说明 |
 |:---|:---|:---|
 | backend | 8000 | FastAPI 后端 API |
-| frontend | 3000 | Next.js 前端 |
+| frontend | 3001 | Next.js 前端 |
 | minio | 9000/9001 | 对象存储 (可选) |
 | postgres | 5432 | 数据库 (可选, 默认用 SQLite) |
 

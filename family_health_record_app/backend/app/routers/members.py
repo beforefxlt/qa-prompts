@@ -20,7 +20,7 @@ UPLOAD_DIR = "uploads"
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 
-router = APIRouter(prefix="/api/v1/members", tags=["members"])
+router = APIRouter(prefix="/members", tags=["members"])
 
 
 def _calculate_baseline_age_months(date_of_birth: date, exam_date: date) -> int:

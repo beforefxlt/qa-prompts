@@ -9,7 +9,7 @@ from ..db import get_db
 from ..models.member import MemberProfile
 from ..models.observation import ExamRecord, Observation, DerivedMetric
 
-router = APIRouter(prefix="/api/v1/members", tags=["trends"])
+router = APIRouter(prefix="/members", tags=["trends"])
 
 
 @router.get("/{member_id}/trends")

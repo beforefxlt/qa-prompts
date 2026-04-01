@@ -39,7 +39,7 @@ def get_storage_client():
             _storage_client = None
     return _storage_client
 
-router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
+router = APIRouter(prefix="/documents", tags=["documents"])
 
 
 def _calculate_baseline_age_months(date_of_birth: date, exam_date: date) -> int:

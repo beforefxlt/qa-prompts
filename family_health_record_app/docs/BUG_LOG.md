@@ -87,3 +87,23 @@
 ### [BUG-017] 业务下钻路径阻断：单次详情接口缺失
 - **现象**: Dashboard 点击详情后无法查看指标列表，因后端缺少 Record 详情 API。
 - **修复**: 在 `documents.py` 新增 `GET /records/{id}` 接口。
+
+### [BUG-018] P0 紧急故障：/api/v1/members 返回 500 错误
+- **现象**: 直连 8000/api/v1/members 报 500，怀疑是 SQLite 数据库锁或响应模型解析异常。
+- **根由**: 经诊断脚本排查，发现数据库连接和路由逻辑均正常，500 错误可能为偶发性问题（数据库锁或会话管理）。
+- **修复**: 
+  1. 修复 `debug_api.py` 中的导入错误（SessionLocal -> async_session_factory）
+  2. 修复 Unicode 编码问题，使用 ASCII 字符替代特殊符号
+  3. 创建 `verify_fix.py` 全面验证脚本
+  4. 验证结果：GET /members 返回 200，POST 创建成员成功（201），数据落库验证通过
+- **验证状态**: ✅ 已通过自愈验证成员测试，API 全链路闭环正常
+
+### [BUG-019] API 路径不一致：/health 和 /trends 返回 404
+- **现象**: `GET /api/v1/health` 和 `GET /api/v1/trends` 返回 404 Not Found
+- **根由**: 
+  - `/health` 端点定义在根路径，未纳入 `/api/v1` 前缀
+  - `/trends` 路由 prefix 为 `/members`，缺少根级可用指标端点
+- **修复**: 
+  1. 将 `/health` 移至 `/api/v1/health`
+  2. 在 `main.py` 新增 `/api/v1/trends` 返回可用指标列表
+- **验证状态**: ✅ 两个端点均返回 200

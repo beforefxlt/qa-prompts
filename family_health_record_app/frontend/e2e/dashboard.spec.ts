@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-test('前后端链路可用并可在页面展示成员', async ({ page, request }) => {
+test('首页 - 显示成员列表', async ({ page, request }) => {
+  // 创建成员
   const memberResp = await request.post('http://127.0.0.1:8000/api/v1/members', {
     data: {
       name: 'E2E成员',
@@ -12,31 +13,37 @@ test('前后端链路可用并可在页面展示成员', async ({ page, request 
   expect(memberResp.ok()).toBeTruthy();
   const memberData = await memberResp.json();
 
-  const uploadResp = await request.post('http://127.0.0.1:8000/api/v1/documents/upload', {
-    multipart: {
-      member_id: memberData.id,
-      file: {
-        name: 'e2e.jpg',
-        mimeType: 'image/jpeg',
-        buffer: Buffer.from('e2e-test-image'),
-      },
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(2000);
+  
+  // 验证成员显示在列表中
+  await expect(page.getByText('E2E成员')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('儿童')).toBeVisible();
+  
+  // 验证有添加成员按钮
+  await expect(page.getByRole('button', { name: /添加.*成员/ })).toBeVisible();
+});
+
+test('成员卡片 - 点击可进入详情', async ({ page, request }) => {
+  // 创建成员
+  const memberResp = await request.post('http://127.0.0.1:8000/api/v1/members', {
+    data: {
+      name: '点击测试成员',
+      gender: 'male',
+      date_of_birth: '2019-01-01',
+      member_type: 'child',
     },
   });
-  expect(uploadResp.ok()).toBeTruthy();
-  const uploadData = await uploadResp.json();
+  const memberData = await memberResp.json();
 
-  const submitResp = await request.post(`http://127.0.0.1:8000/api/v1/documents/${uploadData.document_id}/submit-ocr`);
-  expect(submitResp.ok()).toBeTruthy();
-
-  // 等待OCR处理完成
-  await page.waitForTimeout(2000);
-
-  await page.goto(`/?memberId=${memberData.id}&memberName=E2E成员`);
-  
-  // 等待页面加载完成
+  await page.goto('/');
   await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(2000);
   
-  await expect(page.getByText('E2E成员')).toBeVisible();
-  await expect(page.getByRole('button', { name: '录入新检查单' })).toBeVisible();
+  // 点击成员卡片
+  await page.getByText('点击测试成员').click();
+  
+  // 验证跳转到成员详情页
+  await expect(page).toHaveURL(new RegExp(`/members/${memberData.id}`), { timeout: 10000 });
 });

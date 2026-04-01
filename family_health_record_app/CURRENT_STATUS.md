@@ -1,8 +1,8 @@
 # 家庭检查单管理应用 - 当前状态与下一步计划
 
-> **最后更新**: 2026-04-01 10:05
+> **最后更新**: 2026-04-01 10:45
 > **版本**: v2.0.0 (前端完备性重构版)
-> **测试状态**: 72 passed, 0 failed, 覆盖率 54%, 类型检查通过
+> **测试状态**: 72 pytest passed, MCP E2E 验证中 (1/8 发现 Bug)
 
 ---
 
@@ -76,17 +76,18 @@
 
 ---
 
-## 二、E2E 流程验证 (2026-03-31)
-
 | 步骤 | 状态 | 详情 |
 |:---|:---|:---|
-| 1. 后端启动 | ✅ | Port 8001, uvicorn 运行中 |
-| 2. 创建成员 | ✅ | TestKid (male, 2020-01-01, child) |
-| 3. 上传文档 | ✅ | 01.jpg (98KB) 上传成功 |
-| 4. OCR处理 | ✅ | Qwen2.5-VL-32B 提取 eye axial_length 数据 |
-| 5. 审核工作流 | ✅ | 支持 exam_date 修正后审核通过 |
-| 6. 数据持久化 | ✅ | exam_records + observations 写入数据库 |
-| 7. 趋势 API | ✅ | `/api/v1/members/{id}/trends?metric=axial_length` 返回时间序列 |
+| 1. 后端启动 | ✅ | 端口 8000 (已修复 CORS)，uvicorn 运行中 |
+| 2. 前端启动 | ✅ | 端口 3001，已清理 .next 缓存 |
+| 3. TC-MCP-001 | ⚠️ | 首页加载成功，但存在 Hydration Error 和 `/>` 字符外泄 |
+| 4. TC-MCP-002 | ❌ | 成员创建被阻断。UI 优化已完成（出生年月选择），但点击保存无效 |
+| 5. 后端稳定性 | ✅ | 已通过 `rebuild_db.py` 完成数据库重建，API 返回正常 |
+
+**已定位的关键缺陷**:
+- **BUG-018**: 前端组件 Hydration 冲突，导致事件绑定失效。
+- **BUG-019**: JSX 渲染污染，页面出现悬空 `/>` 字符。
+- **CORS 冲突**: 后端已更新 `main.py` 允许 `3001` 跨域。
 
 **OCR 提取结果示例**:
 ```json
@@ -157,7 +158,7 @@ npm run dev
 2. 扫描代码文件数量
 3. 检查 git 变更状态
 4. 更新 DEVELOPMENT_LOG.md
-5. 如有代码变更则自动 commit
+5. 如有代码变更则自动 commit，并更新对应文档。
 
 **使用方式**:
 ```bash
@@ -172,11 +173,10 @@ schtasks /create /tn "DevLogSync" /tr "python C:\Users\Administrator\qa-prompts\
 
 ## 四、下一步行动建议
 
-### 立即执行 (下一个会话)
-1. 启动 `auto_sync.py` 定时任务
-2. 补充前端 E2E 测试 (审核流程 + 空状态)
-3. 联调审核页 `review/page.tsx` 与后端 API
-4. 接入 MinIO 真实存储
+### 立即执行 (开启新 Session 优先)
+1. **修复前端 500 错误**: 彻底排查 `src/app/page.tsx` 语法，解决 `Internal Server Error`。
+2. **回归 MCP 测试**: 顺序执行 `TC-MCP-001` 至 `TC-MCP-008`。
+3. **完成成员创建**: 验证“保存并开始记录”按钮的连通性。
 
 ### 短期 (本周)
 5. 配置 CI/CD 流水线

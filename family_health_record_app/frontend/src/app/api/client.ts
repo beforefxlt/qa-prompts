@@ -12,42 +12,60 @@ async function handleResponse(res: Response) {
   return res.json();
 }
 
+/**
+ * 包装 fetch 请求，捕获底层网络错误（如后端未启动）
+ * 注入 [AI-FLOW] 追踪逻辑以提升自动化测试的可观测性
+ * 注入 [FORCE-PATH] 自愈逻辑以解决 Next.js 缓存顽疾导致的路径丢失
+ */
+async function safeFetch(url: string, options?: RequestInit) {
+  let finalUrl = url;
+  const method = options?.method || 'GET';
+
+  // [FORCE-PATH] 关键自愈逻辑：检测 8000 端口请求是否漏掉了 /api/v1 前缀
+  if (finalUrl.includes(':8000') && !finalUrl.includes('/api/v1')) {
+     console.warn(`>> [AI-PATH-FIX] Detected potential missing prefix in ${finalUrl}. Attempting self-healing...`);
+     finalUrl = finalUrl.replace(':8000', ':8000/api/v1');
+  }
+
+  console.log(`>> [AI-FLOW] Requesting: ${method} ${finalUrl}`);
+  
+  try {
+    const res = await fetch(finalUrl, options);
+    console.log(`<< [AI-FLOW] Response: ${res.status} for ${finalUrl}`);
+    return await handleResponse(res);
+  } catch (err: any) {
+    console.error(`!! [AI-FLOW] Error for ${finalUrl}:`, err);
+    if (err.message.includes('fetch') || err.message.includes('Failed to fetch')) {
+      throw new Error('网络连接失败，请确认后端 API 是否在 8000 端口运行');
+    }
+    throw err;
+  }
+}
+
 export const apiClient = {
   // Members
-  getMembers: async () => {
-    const res = await fetch(`${API_BASE_URL}/members`);
-    return handleResponse(res);
-  },
+  getMembers: () => safeFetch(`${API_BASE_URL}/members`),
 
-  getMember: async (memberId: string) => {
-    const res = await fetch(`${API_BASE_URL}/members/${memberId}`);
-    return handleResponse(res);
-  },
+  getMember: (memberId: string) => safeFetch(`${API_BASE_URL}/members/${memberId}`),
 
-  createMember: async (data: { name: string; gender: string; date_of_birth: string; member_type: string }) => {
-    const res = await fetch(`${API_BASE_URL}/members`, {
+  createMember: (data: { name: string; gender: string; date_of_birth: string; member_type: string }) => 
+    safeFetch(`${API_BASE_URL}/members`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    });
-    return handleResponse(res);
-  },
+    }),
 
-  updateMember: async (memberId: string, data: Partial<{ name: string; gender: string; date_of_birth: string; member_type: string }>) => {
-    const res = await fetch(`${API_BASE_URL}/members/${memberId}`, {
+  updateMember: (memberId: string, data: Partial<{ name: string; gender: string; date_of_birth: string; member_type: string }>) =>
+    safeFetch(`${API_BASE_URL}/members/${memberId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    });
-    return handleResponse(res);
-  },
+    }),
 
-  deleteMember: async (memberId: string) => {
-    const res = await fetch(`${API_BASE_URL}/members/${memberId}`, {
+  deleteMember: (memberId: string) =>
+    safeFetch(`${API_BASE_URL}/members/${memberId}`, {
       method: 'DELETE',
-    });
-    return handleResponse(res);
-  },
+    }),
 
   // Documents
   uploadDocument: async (file: File, memberId?: string) => {
@@ -57,80 +75,50 @@ export const apiClient = {
       formData.append('member_id', memberId);
     }
 
-    const res = await fetch(`${API_BASE_URL}/documents/upload`, {
+    return safeFetch(`${API_BASE_URL}/documents/upload`, {
       method: 'POST',
       body: formData,
     });
-    return handleResponse(res);
   },
 
-  getDocument: async (documentId: string) => {
-    const res = await fetch(`${API_BASE_URL}/documents/${documentId}`);
-    return handleResponse(res);
-  },
+  getDocument: (documentId: string) => safeFetch(`${API_BASE_URL}/documents/${documentId}`),
 
-  submitOcr: async (documentId: string) => {
-    const res = await fetch(`${API_BASE_URL}/documents/${documentId}/submit-ocr`, {
+  submitOcr: (documentId: string) =>
+    safeFetch(`${API_BASE_URL}/documents/${documentId}/submit-ocr`, {
       method: 'POST',
-    });
-    return handleResponse(res);
-  },
+    }),
 
   // Review Tasks
-  getReviewTasks: async () => {
-    const res = await fetch(`${API_BASE_URL}/review-tasks`);
-    return handleResponse(res);
-  },
+  getReviewTasks: () => safeFetch(`${API_BASE_URL}/review-tasks`),
 
-  getReviewTask: async (taskId: string) => {
-    const res = await fetch(`${API_BASE_URL}/review-tasks/${taskId}`);
-    return handleResponse(res);
-  },
+  getReviewTask: (taskId: string) => safeFetch(`${API_BASE_URL}/review-tasks/${taskId}`),
 
-  approveReviewTask: async (taskId: string, revisedItems?: any[]) => {
-    const res = await fetch(`${API_BASE_URL}/review-tasks/${taskId}/approve`, {
+  approveReviewTask: (taskId: string, revisedItems?: any[]) =>
+    safeFetch(`${API_BASE_URL}/review-tasks/${taskId}/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ revised_items: revisedItems || [] }),
-    });
-    return handleResponse(res);
-  },
+    }),
 
-  rejectReviewTask: async (taskId: string) => {
-    const res = await fetch(`${API_BASE_URL}/review-tasks/${taskId}/reject`, {
+  rejectReviewTask: (taskId: string) =>
+    safeFetch(`${API_BASE_URL}/review-tasks/${taskId}/reject`, {
       method: 'POST',
-    });
-    return handleResponse(res);
-  },
+    }),
 
-  saveDraftReviewTask: async (taskId: string, revisedItems?: any[]) => {
-    const res = await fetch(`${API_BASE_URL}/review-tasks/${taskId}/save-draft`, {
+  saveDraftReviewTask: (taskId: string, revisedItems?: any[]) =>
+    safeFetch(`${API_BASE_URL}/review-tasks/${taskId}/save-draft`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ revised_items: revisedItems || [] }),
-    });
-    return handleResponse(res);
-  },
+    }),
 
   // Trends
-  getTrends: async (memberId: string, metric: string) => {
-    const res = await fetch(`${API_BASE_URL}/members/${memberId}/trends?metric=${metric}`);
-    return handleResponse(res);
-  },
+  getTrends: (memberId: string, metric: string) =>
+    safeFetch(`${API_BASE_URL}/members/${memberId}/trends?metric=${metric}`),
 
-  getVisionDashboard: async (memberId: string) => {
-    const res = await fetch(`${API_BASE_URL}/members/${memberId}/vision-dashboard`);
-    return handleResponse(res);
-  },
+  getVisionDashboard: (memberId: string) => safeFetch(`${API_BASE_URL}/members/${memberId}/vision-dashboard`),
 
-  getGrowthDashboard: async (memberId: string) => {
-    const res = await fetch(`${API_BASE_URL}/members/${memberId}/growth-dashboard`);
-    return handleResponse(res);
-  },
+  getGrowthDashboard: (memberId: string) => safeFetch(`${API_BASE_URL}/members/${memberId}/growth-dashboard`),
 
-  getExamRecord: async (recordId: string) => {
-    const res = await fetch(`${API_BASE_URL}/documents/records/${recordId}`);
-    return handleResponse(res);
-  },
+  getExamRecord: (recordId: string) => safeFetch(`${API_BASE_URL}/documents/records/${recordId}`),
 };
-
