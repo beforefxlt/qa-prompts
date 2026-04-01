@@ -7,7 +7,8 @@ import { test, expect } from '@playwright/test';
 
 test('P5-01: 空状态引导文案清晰可读', async ({ page }) => {
   await page.goto('/');
-  await page.waitForLoadState('networkidle');
+  // 等待 Hydration
+  await page.waitForTimeout(2000);
   
   // 验证欢迎文案存在且可读
   await expect(page.getByText('欢迎使用家庭检查单管理')).toBeVisible();
@@ -23,16 +24,16 @@ test('P5-01: 空状态引导文案清晰可读', async ({ page }) => {
 
 test('P5-02: 成员创建表单字段标签清晰', async ({ page }) => {
   await page.goto('/members/new');
-  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(1500);
   
-  // 等待表单出现
-  await expect(page.getByText('添加新成员')).toBeVisible();
+  // 等待表单出现。在我们的代码中，title 是通过 Props 传入的，NewMemberPage 传入的是 "添加成员"
+  await expect(page.getByText('添加成员')).toBeVisible();
   
   // 验证所有字段标签存在
-  await expect(page.getByText('姓名')).toBeVisible();
-  await expect(page.getByText('性别')).toBeVisible();
-  await expect(page.getByText('出生年月')).toBeVisible();
-  await expect(page.getByText('成员类型')).toBeVisible();
+  await expect(page.getByText('姓名', { exact: true })).toBeVisible();
+  await expect(page.getByText('性别', { exact: true })).toBeVisible();
+  await expect(page.getByText('出生年月', { exact: true })).toBeVisible();
+  await expect(page.getByText('成员类型', { exact: true })).toBeVisible();
   
   // 验证 placeholder 提示存在
   await expect(page.getByPlaceholder('请输入姓名')).toBeVisible();
@@ -42,19 +43,24 @@ test('P5-02: 成员创建表单字段标签清晰', async ({ page }) => {
 });
 
 test('P5-03: 错误提示友好可读', async ({ page }) => {
+  // 模拟 API 报错情况
+  await page.route('**/api/v1/members', route => route.fulfill({
+    status: 500,
+    contentType: 'application/json',
+    body: JSON.stringify({ detail: 'Internal Server Error' })
+  }));
+  
   await page.goto('/');
+  await page.waitForTimeout(1000);
   
-  // 模拟网络错误
-  await page.route('**/api/v1/members', route => route.abort('failed'));
-  await page.reload();
-  
-  // 验证有某种形式的反馈（不白屏）
-  await expect(page.locator('main')).toBeVisible({ timeout: 5000 });
+  // 验证显示了错误状态卡片
+  await expect(page.getByText('服务连接异常')).toBeVisible();
+  await expect(page.getByRole('button', { name: '重试连接' })).toBeVisible();
 });
 
 test('P5-04: 审核页布局清晰', async ({ page }) => {
   await page.goto('/review');
-  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(1000);
   
   // 验证页面标题
   await expect(page.getByText('OCR 识别结果审核')).toBeVisible();
@@ -63,12 +69,11 @@ test('P5-04: 审核页布局清晰', async ({ page }) => {
 test('P5-05: 成员卡片信息完整', async ({ page, request }) => {
   // 创建成员
   await request.post('http://127.0.0.1:8000/api/v1/members', {
-    data: { name: '卡片测试成员', gender: 'male', date_of_birth: '2018-01-01', member_type: 'child' },
+    data: { name: '卡片测试成员', gender: '男', date_of_birth: '2018-01-01', member_type: 'child' },
   });
   
   await page.goto('/');
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(2000);
   
   // 验证成员卡片包含必要信息
   await expect(page.getByText('卡片测试成员')).toBeVisible();

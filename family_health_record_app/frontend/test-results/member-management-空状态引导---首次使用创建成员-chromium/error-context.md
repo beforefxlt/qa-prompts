@@ -1,41 +1,5 @@
 # Page snapshot
 
 ```yaml
-- generic [active] [ref=e1]:
-  - generic [ref=e3]:
-    - generic [ref=e4]:
-      - heading "添加成员" [level=2] [ref=e5]
-      - button [ref=e6] [cursor=pointer]:
-        - img [ref=e7]
-    - generic [ref=e10]:
-      - generic [ref=e11]:
-        - generic [ref=e12]: 姓名
-        - textbox "请输入姓名" [ref=e13]
-      - generic [ref=e14]:
-        - generic [ref=e15]: 性别
-        - combobox [ref=e16]:
-          - option "男" [selected]
-          - option "女"
-      - generic [ref=e17]:
-        - generic [ref=e18]: 出生日期
-        - textbox [ref=e19]
-      - generic [ref=e20]:
-        - generic [ref=e21]: 成员类型
-        - combobox [ref=e22]:
-          - option "儿童" [selected]
-          - option "成人"
-          - option "老人"
-      - button "保存" [ref=e23] [cursor=pointer]
-  - generic [ref=e28] [cursor=pointer]:
-    - button "Open Next.js Dev Tools" [ref=e29]:
-      - img [ref=e30]
-    - generic [ref=e33]:
-      - button "Open issues overlay" [ref=e34]:
-        - generic [ref=e35]:
-          - generic [ref=e36]: "0"
-          - generic [ref=e37]: "1"
-        - generic [ref=e38]: Issue
-      - button "Collapse issues badge" [ref=e39]:
-        - img [ref=e40]
-  - alert [ref=e42]
+- img [ref=e5]
 ```

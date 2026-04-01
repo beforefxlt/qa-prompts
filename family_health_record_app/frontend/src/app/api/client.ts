@@ -9,6 +9,10 @@ async function handleResponse(res: Response) {
     } catch { /* ignore */ }
     throw new Error(`API Error ${res.status}: ${message}`);
   }
+  // 如果是 204 No Content，则不解析 JSON
+  if (res.status === 204) {
+    return null;
+  }
   return res.json();
 }
 

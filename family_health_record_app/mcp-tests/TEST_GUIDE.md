@@ -17,6 +17,29 @@
 
 ---
 
+## 🔐 数据治理协议 (Data Governance)
+
+为了确保测试的**幂等性**和**结果可靠性**，必须严格执行以下数据库状态管理：
+
+### 1. 测试前置 (Pre-Test)
+**必须清空数据库**，确保处于“零成员、零记录”的纯洁状态。执行以下命令：
+```bash
+cd family_health_record_app/backend
+# 此脚本将执行 drop_all 并在内存/本地重建 schema
+python rebuild_db.py
+```
+**预期状态**: 访问首页应看到“TC-MCP-001: 空状态引导页面”。
+
+### 2. 测试后置 (Post-Test)
+**禁止保留测试脏数据**。所有用例执行完毕后，必须再次运行清理脚本：
+```bash
+cd family_health_record_app/backend
+python rebuild_db.py
+```
+**目标**: 确保开发环境不包含“MCP测试成员”等临时数据。
+
+---
+
 ## 快速开始
 
 ### 方式一：通过 AI Agent 执行 (推荐)
@@ -26,6 +49,7 @@
 ---
 
 #### 📋 TC-MCP-001: 空状态引导验证
+**数据背景**: 数据库已执行重置，成员列表为空。
 
 ```
 使用 Chrome DevTools MCP 工具执行以下操作：
@@ -42,6 +66,7 @@
 ---
 
 #### 📋 TC-MCP-002: 成员创建流程
+**数据背景**: 数据库为空。测试后将新增 1 条成员记录。
 
 ```
 使用 Chrome DevTools MCP 工具执行以下操作：
@@ -278,3 +303,21 @@ npm install -g chrome-devtools-mcp@latest
 # 检查 Next.js 编译状态
 # 查看前端终端输出，等待 "Ready in Xms"
 ```
+
+---
+
+# 📚 测试资源清单 (Resource Catalog)
+
+| 资源名 | 类型 | 位置 | 用途描述 |
+|:---|:---|:---|:---|
+| `rebuild_db.py` | 🛠️ 清理工具 | `backend/rebuild_db.py` | 归零测试环境，删除所有脏数据并重建 schema。 |
+| `seed_data.py` | 🧬 数据资产 | `mcp-tests/seed_data.py` | 灌入历史观测值（身高/体重等），验证图表渲染。 |
+| `prepare_data.py` | 🧪 原子接口 | `mcp-tests/prepare_data.py` | 使用 API 模拟原子级成员创建。 |
+| `mcp-runner.js` | 🏃 执行器 | `mcp-tests/mcp-runner.js` | 核心 MCP 测试驱动逻辑。 |
+
+---
+
+## 👨‍💻 维护者注记
+1.  **资产化执行**: 以上脚本均已纳入版本控制，请勿随意更改 ID 或 URL。
+2.  **清理规范**: 每次全量测试 (TC-MCP-001 ~ 008) 运行前后，均需执行 `rebuild_db.py` 保证测试的幂等性。
+

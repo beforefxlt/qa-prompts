@@ -51,7 +51,7 @@ export default function HomePage() {
     senior: 'bg-amber-100 text-amber-700 border-amber-200',
   };
 
-  // 严格的 Hydration 保护：挂载前绝对不渲染任何动态内容
+  // 严格的 Hydration 保护：挂载前仅渲染骨架，挂载后渲染完整内容
   if (!isMounted) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -101,32 +101,6 @@ export default function HomePage() {
     );
   }
 
-  if (members.length === 0) {
-    return (
-      <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-         <div className="glass-card rounded-[40px] p-10 md:p-16 max-w-md w-full space-y-8 shadow-2xl shadow-blue-900/5">
-            <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto text-blue-600 shadow-inner">
-               <User size={48} />
-            </div>
-            <div className="space-y-4">
-              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">欢迎使用家庭检查单管理</h1>
-              <div className="text-slate-500 text-sm leading-relaxed space-y-1">
-                <p>记录家人健康足迹，从添加第一位成员开始。</p>
-                <p>我们将为您智能分析眼轴、身高、体重等核心指标趋势。</p>
-              </div>
-            </div>
-            <button
-              onClick={() => router.push('/members/new')}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-[24px] font-bold shadow-xl shadow-blue-500/30 active:scale-95 transition-all text-lg flex items-center justify-center gap-2"
-            >
-              <Plus size={24} />
-              <span>添加第一位成员</span>
-            </button>
-         </div>
-      </main>
-    );
-  }
-
   return (
     <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 bg-slate-50 min-h-screen pb-20">
       <header className="flex items-center justify-between px-2">
@@ -141,54 +115,76 @@ export default function HomePage() {
         </button>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {members.map((m) => (
+      {members.length === 0 ? (
+        <div className="glass-card rounded-[40px] p-10 md:p-16 max-w-md mx-auto w-full space-y-8 shadow-2xl shadow-blue-900/5 text-center">
+          <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto text-blue-600 shadow-inner">
+            <User size={48} />
+          </div>
+          <div className="space-y-4">
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">欢迎使用家庭检查单管理</h1>
+            <div className="text-slate-500 text-sm leading-relaxed space-y-1">
+              <p>记录家人健康足迹，从添加第一位成员开始。</p>
+              <p>我们将为您智能分析等核心指标趋势。</p>
+            </div>
+          </div>
           <button
-            key={m.id}
-            onClick={() => router.push(`/members/${m.id}`)}
-            className="group glass-card rounded-[32px] p-6 text-left hover:shadow-2xl hover:shadow-slate-200 transition-all active:scale-[0.98] border-2 border-transparent hover:border-blue-500/10 flex flex-col justify-between min-h-[160px]"
+            onClick={() => router.push('/members/new')}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-[24px] font-bold shadow-xl shadow-blue-500/30 active:scale-95 transition-all text-lg flex items-center justify-center gap-2"
           >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-white rounded-[20px] flex items-center justify-center text-blue-600 shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
-                  <User size={28} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-800 tracking-tight">{m.name}</h3>
-                  <div className={`mt-1 inline-block text-[10px] px-2.5 py-1 rounded-full font-black uppercase border tracking-widest ${MEMBER_TYPE_COLORS[m.member_type]}`}>
-                     {MEMBER_TYPE_LABELS[m.member_type]}
+            <Plus size={24} />
+            <span>添加第一位成员</span>
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {members.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => router.push(`/members/${m.id}`)}
+              className="group glass-card rounded-[32px] p-6 text-left hover:shadow-2xl hover:shadow-slate-200 transition-all active:scale-[0.98] border-2 border-transparent hover:border-blue-500/10 flex flex-col justify-between min-h-[160px]"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-white rounded-[20px] flex items-center justify-center text-blue-600 shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
+                    <User size={28} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-800 tracking-tight">{m.name}</h3>
+                    <div className={`mt-1 inline-block text-[10px] px-2.5 py-1 rounded-full font-black uppercase border tracking-widest ${MEMBER_TYPE_COLORS[m.member_type]}`}>
+                       {MEMBER_TYPE_LABELS[m.member_type]}
+                    </div>
                   </div>
                 </div>
+                <div className="text-right flex flex-col items-end opacity-40 group-hover:opacity-100 transition-all">
+                  <ChevronRight size={24} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
+                </div>
               </div>
-              <div className="text-right flex flex-col items-end opacity-40 group-hover:opacity-100 transition-all">
-                <ChevronRight size={24} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
-              </div>
-            </div>
 
-            <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-               <span className="flex items-center gap-1.5 font-medium">
-                  <Calendar size={14} className="text-slate-300" />
-                  {m.last_check_date ? `${m.last_check_date} 最后检查` : '尚无记录'}
-               </span>
-               {m.pending_review_count > 0 && (
-                 <span className="flex items-center gap-1 text-red-500 font-bold px-2 py-1 bg-red-50 rounded-lg">
-                    <AlertCircle size={12} /> {m.pending_review_count} 待核
+              <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                 <span className="flex items-center gap-1.5 font-medium">
+                    <Calendar size={14} className="text-slate-300" />
+                    {m.last_check_date ? `${m.last_check_date} 最后检查` : '尚无记录'}
                  </span>
-               )}
-            </div>
-          </button>
-        ))}
+                 {m.pending_review_count > 0 && (
+                   <span className="flex items-center gap-1 text-red-500 font-bold px-2 py-1 bg-red-50 rounded-lg">
+                      <AlertCircle size={12} /> {m.pending_review_count} 待核
+                   </span>
+                 )}
+              </div>
+            </button>
+          ))}
 
-        <button
-          onClick={() => router.push('/members/new')}
-          className="border-2 border-dashed border-slate-200 rounded-[32px] p-6 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50/30 transition-all flex flex-col items-center justify-center gap-3 min-h-[160px] group"
-        >
-          <div className="bg-white p-3 rounded-2xl shadow-sm group-hover:shadow-md transition-shadow">
-            <Plus size={28} />
-          </div>
-          <span className="font-bold tracking-tight">添加家庭成员</span>
-        </button>
-      </div>
+          <button
+            onClick={() => router.push('/members/new')}
+            className="border-2 border-dashed border-slate-200 rounded-[32px] p-6 text-slate-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50/30 transition-all flex flex-col items-center justify-center gap-3 min-h-[160px] group"
+          >
+            <div className="bg-white p-3 rounded-2xl shadow-sm group-hover:shadow-md transition-shadow">
+              <Plus size={28} />
+            </div>
+            <span className="font-bold tracking-tight">添加家庭成员</span>
+          </button>
+        </div>
+      )}
 
       <footer className="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-sm px-6">
          <div className="bg-slate-900/90 backdrop-blur-xl rounded-[24px] p-3 flex items-center justify-between shadow-2xl">

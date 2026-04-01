@@ -225,7 +225,7 @@ async function main() {
 
   // 检查服务
   try {
-    await checkService(`${CONFIG.backendUrl}/health`, '后端');
+    await checkService(`${CONFIG.backendUrl}/api/v1/health`, '后端');
     await checkService(CONFIG.frontendUrl, '前端');
   } catch (error) {
     console.error(`❌ ${error.message}`);

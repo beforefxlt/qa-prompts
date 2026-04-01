@@ -3,7 +3,7 @@
     "allow": [
       "Bash(python -m pytest tests/ -v --ignore=tests/test_golden_set.py)",
       "Bash(python -m pytest tests/test_api_smoke.py tests/test_api_contract.py tests/test_db_models.py tests/test_rule_engine.py tests/test_image_processor.py tests/test_state_machine_boundaries.py -v)",
-      "python *"
+      "Python *"
     ]
   }
 }

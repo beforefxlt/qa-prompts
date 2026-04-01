@@ -49,7 +49,7 @@ function TrendsContent() {
         date: s.date.slice(5),
         left: s.side === 'left' ? s.value : undefined,
         right: s.side === 'right' ? s.value : undefined,
-        value: s.side === undefined ? s.value : undefined, // 兼容单列数据
+        value: (s.side === null || s.side === undefined) ? s.value : undefined, // 兼容单列数据
       })).reduce((acc: any[], curr: any) => {
         const existing = acc.find(item => item.date === curr.date);
         if (existing) {
