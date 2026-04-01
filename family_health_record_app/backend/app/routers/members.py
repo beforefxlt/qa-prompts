@@ -122,6 +122,7 @@ async def update_member(member_id: UUID, data: MemberUpdate, db: AsyncSession = 
         setattr(member, field, value)
 
     await db.flush()
+    await db.commit()
     await db.refresh(member)
     return MemberResponse(
         id=member.id,
@@ -141,3 +142,4 @@ async def delete_member(member_id: UUID, db: AsyncSession = Depends(get_db)):
 
     member.is_deleted = True
     await db.flush()
+    await db.commit()

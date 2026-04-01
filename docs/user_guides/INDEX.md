@@ -22,6 +22,7 @@
 | `docs/user_guides/bug_diagnostic_flow_guide.md` | 缺陷初诊与建单草稿 | 解释 `/bug-diagnostic-flow` 的补证、隔离、`/tmp/` 草稿边界 |
 | `docs/user_guides/health_record_app_delivery_guide.md` | 家庭检查单管理应用交付 | 解释家庭健康数据应用从规格冻结到多 Subagent 开发与回归验收的推进方式 |
 | `docs/user_guides/qa_cleanup_principles_zh.md` | 收口复核与测试代码整理 | 说明 `reviewer-agent` 与 `test-code-simplifier` 的共性原则 |
+| `docs/user_guides/traceability_test_design_guide.md` | 可追溯测试架构设计 | 说明 TC 编号、P1-P5 分层、`traceability.yaml`、统一审计与门禁升级的设计方法 |
 
 ## 与其他文档的关系
 

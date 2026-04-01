@@ -1,0 +1,39 @@
+version: 1
+project: replace-me
+updated_at: 2026-04-01
+test_layers:
+  - unit
+  - contract
+  - integration
+  - resilience
+  - golden
+  - e2e
+test_cases:
+  - tc_id: TC-P1-001
+    title: Replace with happy path title
+    level: p1
+    layer: unit
+    spec_source:
+      - docs/specs/PRD.md
+      - docs/specs/TEST_STRATEGY.md
+    code_paths:
+      - backend/app/example.py
+    tests:
+      - file: backend/tests/unit/test_example.py
+        name: test_tc_p1_001_replace_me
+    status: stub
+    notes: Replace with the first real test case.
+  - tc_id: TC-P5-001
+    title: Replace with UX acceptance title
+    level: p5
+    layer: e2e
+    spec_source:
+      - docs/specs/UI_SPEC.md
+      - docs/specs/test_strategy_matrix.md
+    code_paths:
+      - frontend/src/app/page.tsx
+    tests:
+      - file: frontend/e2e/example.spec.ts
+        name: TC-P5-001 Replace with real title
+    status: missing
+    notes: Add the first E2E acceptance test here.

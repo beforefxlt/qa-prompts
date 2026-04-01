@@ -81,7 +81,7 @@
 ### 5. 测试主流程与治理方案
 
 - **工程场景**：把需求分析、测试策略、用例沉淀和最终复核串成一条可维护的主流程。
-- **落地方式**：通过 `/test-lifecycle` 工作流和技能治理方案，收敛测试资产边界、调用顺序、版本元数据和文档一致性要求。
+- **落地方式**：通过 `/test-lifecycle` 工作流和技能治理方案，收敛测试资产边界、调用顺序、TC 编号与 `traceability.yaml` 追溯关系、版本元数据和文档一致性要求。
 - **体现能力**：方法论沉淀、工作流设计、测试资产治理、工程规范建设。
 - **入口**：
   - [`.agents/workflows/test-lifecycle.md`](./.agents/workflows/test-lifecycle.md)
@@ -180,7 +180,7 @@ Workflows
 为了避免复杂任务完全依赖即时提示词，本仓库把高频流程收敛成了标准工作流：
 
 - `/test-lifecycle`
-  目标：把需求分析、测试策略、正式用例与最终复核串成闭环
+  目标：把需求分析、可追溯测试架构、测试策略、正式用例与最终复核串成闭环
   入口文档：[`docs/user_guides/test_lifecycle_guide.md`](./docs/user_guides/test_lifecycle_guide.md)
 
 - `/bug-diagnostic-flow`

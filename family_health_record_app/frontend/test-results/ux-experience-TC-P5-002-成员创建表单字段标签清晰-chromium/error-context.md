@@ -1,0 +1,175 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - img [ref=e8]
+          - heading "添加新成员" [level=2] [ref=e11]
+        - button [ref=e12] [cursor=pointer]:
+          - img [ref=e13]
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - generic [ref=e18]: 姓名
+          - textbox "请输入姓名" [ref=e19]
+        - generic [ref=e20]:
+          - generic [ref=e21]:
+            - generic [ref=e22]: 性别
+            - combobox [ref=e23]:
+              - option "男" [selected]
+              - option "女"
+          - generic [ref=e24]:
+            - generic [ref=e25]: 成员类型
+            - combobox [ref=e26]:
+              - option "儿童" [selected]
+              - option "成人"
+              - option "老人"
+        - generic [ref=e27]:
+          - generic [ref=e28]: 出生年月
+          - generic [ref=e29]:
+            - combobox [ref=e30]:
+              - option "年份" [selected]
+              - option "2026 年"
+              - option "2025 年"
+              - option "2024 年"
+              - option "2023 年"
+              - option "2022 年"
+              - option "2021 年"
+              - option "2020 年"
+              - option "2019 年"
+              - option "2018 年"
+              - option "2017 年"
+              - option "2016 年"
+              - option "2015 年"
+              - option "2014 年"
+              - option "2013 年"
+              - option "2012 年"
+              - option "2011 年"
+              - option "2010 年"
+              - option "2009 年"
+              - option "2008 年"
+              - option "2007 年"
+              - option "2006 年"
+              - option "2005 年"
+              - option "2004 年"
+              - option "2003 年"
+              - option "2002 年"
+              - option "2001 年"
+              - option "2000 年"
+              - option "1999 年"
+              - option "1998 年"
+              - option "1997 年"
+              - option "1996 年"
+              - option "1995 年"
+              - option "1994 年"
+              - option "1993 年"
+              - option "1992 年"
+              - option "1991 年"
+              - option "1990 年"
+              - option "1989 年"
+              - option "1988 年"
+              - option "1987 年"
+              - option "1986 年"
+              - option "1985 年"
+              - option "1984 年"
+              - option "1983 年"
+              - option "1982 年"
+              - option "1981 年"
+              - option "1980 年"
+              - option "1979 年"
+              - option "1978 年"
+              - option "1977 年"
+              - option "1976 年"
+              - option "1975 年"
+              - option "1974 年"
+              - option "1973 年"
+              - option "1972 年"
+              - option "1971 年"
+              - option "1970 年"
+              - option "1969 年"
+              - option "1968 年"
+              - option "1967 年"
+              - option "1966 年"
+              - option "1965 年"
+              - option "1964 年"
+              - option "1963 年"
+              - option "1962 年"
+              - option "1961 年"
+              - option "1960 年"
+              - option "1959 年"
+              - option "1958 年"
+              - option "1957 年"
+              - option "1956 年"
+              - option "1955 年"
+              - option "1954 年"
+              - option "1953 年"
+              - option "1952 年"
+              - option "1951 年"
+              - option "1950 年"
+              - option "1949 年"
+              - option "1948 年"
+              - option "1947 年"
+              - option "1946 年"
+              - option "1945 年"
+              - option "1944 年"
+              - option "1943 年"
+              - option "1942 年"
+              - option "1941 年"
+              - option "1940 年"
+              - option "1939 年"
+              - option "1938 年"
+              - option "1937 年"
+              - option "1936 年"
+              - option "1935 年"
+              - option "1934 年"
+              - option "1933 年"
+              - option "1932 年"
+              - option "1931 年"
+              - option "1930 年"
+              - option "1929 年"
+              - option "1928 年"
+              - option "1927 年"
+              - option "1926 年"
+              - option "1925 年"
+              - option "1924 年"
+              - option "1923 年"
+              - option "1922 年"
+              - option "1921 年"
+              - option "1920 年"
+              - option "1919 年"
+              - option "1918 年"
+              - option "1917 年"
+              - option "1916 年"
+              - option "1915 年"
+              - option "1914 年"
+              - option "1913 年"
+              - option "1912 年"
+              - option "1911 年"
+              - option "1910 年"
+              - option "1909 年"
+              - option "1908 年"
+              - option "1907 年"
+            - combobox [ref=e31]:
+              - option "月份" [selected]
+              - option "1 月"
+              - option "2 月"
+              - option "3 月"
+              - option "4 月"
+              - option "5 月"
+              - option "6 月"
+              - option "7 月"
+              - option "8 月"
+              - option "9 月"
+              - option "10 月"
+              - option "11 月"
+              - option "12 月"
+        - generic [ref=e32]:
+          - button "取消" [ref=e33] [cursor=pointer]
+          - button "保存并开始记录" [ref=e34] [cursor=pointer]:
+            - generic [ref=e35]: 保存并开始记录
+  - button "Open Next.js Dev Tools" [ref=e41] [cursor=pointer]:
+    - img [ref=e42]
+  - alert [ref=e45]
+```

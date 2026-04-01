@@ -3,6 +3,10 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_member_document_and_trend_flow(test_client):
+    """
+    [TC-P1-003, TC-P1-016, TC-P1-007, TC-P1-028]
+    通过混合场景模拟创建成员、上传文件并查看趋势的核心 API 主流程，单次测试覆盖多个 P1 指标。
+    """
     create_member_resp = await test_client.post(
         "/api/v1/members",
         json={

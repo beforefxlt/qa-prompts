@@ -1,0 +1,382 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\Administrator\qa-prompts\family_health_record_app\backend
+configfile: pytest.ini
+plugins: allure-pytest-2.15.3, anyio-4.9.0, asyncio-1.3.0, base-url-2.1.0, cov-7.0.0, html-4.1.1, metadata-3.1.1, mock-3.15.1, playwright-0.7.2, rerunfailures-16.1, xdist-3.8.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 17 items
+
+tests\contract\test_spec_alignment.py ..F.F.FF.FFFFFFF.                  [100%]
+
+================================== FAILURES ===================================
+______ test_endpoint_route_is_reachable[GET-/api/v1/members/{member_id}] ______
+
+test_client = <httpx.AsyncClient object at 0x0000028E82289810>, method = 'GET'
+spec_path = '/api/v1/members/{member_id}'
+
+    @pytest.mark.parametrize("method, spec_path", ENDPOINTS)
+    @pytest.mark.asyncio
+    async def test_endpoint_route_is_reachable(test_client, method, spec_path):
+        """
+        对 API_CONTRACT.md 中录入的所有端点执行路由可达性测试。
+        我们的目标是确保文档描述的路径在后端真实存在（不返回 404）。
+        """
+        # 处理路径中的占位符（如 {member_id}, {document_id}）
+        # 将 {uuid} 替换为真实的 uuid 格式，否则 fastapi 路由校验(UUID)会报错并返回 404/422
+        dummy_id = str(uuid4())
+        real_path = re.sub(r'\{[^}]+\}', dummy_id, spec_path)
+    
+        # 特殊处理 multipart 上传路径，避免无 Body 导致的 422 混淆 404
+        # 但由于我们只 assert !404，422 其实也是通过了路由层，所以不影响 contract 验证。
+    
+        response = await test_client.request(method, real_path)
+    
+        # 核心审计逻辑：路径描述必须在后端路由表中存在
+        # 如果返回 404，说明文档和代码严重偏离
+>       assert response.status_code != 404, f"契约偏离：文档定义了 {method} {spec_path}，但在后端真实路由中不存在(404)"
+E       AssertionError: 契约偏离：文档定义了 GET /api/v1/members/{member_id}，但在后端真实路由中不存在(404)
+E       assert 404 != 404
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\contract\test_spec_alignment.py:58: AssertionError
+____ test_endpoint_route_is_reachable[DELETE-/api/v1/members/{member_id}] _____
+
+test_client = <httpx.AsyncClient object at 0x0000028E82347950>
+method = 'DELETE', spec_path = '/api/v1/members/{member_id}'
+
+    @pytest.mark.parametrize("method, spec_path", ENDPOINTS)
+    @pytest.mark.asyncio
+    async def test_endpoint_route_is_reachable(test_client, method, spec_path):
+        """
+        对 API_CONTRACT.md 中录入的所有端点执行路由可达性测试。
+        我们的目标是确保文档描述的路径在后端真实存在（不返回 404）。
+        """
+        # 处理路径中的占位符（如 {member_id}, {document_id}）
+        # 将 {uuid} 替换为真实的 uuid 格式，否则 fastapi 路由校验(UUID)会报错并返回 404/422
+        dummy_id = str(uuid4())
+        real_path = re.sub(r'\{[^}]+\}', dummy_id, spec_path)
+    
+        # 特殊处理 multipart 上传路径，避免无 Body 导致的 422 混淆 404
+        # 但由于我们只 assert !404，422 其实也是通过了路由层，所以不影响 contract 验证。
+    
+        response = await test_client.request(method, real_path)
+    
+        # 核心审计逻辑：路径描述必须在后端路由表中存在
+        # 如果返回 404，说明文档和代码严重偏离
+>       assert response.status_code != 404, f"契约偏离：文档定义了 {method} {spec_path}，但在后端真实路由中不存在(404)"
+E       AssertionError: 契约偏离：文档定义了 DELETE /api/v1/members/{member_id}，但在后端真实路由中不存在(404)
+E       assert 404 != 404
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\contract\test_spec_alignment.py:58: AssertionError
+____ test_endpoint_route_is_reachable[GET-/api/v1/documents/{document_id}] ____
+
+test_client = <httpx.AsyncClient object at 0x0000028E8239DD00>, method = 'GET'
+spec_path = '/api/v1/documents/{document_id}'
+
+    @pytest.mark.parametrize("method, spec_path", ENDPOINTS)
+    @pytest.mark.asyncio
+    async def test_endpoint_route_is_reachable(test_client, method, spec_path):
+        """
+        对 API_CONTRACT.md 中录入的所有端点执行路由可达性测试。
+        我们的目标是确保文档描述的路径在后端真实存在（不返回 404）。
+        """
+        # 处理路径中的占位符（如 {member_id}, {document_id}）
+        # 将 {uuid} 替换为真实的 uuid 格式，否则 fastapi 路由校验(UUID)会报错并返回 404/422
+        dummy_id = str(uuid4())
+        real_path = re.sub(r'\{[^}]+\}', dummy_id, spec_path)
+    
+        # 特殊处理 multipart 上传路径，避免无 Body 导致的 422 混淆 404
+        # 但由于我们只 assert !404，422 其实也是通过了路由层，所以不影响 contract 验证。
+    
+        response = await test_client.request(method, real_path)
+    
+        # 核心审计逻辑：路径描述必须在后端路由表中存在
+        # 如果返回 404，说明文档和代码严重偏离
+>       assert response.status_code != 404, f"契约偏离：文档定义了 {method} {spec_path}，但在后端真实路由中不存在(404)"
+E       AssertionError: 契约偏离：文档定义了 GET /api/v1/documents/{document_id}，但在后端真实路由中不存在(404)
+E       assert 404 != 404
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\contract\test_spec_alignment.py:58: AssertionError
+_ test_endpoint_route_is_reachable[POST-/api/v1/documents/{document_id}/submit-ocr] _
+
+test_client = <httpx.AsyncClient object at 0x0000028E8225F790>, method = 'POST'
+spec_path = '/api/v1/documents/{document_id}/submit-ocr'
+
+    @pytest.mark.parametrize("method, spec_path", ENDPOINTS)
+    @pytest.mark.asyncio
+    async def test_endpoint_route_is_reachable(test_client, method, spec_path):
+        """
+        对 API_CONTRACT.md 中录入的所有端点执行路由可达性测试。
+        我们的目标是确保文档描述的路径在后端真实存在（不返回 404）。
+        """
+        # 处理路径中的占位符（如 {member_id}, {document_id}）
+        # 将 {uuid} 替换为真实的 uuid 格式，否则 fastapi 路由校验(UUID)会报错并返回 404/422
+        dummy_id = str(uuid4())
+        real_path = re.sub(r'\{[^}]+\}', dummy_id, spec_path)
+    
+        # 特殊处理 multipart 上传路径，避免无 Body 导致的 422 混淆 404
+        # 但由于我们只 assert !404，422 其实也是通过了路由层，所以不影响 contract 验证。
+    
+        response = await test_client.request(method, real_path)
+    
+        # 核心审计逻辑：路径描述必须在后端路由表中存在
+        # 如果返回 404，说明文档和代码严重偏离
+>       assert response.status_code != 404, f"契约偏离：文档定义了 {method} {spec_path}，但在后端真实路由中不存在(404)"
+E       AssertionError: 契约偏离：文档定义了 POST /api/v1/documents/{document_id}/submit-ocr，但在后端真实路由中不存在(404)
+E       assert 404 != 404
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\contract\test_spec_alignment.py:58: AssertionError
+____ test_endpoint_route_is_reachable[GET-/api/v1/review-tasks/{task_id}] _____
+
+test_client = <httpx.AsyncClient object at 0x0000028E82340350>, method = 'GET'
+spec_path = '/api/v1/review-tasks/{task_id}'
+
+    @pytest.mark.parametrize("method, spec_path", ENDPOINTS)
+    @pytest.mark.asyncio
+    async def test_endpoint_route_is_reachable(test_client, method, spec_path):
+        """
+        对 API_CONTRACT.md 中录入的所有端点执行路由可达性测试。
+        我们的目标是确保文档描述的路径在后端真实存在（不返回 404）。
+        """
+        # 处理路径中的占位符（如 {member_id}, {document_id}）
+        # 将 {uuid} 替换为真实的 uuid 格式，否则 fastapi 路由校验(UUID)会报错并返回 404/422
+        dummy_id = str(uuid4())
+        real_path = re.sub(r'\{[^}]+\}', dummy_id, spec_path)
+    
+        # 特殊处理 multipart 上传路径，避免无 Body 导致的 422 混淆 404
+        # 但由于我们只 assert !404，422 其实也是通过了路由层，所以不影响 contract 验证。
+    
+        response = await test_client.request(method, real_path)
+    
+        # 核心审计逻辑：路径描述必须在后端路由表中存在
+        # 如果返回 404，说明文档和代码严重偏离
+>       assert response.status_code != 404, f"契约偏离：文档定义了 {method} {spec_path}，但在后端真实路由中不存在(404)"
+E       AssertionError: 契约偏离：文档定义了 GET /api/v1/review-tasks/{task_id}，但在后端真实路由中不存在(404)
+E       assert 404 != 404
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\contract\test_spec_alignment.py:58: AssertionError
+_ test_endpoint_route_is_reachable[POST-/api/v1/review-tasks/{task_id}/approve] _
+
+test_client = <httpx.AsyncClient object at 0x0000028E8232D130>, method = 'POST'
+spec_path = '/api/v1/review-tasks/{task_id}/approve'
+
+    @pytest.mark.parametrize("method, spec_path", ENDPOINTS)
+    @pytest.mark.asyncio
+    async def test_endpoint_route_is_reachable(test_client, method, spec_path):
+        """
+        对 API_CONTRACT.md 中录入的所有端点执行路由可达性测试。
+        我们的目标是确保文档描述的路径在后端真实存在（不返回 404）。
+        """
+        # 处理路径中的占位符（如 {member_id}, {document_id}）
+        # 将 {uuid} 替换为真实的 uuid 格式，否则 fastapi 路由校验(UUID)会报错并返回 404/422
+        dummy_id = str(uuid4())
+        real_path = re.sub(r'\{[^}]+\}', dummy_id, spec_path)
+    
+        # 特殊处理 multipart 上传路径，避免无 Body 导致的 422 混淆 404
+        # 但由于我们只 assert !404，422 其实也是通过了路由层，所以不影响 contract 验证。
+    
+        response = await test_client.request(method, real_path)
+    
+        # 核心审计逻辑：路径描述必须在后端路由表中存在
+        # 如果返回 404，说明文档和代码严重偏离
+>       assert response.status_code != 404, f"契约偏离：文档定义了 {method} {spec_path}，但在后端真实路由中不存在(404)"
+E       AssertionError: 契约偏离：文档定义了 POST /api/v1/review-tasks/{task_id}/approve，但在后端真实路由中不存在(404)
+E       assert 404 != 404
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\contract\test_spec_alignment.py:58: AssertionError
+_ test_endpoint_route_is_reachable[POST-/api/v1/review-tasks/{task_id}/reject] _
+
+test_client = <httpx.AsyncClient object at 0x0000028E8232E3F0>, method = 'POST'
+spec_path = '/api/v1/review-tasks/{task_id}/reject'
+
+    @pytest.mark.parametrize("method, spec_path", ENDPOINTS)
+    @pytest.mark.asyncio
+    async def test_endpoint_route_is_reachable(test_client, method, spec_path):
+        """
+        对 API_CONTRACT.md 中录入的所有端点执行路由可达性测试。
+        我们的目标是确保文档描述的路径在后端真实存在（不返回 404）。
+        """
+        # 处理路径中的占位符（如 {member_id}, {document_id}）
+        # 将 {uuid} 替换为真实的 uuid 格式，否则 fastapi 路由校验(UUID)会报错并返回 404/422
+        dummy_id = str(uuid4())
+        real_path = re.sub(r'\{[^}]+\}', dummy_id, spec_path)
+    
+        # 特殊处理 multipart 上传路径，避免无 Body 导致的 422 混淆 404
+        # 但由于我们只 assert !404，422 其实也是通过了路由层，所以不影响 contract 验证。
+    
+        response = await test_client.request(method, real_path)
+    
+        # 核心审计逻辑：路径描述必须在后端路由表中存在
+        # 如果返回 404，说明文档和代码严重偏离
+>       assert response.status_code != 404, f"契约偏离：文档定义了 {method} {spec_path}，但在后端真实路由中不存在(404)"
+E       AssertionError: 契约偏离：文档定义了 POST /api/v1/review-tasks/{task_id}/reject，但在后端真实路由中不存在(404)
+E       assert 404 != 404
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\contract\test_spec_alignment.py:58: AssertionError
+_ test_endpoint_route_is_reachable[POST-/api/v1/review-tasks/{task_id}/save-draft] _
+
+test_client = <httpx.AsyncClient object at 0x0000028E823F0AD0>, method = 'POST'
+spec_path = '/api/v1/review-tasks/{task_id}/save-draft'
+
+    @pytest.mark.parametrize("method, spec_path", ENDPOINTS)
+    @pytest.mark.asyncio
+    async def test_endpoint_route_is_reachable(test_client, method, spec_path):
+        """
+        对 API_CONTRACT.md 中录入的所有端点执行路由可达性测试。
+        我们的目标是确保文档描述的路径在后端真实存在（不返回 404）。
+        """
+        # 处理路径中的占位符（如 {member_id}, {document_id}）
+        # 将 {uuid} 替换为真实的 uuid 格式，否则 fastapi 路由校验(UUID)会报错并返回 404/422
+        dummy_id = str(uuid4())
+        real_path = re.sub(r'\{[^}]+\}', dummy_id, spec_path)
+    
+        # 特殊处理 multipart 上传路径，避免无 Body 导致的 422 混淆 404
+        # 但由于我们只 assert !404，422 其实也是通过了路由层，所以不影响 contract 验证。
+    
+        response = await test_client.request(method, real_path)
+    
+        # 核心审计逻辑：路径描述必须在后端路由表中存在
+        # 如果返回 404，说明文档和代码严重偏离
+>       assert response.status_code != 404, f"契约偏离：文档定义了 {method} {spec_path}，但在后端真实路由中不存在(404)"
+E       AssertionError: 契约偏离：文档定义了 POST /api/v1/review-tasks/{task_id}/save-draft，但在后端真实路由中不存在(404)
+E       assert 404 != 404
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\contract\test_spec_alignment.py:58: AssertionError
+_ test_endpoint_route_is_reachable[GET-/api/v1/members/{member_id}/trends?metric={metric}&range={range}] _
+
+test_client = <httpx.AsyncClient object at 0x0000028E823A9FD0>, method = 'GET'
+spec_path = '/api/v1/members/{member_id}/trends?metric={metric}&range={range}'
+
+    @pytest.mark.parametrize("method, spec_path", ENDPOINTS)
+    @pytest.mark.asyncio
+    async def test_endpoint_route_is_reachable(test_client, method, spec_path):
+        """
+        对 API_CONTRACT.md 中录入的所有端点执行路由可达性测试。
+        我们的目标是确保文档描述的路径在后端真实存在（不返回 404）。
+        """
+        # 处理路径中的占位符（如 {member_id}, {document_id}）
+        # 将 {uuid} 替换为真实的 uuid 格式，否则 fastapi 路由校验(UUID)会报错并返回 404/422
+        dummy_id = str(uuid4())
+        real_path = re.sub(r'\{[^}]+\}', dummy_id, spec_path)
+    
+        # 特殊处理 multipart 上传路径，避免无 Body 导致的 422 混淆 404
+        # 但由于我们只 assert !404，422 其实也是通过了路由层，所以不影响 contract 验证。
+    
+        response = await test_client.request(method, real_path)
+    
+        # 核心审计逻辑：路径描述必须在后端路由表中存在
+        # 如果返回 404，说明文档和代码严重偏离
+>       assert response.status_code != 404, f"契约偏离：文档定义了 {method} {spec_path}，但在后端真实路由中不存在(404)"
+E       AssertionError: 契约偏离：文档定义了 GET /api/v1/members/{member_id}/trends?metric={metric}&range={range}，但在后端真实路由中不存在(404)
+E       assert 404 != 404
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\contract\test_spec_alignment.py:58: AssertionError
+_ test_endpoint_route_is_reachable[GET-/api/v1/members/{member_id}/vision-dashboard?range={range}] _
+
+test_client = <httpx.AsyncClient object at 0x0000028E82346820>, method = 'GET'
+spec_path = '/api/v1/members/{member_id}/vision-dashboard?range={range}'
+
+    @pytest.mark.parametrize("method, spec_path", ENDPOINTS)
+    @pytest.mark.asyncio
+    async def test_endpoint_route_is_reachable(test_client, method, spec_path):
+        """
+        对 API_CONTRACT.md 中录入的所有端点执行路由可达性测试。
+        我们的目标是确保文档描述的路径在后端真实存在（不返回 404）。
+        """
+        # 处理路径中的占位符（如 {member_id}, {document_id}）
+        # 将 {uuid} 替换为真实的 uuid 格式，否则 fastapi 路由校验(UUID)会报错并返回 404/422
+        dummy_id = str(uuid4())
+        real_path = re.sub(r'\{[^}]+\}', dummy_id, spec_path)
+    
+        # 特殊处理 multipart 上传路径，避免无 Body 导致的 422 混淆 404
+        # 但由于我们只 assert !404，422 其实也是通过了路由层，所以不影响 contract 验证。
+    
+        response = await test_client.request(method, real_path)
+    
+        # 核心审计逻辑：路径描述必须在后端路由表中存在
+        # 如果返回 404，说明文档和代码严重偏离
+>       assert response.status_code != 404, f"契约偏离：文档定义了 {method} {spec_path}，但在后端真实路由中不存在(404)"
+E       AssertionError: 契约偏离：文档定义了 GET /api/v1/members/{member_id}/vision-dashboard?range={range}，但在后端真实路由中不存在(404)
+E       assert 404 != 404
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\contract\test_spec_alignment.py:58: AssertionError
+_ test_endpoint_route_is_reachable[GET-/api/v1/members/{member_id}/growth-dashboard?range={range}] _
+
+test_client = <httpx.AsyncClient object at 0x0000028E823E8C50>, method = 'GET'
+spec_path = '/api/v1/members/{member_id}/growth-dashboard?range={range}'
+
+    @pytest.mark.parametrize("method, spec_path", ENDPOINTS)
+    @pytest.mark.asyncio
+    async def test_endpoint_route_is_reachable(test_client, method, spec_path):
+        """
+        对 API_CONTRACT.md 中录入的所有端点执行路由可达性测试。
+        我们的目标是确保文档描述的路径在后端真实存在（不返回 404）。
+        """
+        # 处理路径中的占位符（如 {member_id}, {document_id}）
+        # 将 {uuid} 替换为真实的 uuid 格式，否则 fastapi 路由校验(UUID)会报错并返回 404/422
+        dummy_id = str(uuid4())
+        real_path = re.sub(r'\{[^}]+\}', dummy_id, spec_path)
+    
+        # 特殊处理 multipart 上传路径，避免无 Body 导致的 422 混淆 404
+        # 但由于我们只 assert !404，422 其实也是通过了路由层，所以不影响 contract 验证。
+    
+        response = await test_client.request(method, real_path)
+    
+        # 核心审计逻辑：路径描述必须在后端路由表中存在
+        # 如果返回 404，说明文档和代码严重偏离
+>       assert response.status_code != 404, f"契约偏离：文档定义了 {method} {spec_path}，但在后端真实路由中不存在(404)"
+E       AssertionError: 契约偏离：文档定义了 GET /api/v1/members/{member_id}/growth-dashboard?range={range}，但在后端真实路由中不存在(404)
+E       assert 404 != 404
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\contract\test_spec_alignment.py:58: AssertionError
+============================== warnings summary ===============================
+app\schemas\member.py:21
+  C:\Users\Administrator\qa-prompts\family_health_record_app\backend\app\schemas\member.py:21: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class MemberResponse(BaseModel):
+
+app\routers\review.py:19
+  C:\Users\Administrator\qa-prompts\family_health_record_app\backend\app\routers\review.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class ReviewTaskResponse(BaseModel):
+
+app\main.py:30
+  C:\Users\Administrator\qa-prompts\family_health_record_app\backend\app\main.py:30: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+..\..\..\..\..\Python313\Lib\site-packages\fastapi\applications.py:4598
+  C:\Python313\Lib\site-packages\fastapi\applications.py:4598: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/contract/test_spec_alignment.py::test_endpoint_route_is_reachable[GET-/api/v1/members/{member_id}]
+FAILED tests/contract/test_spec_alignment.py::test_endpoint_route_is_reachable[DELETE-/api/v1/members/{member_id}]
+FAILED tests/contract/test_spec_alignment.py::test_endpoint_route_is_reachable[GET-/api/v1/documents/{document_id}]
+FAILED tests/contract/test_spec_alignment.py::test_endpoint_route_is_reachable[POST-/api/v1/documents/{document_id}/submit-ocr]
+FAILED tests/contract/test_spec_alignment.py::test_endpoint_route_is_reachable[GET-/api/v1/review-tasks/{task_id}]
+FAILED tests/contract/test_spec_alignment.py::test_endpoint_route_is_reachable[POST-/api/v1/review-tasks/{task_id}/approve]
+FAILED tests/contract/test_spec_alignment.py::test_endpoint_route_is_reachable[POST-/api/v1/review-tasks/{task_id}/reject]
+FAILED tests/contract/test_spec_alignment.py::test_endpoint_route_is_reachable[POST-/api/v1/review-tasks/{task_id}/save-draft]
+FAILED tests/contract/test_spec_alignment.py::test_endpoint_route_is_reachable[GET-/api/v1/members/{member_id}/trends?metric={metric}&range={range}]
+FAILED tests/contract/test_spec_alignment.py::test_endpoint_route_is_reachable[GET-/api/v1/members/{member_id}/vision-dashboard?range={range}]
+FAILED tests/contract/test_spec_alignment.py::test_endpoint_route_is_reachable[GET-/api/v1/members/{member_id}/growth-dashboard?range={range}]
+================== 11 failed, 6 passed, 4 warnings in 0.42s ===================

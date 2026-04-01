@@ -5,13 +5,13 @@ import { test, expect } from '@playwright/test';
  * 验证空状态引导、错误提示、图表可读性等用户体验指标
  */
 
-test('P5-01: 空状态引导文案清晰可读', async ({ page }) => {
+test('TC-P5-001: 空状态引导文案清晰可读', async ({ page }) => {
   await page.goto('/');
   // 等待 Hydration
   await page.waitForTimeout(2000);
   
   // 验证欢迎文案存在且可读
-  await expect(page.getByText('欢迎使用家庭检查单管理')).toBeVisible();
+  await expect(page.getByText('家庭健康足迹')).toBeVisible();
   
   // 验证引导说明存在
   await expect(page.getByText('记录家人健康足迹')).toBeVisible();
@@ -22,7 +22,7 @@ test('P5-01: 空状态引导文案清晰可读', async ({ page }) => {
   await expect(actionButton).toBeEnabled();
 });
 
-test('P5-02: 成员创建表单字段标签清晰', async ({ page }) => {
+test('TC-P5-002: 成员创建表单字段标签清晰', async ({ page }) => {
   await page.goto('/members/new');
   await page.waitForTimeout(1500);
   
@@ -42,7 +42,7 @@ test('P5-02: 成员创建表单字段标签清晰', async ({ page }) => {
   await expect(page.getByRole('button', { name: '保存并开始记录' })).toBeVisible();
 });
 
-test('P5-03: 错误提示友好可读', async ({ page }) => {
+test('TC-P5-011: 错误提示友好可读', async ({ page }) => {
   // 模拟 API 报错情况
   await page.route('**/api/v1/members', route => route.fulfill({
     status: 500,
@@ -58,7 +58,7 @@ test('P5-03: 错误提示友好可读', async ({ page }) => {
   await expect(page.getByRole('button', { name: '重试连接' })).toBeVisible();
 });
 
-test('P5-04: 审核页布局清晰', async ({ page }) => {
+test('TC-P5-020: 审核页布局清晰', async ({ page }) => {
   await page.goto('/review');
   await page.waitForTimeout(1000);
   
@@ -66,7 +66,7 @@ test('P5-04: 审核页布局清晰', async ({ page }) => {
   await expect(page.getByText('OCR 识别结果审核')).toBeVisible();
 });
 
-test('P5-05: 成员卡片信息完整', async ({ page, request }) => {
+test('TC-P5-024: 成员卡片信息完整', async ({ page, request }) => {
   // 创建成员
   await request.post('http://127.0.0.1:8000/api/v1/members', {
     data: { name: '卡片测试成员', gender: '男', date_of_birth: '2018-01-01', member_type: 'child' },

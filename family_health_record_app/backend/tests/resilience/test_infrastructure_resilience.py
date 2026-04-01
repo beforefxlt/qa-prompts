@@ -75,7 +75,7 @@ async def _upload_document(client, member_id, content=b"dummy"):
 
 @pytest.mark.asyncio
 async def test_ocr_timeout_returns_error(test_env, monkeypatch):
-    """OCR 接口超时 (>30s) 应返回 500 错误，不阻塞主流程。"""
+    """[TC-P3-003] OCR 接口超时 (>30s) 应返回 500 错误，不阻塞主流程。"""
     client, session_factory = test_env
     member_id = await _create_member(client)
     document_id = await _upload_document(client, member_id)
@@ -97,7 +97,7 @@ async def test_ocr_timeout_returns_error(test_env, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_ocr_api_unavailable_returns_error(test_env, monkeypatch):
-    """OCR 服务完全不可用时应返回 500 错误。"""
+    """[TC-P3-005] OCR 服务完全不可用时应返回 500 错误。"""
     client, session_factory = test_env
     member_id = await _create_member(client)
     document_id = await _upload_document(client, member_id)
