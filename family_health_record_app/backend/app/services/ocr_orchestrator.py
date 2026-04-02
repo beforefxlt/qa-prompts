@@ -75,28 +75,6 @@ class OCROrchestrator:
             logger.error(f"从 MinIO 获取文件失败: {file_url}, 错误: {e}")
             return {"status": "error", "message": "File not found"}
 
-        # --- E2E 快速通道: 如果是模拟测试文件，直接返回预定义的 Mock JSON ---
-        if "e2e" in file_url.lower():
-            logger.info(f"检测到 E2E 测试文件，跳过 AI 调用，进入模拟识别通道")
-            mock_data = {
-                "exam_date": datetime.now().strftime("%Y-%m-%d"),
-                "observations": [
-                    {"metric_code": "axial_length", "value_numeric": 24.35, "unit": "mm", "side": "right"},
-                    {"metric_code": "axial_length", "value_numeric": 23.32, "unit": "mm", "side": "left"}
-                ],
-                "institution": "E2E Test Simulation Cloud"
-            }
-            return {
-                "status": "approved",
-                "data": {
-                    "document_id": document_id,
-                    "raw_json": mock_data,
-                    "processed_items": mock_data,
-                    "confidence_score": 1.0,
-                    "rule_conflict_details": None
-                }
-            }
-
         try:
             # 1. 先执行脱敏处理（安全红线：绝不向公有云发送原图）
             desensitized_bytes = desensitize_image(original_bytes)
