@@ -144,3 +144,23 @@
   2. 处理 `file_url` 格式：提取 key 部分（去掉 bucket 名称前缀）
 - **验证状态**: ✅ OCR 提交返回 500（AI 服务连接异常，但文件获取成功）
 - **教训**: **修复后必须自测验证，不能只看代码逻辑**
+
+### [BUG-023] 审核页面不能预览图片
+- **现象**: 审核页面左侧"脱敏图预览"区域显示空状态，无法查看上传的检查单图片
+- **根由**: 
+  1. 后端 `get_review_task` API 没有返回 `image_url` 字段
+  2. 缺少图片预览 API 端点
+- **修复**: 
+  1. 修改 `review.py` 的 `get_review_task` 函数，返回 `image_url` 字段
+  2. 在 `documents.py` 新增 `/{document_id}/preview` 端点
+  3. 预览端点从 MinIO 获取脱敏图片并返回
+- **验证状态**: ✅ 审核页面可显示脱敏图片
+
+### [BUG-024] OCR 返回 mock 数据而非真实识别结果
+- **现象**: 上传图片后 OCR 返回置信度 95% 但数据是固定的 mock 数据（眼轴 24.35/23.32）
+- **根由**: 
+  1. `ocr_orchestrator.py` 中 E2E 测试模式检查文件名包含 "e2e"
+  2. 用户上传的文件名不包含 "e2e"，但可能触发了其他 mock 逻辑
+  3. SiliconFlow API 返回错误 "image_url provided is not a valid image"
+- **修复**: 需要检查图片编码和 API 调用格式
+- **验证状态**: ⚠️ 待验证
