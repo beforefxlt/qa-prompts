@@ -48,6 +48,33 @@ export default function MemberDashboard() {
     }
   };
 
+  // 将 API 返回的 {date, value, side} 格式转换为 TrendChart 期望的 {date, left, right} 格式
+  const transformSeries = (series: any[]) => {
+    if (!series || series.length === 0) return [];
+    
+    // 按日期分组
+    const byDate = new Map<string, { date: string; left?: number; right?: number; value?: number }>();
+    
+    for (const item of series) {
+      const date = item.date;
+      if (!byDate.has(date)) {
+        byDate.set(date, { date });
+      }
+      const entry = byDate.get(date)!;
+      
+      if (item.side === 'left') {
+        entry.left = item.value;
+      } else if (item.side === 'right') {
+        entry.right = item.value;
+      } else {
+        // 没有 side 的指标（如身高、体重）
+        entry.value = item.value;
+      }
+    }
+    
+    return Array.from(byDate.values());
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -117,9 +144,9 @@ export default function MemberDashboard() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div className="glass-card rounded-[32px] p-6 space-y-4 hover:shadow-xl transition-all group">
-                <TrendChart data={visionData?.axial_length?.series || []} metric="axial_length" height={180} />
-             </div>
+              <div className="glass-card rounded-[32px] p-6 space-y-4 hover:shadow-xl transition-all group">
+                 <TrendChart data={transformSeries(visionData?.axial_length?.series || [])} metric="axial_length" height={180} />
+              </div>
              
              <div className="glass-card rounded-[32px] p-6 flex flex-col justify-between hover:shadow-xl transition-all">
                 <div className="flex items-center justify-between mb-4">
@@ -164,10 +191,10 @@ export default function MemberDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="glass-card rounded-[32px] p-6 hover:shadow-xl transition-all">
-            <TrendChart data={growthData?.height?.series || []} metric="height" height={180} />
+            <TrendChart data={transformSeries(growthData?.height?.series || [])} metric="height" height={180} />
           </div>
           <div className="glass-card rounded-[32px] p-6 hover:shadow-xl transition-all">
-            <TrendChart data={growthData?.weight?.series || []} metric="weight" height={180} />
+            <TrendChart data={transformSeries(growthData?.weight?.series || [])} metric="weight" height={180} />
           </div>
         </div>
       </section>

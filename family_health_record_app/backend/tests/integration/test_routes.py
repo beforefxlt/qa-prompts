@@ -411,6 +411,60 @@ async def test_trends_with_abnormal_data(route_env, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_trends_comparison_same_date_no_comparison(route_env, monkeypatch):
+    """[TC-P4-025] 同一次检查的左右眼不应产生 comparison"""
+    client, session_factory = route_env
+    member = await _create_member(client)
+    member_uuid = UUID(member["id"])
+
+    async with session_factory() as session:
+        # 只有 1 次检查，但有左右眼
+        exam = ExamRecord(
+            id=uuid4(),
+            document_id=uuid4(),
+            member_id=member_uuid,
+            exam_date=date(2026, 3, 1),
+            baseline_age_months=84,
+        )
+        session.add(exam)
+        await session.flush()
+
+        session.add(
+            Observation(
+                id=uuid4(),
+                exam_record_id=exam.id,
+                metric_code="axial_length",
+                value_numeric=24.35,
+                unit="mm",
+                side="right",
+                is_abnormal=False,
+                confidence_score=0.95,
+            )
+        )
+        session.add(
+            Observation(
+                id=uuid4(),
+                exam_record_id=exam.id,
+                metric_code="axial_length",
+                value_numeric=23.32,
+                unit="mm",
+                side="left",
+                is_abnormal=False,
+                confidence_score=0.95,
+            )
+        )
+        await session.commit()
+
+    resp = await client.get(f"/api/v1/members/{member['id']}/trends?metric=axial_length")
+    assert resp.status_code == 200
+    data = resp.json()
+    # 只有 1 次检查，不应有 comparison
+    assert data["comparison"] is None
+    # 但 series 应该有 2 条（左右眼）
+    assert len(data["series"]) == 2
+
+
+@pytest.mark.asyncio
 async def test_trends_comparison_data(route_env, monkeypatch):
     """多条数据时应返回对比信息"""
     client, session_factory = route_env
