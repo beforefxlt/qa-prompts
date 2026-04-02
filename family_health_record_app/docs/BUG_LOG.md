@@ -131,3 +131,16 @@
   2. 修正 working_dir: /app
   3. 移除不必要的 volume 挂载
 - **验证状态**: ✅ CSS 文件 26KB，样式正常
+
+### [BUG-022] OCR 提交 500 错误：文件存储路径不一致
+- **现象**: 上传图片后提交 OCR 返回 500 Internal Server Error，日志显示"文件不存在"
+- **根由**: 
+  1. `ocr_orchestrator.py` 使用 `os.path.exists()` 检查本地文件路径
+  2. 但文件实际存储在 MinIO 中，本地路径不存在
+  3. **首次修复失败**：只修改了获取方式，但没有处理 `file_url` 包含 bucket 名称的问题
+  4. **未自测**：声称修复完成但没有实际验证
+- **修复**: 
+  1. 修改 `ocr_orchestrator.py` 使用 `storage_client.get_file()` 从 MinIO 获取
+  2. 处理 `file_url` 格式：提取 key 部分（去掉 bucket 名称前缀）
+- **验证状态**: ✅ OCR 提交返回 500（AI 服务连接异常，但文件获取成功）
+- **教训**: **修复后必须自测验证，不能只看代码逻辑**

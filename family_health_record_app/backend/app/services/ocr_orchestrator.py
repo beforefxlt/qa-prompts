@@ -62,8 +62,17 @@ class OCROrchestrator:
         """
         logger.info(f"开始处理文档 {document_id}, 文件路径: {file_url}")
         
-        if not os.path.exists(file_url):
-            logger.error(f"文件不存在: {file_url}")
+        # 从 MinIO 获取文件
+        from .storage_client import storage_client, storage_settings
+        try:
+            # file_url 格式为 "bucket/key"，需要提取 key
+            if file_url.startswith(f"{storage_settings.MINIO_BUCKET}/"):
+                file_key = file_url[len(f"{storage_settings.MINIO_BUCKET}/"):]
+            else:
+                file_key = file_url
+            original_bytes = storage_client.get_file(file_key)
+        except Exception as e:
+            logger.error(f"从 MinIO 获取文件失败: {file_url}, 错误: {e}")
             return {"status": "error", "message": "File not found"}
 
         # --- E2E 快速通道: 如果是模拟测试文件，直接返回预定义的 Mock JSON ---
@@ -90,8 +99,6 @@ class OCROrchestrator:
 
         try:
             # 1. 先执行脱敏处理（安全红线：绝不向公有云发送原图）
-            with open(file_url, "rb") as f:
-                original_bytes = f.read()
             desensitized_bytes = desensitize_image(original_bytes)
 
             # 将脱敏图写入临时文件用于 base64 编码

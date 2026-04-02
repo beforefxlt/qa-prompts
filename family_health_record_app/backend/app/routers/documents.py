@@ -117,10 +117,13 @@ async def upload_document(
     
     # 尝试上传到 MinIO，失败则存本地
     storage_client = get_storage_client()
+    logger.info(f"Storage client: {storage_client}")
     if storage_client:
         try:
             # 上传原图到 MinIO
+            logger.info(f"Uploading to MinIO: original/{unique_filename}")
             file_url = storage_client.upload_file(file_content, f"original/{unique_filename}", "image/jpeg")
+            logger.info(f"Uploaded to MinIO: {file_url}")
             
             # 脱敏后上传
             desensitized_bytes = desensitize_image(file_content)
@@ -138,6 +141,7 @@ async def upload_document(
             desensitized_url = None
     else:
         # Local storage fallback
+        logger.warning("No storage client, using local storage")
         file_path = os.path.join(UPLOAD_DIR, unique_filename)
         with open(file_path, "wb") as buffer:
             buffer.write(file_content)
