@@ -7,31 +7,34 @@
 
 ## 当前状态
 
-**整体进度**: ✅ E2E 测试全部通过，Docker 部署方案完成
+**整体进度**: ✅ OCR 提示词管理重构完成，Docker 部署方案稳定
 
 | 模块 | 状态 | 说明 |
 |------|------|------|
 | 后端 API | ✅ 正常 | FastAPI 运行在端口 8000 |
-| 后端测试 | ✅ 通过 | 89 个 pytest 测试全部通过 |
+| 后端测试 | ✅ 通过 | 99 个 pytest 测试全部通过 |
 | 前端页面 | ✅ 正常 | Next.js 运行在端口 3001，样式正常 |
-| E2E 测试 | ✅ 通过 | 17/17 Playwright 测试全部通过 |
-| Docker 部署 | ✅ 完成 | 预构建镜像 + 国内源加速 |
+| E2E 测试 | ⚠️ 待修复 | 前端 Docker 挂载问题导致 E2E 无法运行 |
+| Docker 部署 | ✅ 完成 | 预构建镜像，无 volume 挂载 |
 
 ---
 
-## E2E 测试结果
+## 后端测试结果
 
 ```
-17 passed (40.5s)
+99 passed, 4 warnings in 34.50s
 ```
 
-| 测试文件 | 用例数 | 状态 |
+| 测试类型 | 用例数 | 状态 |
 |----------|--------|------|
-| dashboard.spec.ts | 2 | ✅ |
-| error-states.spec.ts | 4 | ✅ |
-| member-management.spec.ts | 4 | ✅ |
-| review-workflow.spec.ts | 2 | ✅ |
-| ux-experience.spec.ts | 5 | ✅ |
+| 单元测试 | 11 | ✅ |
+| API 合约 | 15 | ✅ |
+| Golden Set | 4 | ✅ |
+| 集成测试 | 30 | ✅ |
+| 容灾测试 | 11 | ✅ |
+| 体验测试 | 11 | ✅ |
+| 基础设施 | 3 | ✅ |
+| 路由测试 | 14 | ✅ |
 
 ---
 
@@ -48,7 +51,7 @@
 ## 快速启动
 
 ```bash
-cd infra
+cd family_health_record_app/infra
 docker compose up -d
 ```
 
@@ -66,27 +69,38 @@ docker compose up -d
 docker exec health-record-backend python -m pytest tests/ -v
 ```
 
-### E2E 测试
+### 健康检查
 ```bash
-cd family_health_record_app/frontend
-PLAYWRIGHT_BASE_URL=http://localhost:3001 npx playwright test
+curl http://localhost:8000/api/v1/health
 ```
 
 ---
 
 ## 本次更新
 
-### 修复的问题
-1. ✅ E2E 测试并行数据冲突（使用 serial describe + beforeAll/afterAll）
-2. ✅ E2E 测试选择器问题（使用精确选择器）
-3. ✅ MemberForm 硬编码文案 bug（使用 submitLabel 属性）
-4. ✅ 前端样式丢失（重新构建镜像，修正 docker-compose 配置）
-5. ✅ UI 文案不一致（创建 ui-text.ts 常量层）
+### 新增功能
+1. ✅ OCR 提示词管理器 (`prompt_manager.py`)
+   - 动态组合提示词，支持多单据类型
+   - 公共指令与具体逻辑分离
+   - 支持眼轴、血常规等多类单据
 
-### 新增资产
-- `src/constants/ui-text.ts` - UI 文案单一真相源
-- `e2e/fixtures.ts` - 测试 fixtures（数据清理）
-- `docs/bugs/BUG-UI-001.md` - Bug 记录文档
+2. ✅ 审核页面图片预览
+   - 新增 `/{document_id}/preview` 端点
+   - 从 MinIO 获取脱敏图片
+
+3. ✅ 测试代码检查脚本 (`scripts/check_no_test_code.py`)
+   - 自动扫描生产代码中的测试逻辑
+
+### 修复的问题
+1. ✅ OCR 文件路径不一致（MinIO key 格式处理）
+2. ✅ OCR E2E mock 逻辑移除
+3. ✅ 前端 Docker 部署问题（移除 volume 挂载）
+4. ✅ Golden Set 测试适配新签名
+5. ✅ 前端配置文件名修正（`.js` 替代 `.ts`/`.mjs`）
+
+### 规范更新
+1. ✅ AGENTS.md 第7条红线：修复自测验证
+2. ✅ AGENTS.md 第8条红线：生产代码禁止测试逻辑
 
 ---
 
@@ -94,8 +108,8 @@ PLAYWRIGHT_BASE_URL=http://localhost:3001 npx playwright test
 
 | 优先级 | 任务 | 状态 |
 |--------|------|------|
+| P1 | E2E 测试修复 | 进行中 |
 | P1 | 视觉回归测试 | 待定 |
-| P1 | CSS 断言测试 | 待定 |
 | P2 | 用户认证/授权 | 待定 |
 
 ---
@@ -103,13 +117,14 @@ PLAYWRIGHT_BASE_URL=http://localhost:3001 npx playwright test
 ## 开发日志
 
 - **2026-04-02**: 
-  - 修复 E2E 测试全部通过 (17/17)
-  - 创建 UI 文案常量层
-  - 修复前端样式丢失问题
-  - 更新 UI_SPEC.md 与代码一致
+  - OCR 提示词管理重构
+  - 审核页面图片预览
+  - 前端 Docker 部署修复
+  - 新增测试代码检查脚本
+  - 更新 AGENTS.md 规范
 - **2026-04-01**: 
   - 完成 Docker 预构建镜像方案
-  - 成功执行 MCP 前端测试
+  - 修复 E2E 测试 (17/17)
 
 ---
 

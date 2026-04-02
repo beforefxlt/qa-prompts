@@ -167,3 +167,22 @@
   2. 确保端到端测试使用真实 OCR 服务
 - **验证状态**: ✅ 已移除 mock 逻辑
 - **教训**: **测试代码不应存在于生产代码中，应使用独立的测试环境或 mock 服务**
+
+### [BUG-025] 前端 Docker 部署：配置文件被创建为目录
+- **现象**: 前端返回 500 错误，日志显示 `next.config.ts is a directory`
+- **根由**: 
+  1. Windows 文件系统与 Docker 挂载兼容性问题
+  2. 文件级挂载 (`../frontend/next.config.ts:/app/next.config.ts`) 在 Windows 上将文件创建为目录
+  3. 镜像中的配置文件名与实际不符 (`tailwind.config.ts` vs `tailwind.config.js`)
+- **修复**: 
+  1. 移除所有文件级挂载，使用镜像内置构建产物
+  2. 修正 Dockerfile 配置文件名（`.js` 替代 `.ts`/`.mjs`）
+  3. 使用 `npm start` 替代 `npm run dev`
+- **验证状态**: ✅ 前端 200 OK
+- **教训**: **Windows 环境下避免使用文件级 Docker 挂载，使用目录级挂载或镜像内置**
+
+### [BUG-026] Golden Set 测试失败：process_document 签名变更
+- **现象**: 4 个 Golden Set 测试失败，`fake_ocr() takes 2 positional arguments but 3 were given`
+- **根由**: `ocr_orchestrator.process_document` 新增 `document_type` 参数，但测试 mock 函数未更新
+- **修复**: 更新 `test_golden_set.py` 中所有 `fake_ocr` 函数签名
+- **验证状态**: ✅ 99 passed

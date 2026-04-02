@@ -50,12 +50,12 @@ docker compose up -d --build
 |:---|:---|:---|
 | qa-base | 448MB | 基础镜像 (Python 3.11 + Node.js 20 + 国内源) |
 | qa-backend | 617MB | 后端镜像 (含 Python 依赖) |
-| qa-frontend | 1.32GB | 前端镜像 (含 Node.js 依赖) |
+| infra-frontend | ~500MB | 前端镜像 (含 Node.js 依赖) |
 
 ### 镜像特性
 - ✅ **国内源加速**: 阿里云 apt/pip 源、淘宝 npm 源
 - ✅ **依赖预装**: 首次启动无需等待依赖安装
-- ✅ **热更新**: 源代码挂载，修改即时生效
+- ✅ **无 volume 挂载**: 避免 Windows 文件挂载问题
 
 ## 服务架构
 
@@ -83,7 +83,7 @@ docker compose up -d --build
 | db | postgres:16-alpine | 内部 | PostgreSQL 数据库 |
 | minio | minio/minio | 9000/9001 | 对象存储 |
 | backend | qa-backend | 8000 | FastAPI 后端 API |
-| frontend | qa-frontend | 3001 | Next.js 前端 |
+| frontend | infra-frontend | 3001 | Next.js 前端 |
 
 ## 数据持久化
 
@@ -191,9 +191,10 @@ docker exec health-record-backend env | grep DATABASE_URL
 
 ### 4. 前端构建失败
 ```bash
-# 清理缓存
-docker exec health-record-frontend rm -rf .next
-docker compose restart frontend
+# 重新构建前端镜像
+cd infra
+docker compose build frontend --no-cache
+docker compose up -d --force-recreate frontend
 ```
 
 ## 生产环境部署建议
@@ -215,8 +216,10 @@ services:
 
 ## 更新日志
 
-### v1.3.0 (2026-04-02)
-- ✅ 添加预构建 Docker 镜像支持
-- ✅ 配置国内源（阿里云 apt/pip、淘宝 npm）
-- ✅ 优化前端 ESLint 配置
-- ✅ 更新部署文档
+### v1.4.0 (2026-04-02)
+- ✅ OCR 提示词管理器重构 (prompt_manager.py)
+- ✅ 审核页面图片预览功能
+- ✅ 修复前端 Docker 部署问题（移除 volume 挂载）
+- ✅ 新增测试代码检查脚本
+- ✅ 更新 AGENTS.md 规范（第7、8条红线）
+- ✅ 修正 Dockerfile 配置文件名
