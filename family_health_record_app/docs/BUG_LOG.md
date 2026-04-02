@@ -172,13 +172,14 @@
 - **现象**: 前端返回 500 错误，日志显示 `next.config.ts is a directory`
 - **根由**: 
   1. Windows 文件系统与 Docker 挂载兼容性问题
-  2. 文件级挂载 (`../frontend/next.config.ts:/app/next.config.ts`) 在 Windows 上将文件创建为目录
-  3. 镜像中的配置文件名与实际不符 (`tailwind.config.ts` vs `tailwind.config.js`)
+  2. 文件级挂载在 Windows 上将文件创建为目录
+  3. 镜像中的配置文件名与实际不符
 - **修复**: 
   1. 移除所有文件级挂载，使用镜像内置构建产物
   2. 修正 Dockerfile 配置文件名（`.js` 替代 `.ts`/`.mjs`）
   3. 使用 `npm start` 替代 `npm run dev`
 - **验证状态**: ✅ 前端 200 OK
+- **UT 覆盖**: ❌ 无（Docker 配置问题，不适合 UT）
 - **教训**: **Windows 环境下避免使用文件级 Docker 挂载，使用目录级挂载或镜像内置**
 
 ### [BUG-026] Golden Set 测试失败：process_document 签名变更
@@ -186,3 +187,26 @@
 - **根由**: `ocr_orchestrator.process_document` 新增 `document_type` 参数，但测试 mock 函数未更新
 - **修复**: 更新 `test_golden_set.py` 中所有 `fake_ocr` 函数签名
 - **验证状态**: ✅ 99 passed
+- **UT 覆盖**: ✅ 本身就是测试用例
+
+### [BUG-027] 趋势图将同次检查的左右眼误认为当前/上次值
+- **现象**: 只有 1 次检查时，前端显示"当前数值 23.32mm，上次数值 24.35mm"
+- **根由**: 
+  1. 后端 `get_trends` 按 `trend_rows` 排序比较，同次检查的左右眼被当作两个时间点
+  2. 前端 `TrendChart` 直接用数组索引取最后两个元素
+  3. 前端仪表盘页面缺少数据转换逻辑（`trends/page.tsx` 有，`page.tsx` 没有）
+- **修复**: 
+  1. 后端按 `exam_date` 分组比较，同次检查不产生 comparison
+  2. 前端添加 `transformSeries` 函数，按日期合并左右眼
+  3. 修复 `ChartPoint.left` TypeScript 类型错误
+- **验证状态**: ✅ API 返回 `comparison: null`（同次检查）
+- **UT 覆盖**: ✅ `test_trends_comparison_same_date_no_comparison`
+
+### [BUG-028] 重复上传同一张图片没有去重
+- **现象**: 同一张图片多次上传，系统创建多个 ExamRecord
+- **根由**: 上传接口没有检查文件哈希
+- **修复**: 
+  1. `DocumentRecord` 新增 `file_hash` 字段 (SHA-256)
+  2. 上传时计算文件哈希，同一成员已上传过相同文件则返回 `status: "duplicate"`
+- **验证状态**: ✅ 重复上传返回 duplicate 状态
+- **UT 覆盖**: ✅ `test_upload_duplicate_document_returns_duplicate`
