@@ -160,7 +160,9 @@ export default function MemberDashboard() {
                     <div className="p-4 bg-slate-50 rounded-2xl">
                       <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">预计年增长</p>
                       <p className="text-3xl font-black text-slate-800 tracking-tighter">
-                        +{visionData.axial_length?.growth_rate?.toFixed(2) || '0.22'} 
+                        {visionData.axial_length?.growth_rate != null 
+                          ? `${visionData.axial_length.growth_rate >= 0 ? '+' : ''}${visionData.axial_length.growth_rate.toFixed(2)}`
+                          : 'N/A'} 
                         <span className="text-sm font-normal text-slate-400 ml-1">mm/year</span>
                       </p>
                     </div>

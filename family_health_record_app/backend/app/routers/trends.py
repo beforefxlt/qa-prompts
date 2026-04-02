@@ -125,6 +125,31 @@ async def get_vision_dashboard(member_id: UUID, db: AsyncSession = Depends(get_d
         )
     )
 
+    # 计算眼轴年增长率
+    growth_rate = None
+    if len(axial_rows) >= 2:
+        # 获取所有不同日期
+        dates = sorted(set(row.exam_date for row in axial_rows))
+        if len(dates) >= 2:
+            first_date = dates[0]
+            last_date = dates[-1]
+            
+            # 计算时间差（年）
+            days_diff = (last_date - first_date).days
+            years_diff = days_diff / 365.25
+            
+            if years_diff > 0:
+                # 获取第一个日期的平均值
+                first_rows = [row for row in axial_rows if row.exam_date == first_date]
+                first_avg = sum(r.value_numeric for r in first_rows) / len(first_rows)
+                
+                # 获取最后一个日期的平均值
+                last_rows = [row for row in axial_rows if row.exam_date == last_date]
+                last_avg = sum(r.value_numeric for r in last_rows) / len(last_rows)
+                
+                # 计算年增长率
+                growth_rate = round((last_avg - first_avg) / years_diff, 2)
+
     return {
         "member_id": str(member_id),
         "member_type": member.member_type,
@@ -136,6 +161,7 @@ async def get_vision_dashboard(member_id: UUID, db: AsyncSession = Depends(get_d
             ],
             "reference_range": next((row.reference_range for row in axial_rows if row.reference_range), None),
             "alert_status": "warning" if any(row.is_abnormal for row in axial_rows) else "normal",
+            "growth_rate": growth_rate,
         },
         "vision_acuity": {
             "series": [
@@ -145,6 +171,32 @@ async def get_vision_dashboard(member_id: UUID, db: AsyncSession = Depends(get_d
         },
         "growth_deviation": derived.value_json if derived else None,
     }
+
+
+def _calculate_growth_rate(rows):
+    """计算年增长率，输入为 [(exam_date, value_numeric), ...] 列表"""
+    if len(rows) < 2:
+        return None
+    
+    dates = sorted(set(row.exam_date for row in rows))
+    if len(dates) < 2:
+        return None
+    
+    first_date = dates[0]
+    last_date = dates[-1]
+    days_diff = (last_date - first_date).days
+    years_diff = days_diff / 365.25
+    
+    if years_diff <= 0:
+        return None
+    
+    first_rows = [row for row in rows if row.exam_date == first_date]
+    first_avg = sum(r.value_numeric for r in first_rows) / len(first_rows)
+    
+    last_rows = [row for row in rows if row.exam_date == last_date]
+    last_avg = sum(r.value_numeric for r in last_rows) / len(last_rows)
+    
+    return round((last_avg - first_avg) / years_diff, 2)
 
 
 @router.get("/{member_id}/growth-dashboard")
@@ -184,6 +236,7 @@ async def get_growth_dashboard(member_id: UUID, db: AsyncSession = Depends(get_d
             ],
             "reference_range": next((row.reference_range for row in height_rows if row.reference_range), None),
             "alert_status": "warning" if any(row.is_abnormal for row in height_rows) else "normal",
+            "growth_rate": _calculate_growth_rate(height_rows),
         },
         "weight": {
             "series": [
@@ -192,5 +245,6 @@ async def get_growth_dashboard(member_id: UUID, db: AsyncSession = Depends(get_d
             ],
             "reference_range": next((row.reference_range for row in weight_rows if row.reference_range), None),
             "alert_status": "warning" if any(row.is_abnormal for row in weight_rows) else "normal",
+            "growth_rate": _calculate_growth_rate(weight_rows),
         },
     }

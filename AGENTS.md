@@ -65,7 +65,7 @@
   - ✅ 使用环境变量控制配置（但 mock 逻辑放在测试代码中）
   - ✅ 使用独立的 mock 服务（如 WireMock、MockServer）
   - ✅ 测试代码放在 `tests/` 目录，与生产代码物理隔离
-- **自动化检查**：提交前运行 `python scripts/check_no_test_code.py`
+- **自动化检查**：提交前运行 `python family_health_record_app/scripts/check_no_test_code.py`
 - **反面案例**（BUG-024）：
   - ❌ 在 `ocr_orchestrator.py` 中检查文件名包含 "e2e" 返回 mock 数据
   - ✅ 应该在测试文件中 mock `ocr_orchestrator` 服务

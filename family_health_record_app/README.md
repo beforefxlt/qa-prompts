@@ -45,6 +45,29 @@ family_health_record_app/
     └── specs/                  # 8 个规格文档 (已标记 v2.0.0 完备性)
 ```
 
+## 部署脚本（CI/CD 入口）
+
+> ⚠️ **重要**：部署脚本位于 `scripts/build_docker.py`（本目录下），用于完整构建 Docker 镜像并重新部署。
+
+```bash
+# 进入项目目录
+cd family_health_record_app
+
+# 完整构建所有镜像（前端 + 后端）
+python scripts/build_docker.py --all
+
+# 仅构建后端
+python scripts/build_docker.py --backend
+
+# 仅构建前端
+python scripts/build_docker.py --frontend
+
+# 构建完成后启动服务
+cd infra && docker compose up -d
+```
+
+详细部署说明请参考 [`DEPLOY.md`](./DEPLOY.md)。
+
 
 ## 技术基线
 

@@ -253,6 +253,42 @@ async def test_document_get_nonexistent(route_env):
 
 
 @pytest.mark.asyncio
+async def test_upload_duplicate_document_returns_duplicate(route_env):
+    """[TC-P2-025] 同一成员重复上传相同文件应返回 duplicate 状态"""
+    client, session_factory = route_env
+    member = await _create_member(client)
+    member_id = member["id"]
+    
+    # 第一次上传
+    resp1 = await client.post(
+        "/api/v1/documents/upload",
+        data={"member_id": member_id},
+        files={"file": ("test.jpg", b"same-image-content", "image/jpeg")},
+    )
+    assert resp1.status_code == 201
+    assert resp1.json()["status"] == "uploaded"
+    
+    # 第二次上传相同内容
+    resp2 = await client.post(
+        "/api/v1/documents/upload",
+        data={"member_id": member_id},
+        files={"file": ("test.jpg", b"same-image-content", "image/jpeg")},
+    )
+    assert resp2.status_code == 201
+    assert resp2.json()["status"] == "duplicate"
+    
+    # 不同成员上传相同文件应该成功
+    member2 = await _create_member(client)
+    resp3 = await client.post(
+        "/api/v1/documents/upload",
+        data={"member_id": member2["id"]},
+        files={"file": ("test.jpg", b"same-image-content", "image/jpeg")},
+    )
+    assert resp3.status_code == 201
+    assert resp3.json()["status"] == "uploaded"
+
+
+@pytest.mark.asyncio
 async def test_submit_ocr_nonexistent_document(route_env):
     """对不存在的文档提交 OCR 应返回 404"""
     client, _ = route_env

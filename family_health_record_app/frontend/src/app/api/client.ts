@@ -1,4 +1,13 @@
-const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
+// SSR (容器内): 使用 API_URL (Docker 内部网络 http://backend:8000)
+// Client (浏览器): 使用 NEXT_PUBLIC_API_URL (外部可访问地址)
+// 部署到服务器时，只需修改环境变量即可
+const SSR_API_URL = process.env.API_URL;
+const CLIENT_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
+// 根据运行环境自动选择正确的 API 地址
+const API_BASE_URL = (typeof window === 'undefined' && SSR_API_URL)
+  ? SSR_API_URL + '/api/v1'
+  : CLIENT_API_URL;
 
 async function handleResponse(res: Response) {
   if (!res.ok) {

@@ -1,5 +1,15 @@
 # 家庭检查单管理应用 - 部署指南
 
+> ⚠️ **重要**：自动构建脚本位于 `scripts/build_docker.py`（本目录下），每次 CI/CD 或完整重新部署时使用。
+
+```bash
+# 进入项目目录
+cd family_health_record_app
+
+# 执行构建
+python scripts/build_docker.py --all
+```
+
 ## 部署方式
 
 ### 方式一：使用预构建镜像（推荐）
