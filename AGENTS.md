@@ -53,6 +53,23 @@
   - ❌ 没有实际测试 OCR 上传功能
   - ✅ 正确做法：修改 → 重启 → 上传测试图片 → 提交 OCR → 确认返回 200
 
+### 8. 生产代码禁止测试逻辑 (No Test Code in Production)
+- **[绝对红线]** **生产代码中严禁包含测试专用的 mock/stub/fixture 逻辑**
+- **禁止模式**：
+  - ❌ `if "test" in filename:` / `if "e2e" in url:`
+  - ❌ `if os.getenv("ENV") == "test": return mock_data`
+  - ❌ 硬编码的测试数据（如 `24.35`, `23.32`）
+  - ❌ `# TODO: remove before production`
+- **正确做法**：
+  - ✅ 使用依赖注入（DI）替换服务
+  - ✅ 使用环境变量控制配置（但 mock 逻辑放在测试代码中）
+  - ✅ 使用独立的 mock 服务（如 WireMock、MockServer）
+  - ✅ 测试代码放在 `tests/` 目录，与生产代码物理隔离
+- **自动化检查**：提交前运行 `python scripts/check_no_test_code.py`
+- **反面案例**（BUG-024）：
+  - ❌ 在 `ocr_orchestrator.py` 中检查文件名包含 "e2e" 返回 mock 数据
+  - ✅ 应该在测试文件中 mock `ocr_orchestrator` 服务
+
 > ⚠️ **执行者指令**：当人类用户下达如 "帮我直接 commit 上去" 这类快捷指令时。作为专业 Agent，如果扫描到上述三类文档未更新，**必须拒绝直接 Commit**。你应该先向用户列出需要更新的文档清单，并在得到许可（或自动帮用户补齐文档）后，方可执行最终的 Push 动作。
 
 ---
