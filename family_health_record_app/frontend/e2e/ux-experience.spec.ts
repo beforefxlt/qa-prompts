@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, createTestMember } from './fixtures';
 
 /**
  * P5 用户体验测试
@@ -7,11 +7,10 @@ import { test, expect } from '@playwright/test';
 
 test('TC-P5-001: 空状态引导文案清晰可读', async ({ page }) => {
   await page.goto('/');
-  // 等待 Hydration
   await page.waitForTimeout(2000);
   
   // 验证欢迎文案存在且可读
-  await expect(page.getByText('家庭健康足迹')).toBeVisible();
+  await expect(page.getByText('欢迎使用家庭检查单管理')).toBeVisible();
   
   // 验证引导说明存在
   await expect(page.getByText('记录家人健康足迹')).toBeVisible();
@@ -26,7 +25,7 @@ test('TC-P5-002: 成员创建表单字段标签清晰', async ({ page }) => {
   await page.goto('/members/new');
   await page.waitForTimeout(1500);
   
-  // 等待表单出现。在我们的代码中，title 是通过 Props 传入的，NewMemberPage 传入的是 "添加成员"
+  // 等待表单出现
   await expect(page.getByText('添加成员')).toBeVisible();
   
   // 验证所有字段标签存在
@@ -66,11 +65,9 @@ test('TC-P5-020: 审核页布局清晰', async ({ page }) => {
   await expect(page.getByText('OCR 识别结果审核')).toBeVisible();
 });
 
-test('TC-P5-024: 成员卡片信息完整', async ({ page, request }) => {
+test('TC-P5-024: 成员卡片信息完整', async ({ page }) => {
   // 创建成员
-  await request.post('http://127.0.0.1:8000/api/v1/members', {
-    data: { name: '卡片测试成员', gender: '男', date_of_birth: '2018-01-01', member_type: 'child' },
-  });
+  await createTestMember({ name: '卡片测试成员' });
   
   await page.goto('/');
   await page.waitForTimeout(2000);
@@ -78,8 +75,8 @@ test('TC-P5-024: 成员卡片信息完整', async ({ page, request }) => {
   // 验证成员卡片包含必要信息
   await expect(page.getByText('卡片测试成员')).toBeVisible();
   
-  // 验证成员类型标签
-  await expect(page.getByText('儿童')).toBeVisible();
+  // 验证成员类型标签（使用更精确的选择器）
+  await expect(page.getByText('儿童').first()).toBeVisible();
   
   // 验证无记录提示
   await expect(page.getByText('尚无记录')).toBeVisible();

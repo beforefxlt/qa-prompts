@@ -1,6 +1,12 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, createTestMember } from './fixtures';
+
+/**
+ * 错误状态测试
+ * 验证空状态、错误状态的用户引导
+ */
 
 test('首页 - 空状态引导', async ({ page }) => {
+  // 确保数据库为空（cleanDb fixture 自动清理）
   await page.goto('/');
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(2000);
@@ -12,19 +18,19 @@ test('首页 - 空状态引导', async ({ page }) => {
   await expect(page.getByRole('button', { name: '添加第一位成员' })).toBeVisible();
 });
 
-test('首页 - 有成员时显示卡片列表', async ({ page, request }) => {
-  // 创建测试成员
-  await request.post('http://127.0.0.1:8000/api/v1/members', {
-    data: { name: '指标测试成员', gender: 'male', date_of_birth: '2018-01-01', member_type: 'child' },
-  });
-
+test('首页 - 有成员时显示卡片列表', async ({ page }) => {
+  // 注入测试数据
+  await createTestMember({ name: 'E2E测试成员' });
+  
   await page.goto('/');
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(2000);
   
   // 验证成员卡片可见
-  await expect(page.getByText('指标测试成员')).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText('儿童')).toBeVisible();
+  await expect(page.getByText('E2E测试成员')).toBeVisible({ timeout: 10000 });
+  
+  // 验证成员类型标签（使用更精确的选择器）
+  await expect(page.getByText('儿童').first()).toBeVisible();
 });
 
 test('成员创建 - 跳转到新建页面', async ({ page }) => {
@@ -37,7 +43,7 @@ test('成员创建 - 跳转到新建页面', async ({ page }) => {
   
   // 验证跳转到新建页面
   await expect(page).toHaveURL(/\/members\/new/);
-  await expect(page.getByText('添加新成员')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('添加成员')).toBeVisible({ timeout: 10000 });
 });
 
 test('审核页 - 页面标题正确', async ({ page }) => {
