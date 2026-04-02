@@ -1,20 +1,30 @@
-import { test, expect, createTestMember } from './fixtures';
+import { test, expect, createTestMember, cleanDatabase, UI_TEXT } from './fixtures';
 
 /**
  * P1 成员管理核心流程测试
  * 使用 fixtures 自动清理数据库
  */
 
-test('TC-P1-001: 空状态引导 - 首次使用创建成员', async ({ page }) => {
-  await page.goto('/');
-  await page.waitForTimeout(2000);
-  
-  // 验证空状态
-  await expect(page.getByRole('button', { name: '添加第一位成员' })).toBeVisible();
-  
-  // 点击按钮
-  await page.getByRole('button', { name: '添加第一位成员' }).click();
-  await expect(page).toHaveURL(/\/members\/new/);
+test.describe.serial('P1 空状态测试', () => {
+  test.beforeAll(async () => {
+    await cleanDatabase();
+  });
+
+  test('TC-P1-001: 空状态引导 - 首次使用创建成员', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForTimeout(2000);
+    
+    // 验证空状态
+    await expect(page.getByRole('button', { name: UI_TEXT.ADD_FIRST_MEMBER })).toBeVisible();
+    
+    // 点击按钮
+    await page.getByRole('button', { name: UI_TEXT.ADD_FIRST_MEMBER }).click();
+    await expect(page).toHaveURL(/\/members\/new/);
+  });
+
+  test.afterAll(async () => {
+    await cleanDatabase();
+  });
 });
 
 test('TC-P1-016: 成员列表 - 展示多个成员', async ({ page }) => {
@@ -39,16 +49,16 @@ test('TC-P1-018: 成员编辑 - 修改成员信息', async ({ page }) => {
   await page.waitForTimeout(2000);
   await page.getByText('待编辑成员').click();
   
-  // 等待详情页加载，点击右上角设置按钮
+  // 等待详情页加载，点击设置按钮（使用更精确的选择器）
   await page.waitForTimeout(1000);
-  await page.locator('header button:last-child').click();
+  await page.locator('header').getByRole('button').last().click();
   
   // 等待编辑页面
   await page.waitForTimeout(1000);
   
   // 修改姓名
-  await page.getByPlaceholder('请输入姓名').fill('已编辑成员');
-  await page.getByRole('button', { name: /保存|更新/ }).click();
+  await page.getByPlaceholder(UI_TEXT.PLACEHOLDER_NAME).fill('已编辑成员');
+  await page.getByRole('button', { name: UI_TEXT.FORM_SUBMIT_EDIT }).click();
   
   // 验证更新成功（跳转回详情页或列表）
   await page.waitForTimeout(1000);
@@ -66,12 +76,19 @@ test('TC-P1-019: 成员删除 - 软删除验证', async ({ page }) => {
   
   // 点击设置按钮进入编辑页面
   await page.waitForTimeout(1000);
-  await page.locator('header button:last-child').click();
+  await page.locator('header').getByRole('button').last().click();
+  
+  // 等待编辑页面加载
+  await page.waitForTimeout(1000);
+  
+  // 设置 dialog 处理器
+  page.on('dialog', dialog => dialog.accept());
   
   // 点击删除按钮
-  page.on('dialog', dialog => dialog.accept());
-  await page.waitForTimeout(1000);
-  await page.getByRole('button', { name: /删除/ }).click();
+  await page.getByRole('button', { name: UI_TEXT.FORM_DELETE }).click();
+  
+  // 等待删除操作完成
+  await page.waitForTimeout(2000);
   
   // 验证回到首页
   await expect(page).toHaveURL('/');

@@ -1,30 +1,45 @@
-import { test, expect, createTestMember, UI_TEXT } from './fixtures';
+import { test, expect, createTestMember, cleanDatabase, UI_TEXT } from './fixtures';
 
-test('TC-P5-001: 空状态引导文案清晰可读', async ({ page }) => {
-  await page.goto('/');
-  await page.waitForTimeout(2000);
-  
-  await expect(page.getByText(UI_TEXT.WELCOME_TITLE)).toBeVisible();
-  await expect(page.getByText('记录家人健康足迹')).toBeVisible();
-  
-  const actionButton = page.getByRole('button', { name: UI_TEXT.ADD_FIRST_MEMBER });
-  await expect(actionButton).toBeVisible();
-  await expect(actionButton).toBeEnabled();
-});
+/**
+ * P5 用户体验测试
+ * 验证空状态引导、错误提示、图表可读性等用户体验指标
+ */
 
-test('TC-P5-002: 成员创建表单字段标签清晰', async ({ page }) => {
-  await page.goto('/members/new');
-  await page.waitForTimeout(1500);
-  
-  await expect(page.getByText(UI_TEXT.FORM_TITLE_CREATE)).toBeVisible();
-  
-  await expect(page.getByText(UI_TEXT.LABEL_NAME, { exact: true })).toBeVisible();
-  await expect(page.getByText(UI_TEXT.LABEL_GENDER, { exact: true })).toBeVisible();
-  await expect(page.getByText(UI_TEXT.LABEL_DOB, { exact: true })).toBeVisible();
-  await expect(page.getByText(UI_TEXT.LABEL_TYPE, { exact: true })).toBeVisible();
-  
-  await expect(page.getByPlaceholder(UI_TEXT.PLACEHOLDER_NAME)).toBeVisible();
-  await expect(page.getByRole('button', { name: UI_TEXT.FORM_SUBMIT_CREATE })).toBeVisible();
+test.describe.serial('P5 空状态测试', () => {
+  test.beforeAll(async () => {
+    await cleanDatabase();
+  });
+
+  test('TC-P5-001: 空状态引导文案清晰可读', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForTimeout(2000);
+    
+    await expect(page.getByText(UI_TEXT.WELCOME_TITLE)).toBeVisible();
+    await expect(page.getByText('记录家人健康足迹')).toBeVisible();
+    
+    const actionButton = page.getByRole('button', { name: UI_TEXT.ADD_FIRST_MEMBER });
+    await expect(actionButton).toBeVisible();
+    await expect(actionButton).toBeEnabled();
+  });
+
+  test('TC-P5-002: 成员创建表单字段标签清晰', async ({ page }) => {
+    await page.goto('/members/new');
+    await page.waitForTimeout(1500);
+    
+    await expect(page.getByText(UI_TEXT.FORM_TITLE_CREATE)).toBeVisible();
+    
+    await expect(page.getByText(UI_TEXT.LABEL_NAME, { exact: true })).toBeVisible();
+    await expect(page.getByText(UI_TEXT.LABEL_GENDER, { exact: true })).toBeVisible();
+    await expect(page.getByText(UI_TEXT.LABEL_DOB, { exact: true })).toBeVisible();
+    await expect(page.getByText(UI_TEXT.LABEL_TYPE, { exact: true })).toBeVisible();
+    
+    await expect(page.getByPlaceholder(UI_TEXT.PLACEHOLDER_NAME)).toBeVisible();
+    await expect(page.getByRole('button', { name: UI_TEXT.FORM_SUBMIT_CREATE })).toBeVisible();
+  });
+
+  test.afterAll(async () => {
+    await cleanDatabase();
+  });
 });
 
 test('TC-P5-011: 错误提示友好可读', async ({ page }) => {
