@@ -107,3 +107,27 @@
   1. 将 `/health` 移至 `/api/v1/health`
   2. 在 `main.py` 新增 `/api/v1/trends` 返回可用指标列表
 - **验证状态**: ✅ 两个端点均返回 200
+
+### [BUG-020] E2E 测试用例与 UI 文案不一致
+- **现象**: E2E 测试失败，找不到页面元素（如"欢迎使用家庭检查单管理"）
+- **根由**: 
+  1. 测试用例硬编码文案，未对照 UI_SPEC.md 或代码
+  2. 缺少文案常量层，测试和代码各自硬编码
+  3. MemberForm.tsx 硬编码按钮文案，未使用 submitLabel 属性
+- **修复**: 
+  1. 创建 `src/constants/ui-text.ts` 文案单一真相源
+  2. 更新测试用例引用 UI_TEXT 常量
+  3. 修复 MemberForm.tsx 使用 submitLabel 属性
+  4. 更新 UI_SPEC.md 与代码一致
+- **验证状态**: ✅ E2E 测试 17/17 通过
+
+### [BUG-021] 前端样式丢失：Docker 镜像配置错误
+- **现象**: 页面所有样式丢失，只有干巴巴的文字
+- **根由**: 
+  1. 镜像中的 package.json 等关键文件为空（0字节）
+  2. docker-compose.yml working_dir: /app/frontend 与镜像实际目录 /app 不符
+- **修复**: 
+  1. 重新构建前端镜像
+  2. 修正 working_dir: /app
+  3. 移除不必要的 volume 挂载
+- **验证状态**: ✅ CSS 文件 26KB，样式正常

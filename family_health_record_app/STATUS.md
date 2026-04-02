@@ -7,14 +7,31 @@
 
 ## 当前状态
 
-**整体进度**: ✅ Docker 部署方案完成，预构建镜像可用
+**整体进度**: ✅ E2E 测试全部通过，Docker 部署方案完成
 
 | 模块 | 状态 | 说明 |
 |------|------|------|
 | 后端 API | ✅ 正常 | FastAPI 运行在端口 8000 |
 | 后端测试 | ✅ 通过 | 89 个 pytest 测试全部通过 |
-| 前端页面 | ✅ 正常 | Next.js 运行在端口 3001 |
+| 前端页面 | ✅ 正常 | Next.js 运行在端口 3001，样式正常 |
+| E2E 测试 | ✅ 通过 | 17/17 Playwright 测试全部通过 |
 | Docker 部署 | ✅ 完成 | 预构建镜像 + 国内源加速 |
+
+---
+
+## E2E 测试结果
+
+```
+17 passed (40.5s)
+```
+
+| 测试文件 | 用例数 | 状态 |
+|----------|--------|------|
+| dashboard.spec.ts | 2 | ✅ |
+| error-states.spec.ts | 4 | ✅ |
+| member-management.spec.ts | 4 | ✅ |
+| review-workflow.spec.ts | 2 | ✅ |
+| ux-experience.spec.ts | 5 | ✅ |
 
 ---
 
@@ -23,13 +40,8 @@
 | 镜像 | 大小 | 说明 |
 |------|------|------|
 | qa-base | 448MB | 基础镜像 (Python 3.11 + Node.js 20) |
-| qa-backend | 617MB | 后端含依赖 |
-| qa-frontend | 1.32GB | 前端含依赖 |
-
-### 镜像特性
-- ✅ 国内源：阿里云 apt/pip、淘宝 npm
-- ✅ 依赖预装：启动无需等待
-- ✅ 热更新：源码挂载即时生效
+| qa-backend | 617MB | 后端含 pytest 依赖 |
+| infra-frontend | ~500MB | 前端含依赖 |
 
 ---
 
@@ -57,24 +69,24 @@ docker exec health-record-backend python -m pytest tests/ -v
 ### E2E 测试
 ```bash
 cd family_health_record_app/frontend
-npx playwright test
-```
-
-### 健康检查
-```bash
-curl http://localhost:8000/api/v1/health
-# {"status":"ok","version":"v1.3.0"}
+PLAYWRIGHT_BASE_URL=http://localhost:3001 npx playwright test
 ```
 
 ---
 
-## 已完成的修复
+## 本次更新
 
-### BUG-020: 前端 204 No Content 解析崩溃 ✅
-- 修复 `client.ts`：在解析 JSON 前判断 `status !== 204`
+### 修复的问题
+1. ✅ E2E 测试并行数据冲突（使用 serial describe + beforeAll/afterAll）
+2. ✅ E2E 测试选择器问题（使用精确选择器）
+3. ✅ MemberForm 硬编码文案 bug（使用 submitLabel 属性）
+4. ✅ 前端样式丢失（重新构建镜像，修正 docker-compose 配置）
+5. ✅ UI 文案不一致（创建 ui-text.ts 常量层）
 
-### BUG-021: 趋势图/折线图渲染失效 ✅
-- 修复 `trends/page.tsx`：修正 `null side` 的逻辑判断
+### 新增资产
+- `src/constants/ui-text.ts` - UI 文案单一真相源
+- `e2e/fixtures.ts` - 测试 fixtures（数据清理）
+- `docs/bugs/BUG-UI-001.md` - Bug 记录文档
 
 ---
 
@@ -82,16 +94,22 @@ curl http://localhost:8000/api/v1/health
 
 | 优先级 | 任务 | 状态 |
 |--------|------|------|
-| P1 | E2E 测试用例完善 | 进行中 |
-| P1 | 测试覆盖率提升 | 当前 10.3% |
+| P1 | 视觉回归测试 | 待定 |
+| P1 | CSS 断言测试 | 待定 |
 | P2 | 用户认证/授权 | 待定 |
 
 ---
 
 ## 开发日志
 
-- **2026-04-02**: 完成 Docker 预构建镜像方案，配置国内源，更新部署文档
-- **2026-04-01**: 成功执行 MCP 前端测试，修复删除和趋势图 Bug
+- **2026-04-02**: 
+  - 修复 E2E 测试全部通过 (17/17)
+  - 创建 UI 文案常量层
+  - 修复前端样式丢失问题
+  - 更新 UI_SPEC.md 与代码一致
+- **2026-04-01**: 
+  - 完成 Docker 预构建镜像方案
+  - 成功执行 MCP 前端测试
 
 ---
 
@@ -99,6 +117,6 @@ curl http://localhost:8000/api/v1/health
 
 **Docker 服务**:
 - 后端: http://localhost:8000 (qa-backend)
-- 前端: http://localhost:3001 (qa-frontend)
+- 前端: http://localhost:3001 (infra-frontend)
 - 数据库: PostgreSQL 16 (健康)
 - 存储: MinIO (健康)
