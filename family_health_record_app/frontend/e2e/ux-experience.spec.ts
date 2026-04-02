@@ -26,7 +26,7 @@ test('TC-P5-002: 成员创建表单字段标签清晰', async ({ page }) => {
   await page.waitForTimeout(1500);
   
   // 等待表单出现
-  await expect(page.getByText('添加成员')).toBeVisible();
+  await expect(page.getByText('添加新成员')).toBeVisible();
   
   // 验证所有字段标签存在
   await expect(page.getByText('姓名', { exact: true })).toBeVisible();

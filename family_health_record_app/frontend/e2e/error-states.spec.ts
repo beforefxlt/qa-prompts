@@ -43,7 +43,7 @@ test('成员创建 - 跳转到新建页面', async ({ page }) => {
   
   // 验证跳转到新建页面
   await expect(page).toHaveURL(/\/members\/new/);
-  await expect(page.getByText('添加成员')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('添加新成员')).toBeVisible({ timeout: 10000 });
 });
 
 test('审核页 - 页面标题正确', async ({ page }) => {

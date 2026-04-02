@@ -6,10 +6,7 @@ const API_BASE = 'http://127.0.0.1:8000/api/v1';
  * E2E 测试 fixtures
  * 提供数据清理和注入功能
  */
-export const test = base.extend<{
-  cleanDb: void;
-  emptyDb: void;
-}>({
+export const test = base.extend<{ cleanDb: void }>({
   // 每个测试前清理数据库，测试后恢复空状态
   cleanDb: [async ({}, use) => {
     // 测试前：清理所有数据
@@ -20,21 +17,13 @@ export const test = base.extend<{
     // 测试后：清理所有数据
     await cleanDatabase();
   }, { auto: true }],  // 自动应用于所有测试
-  
-  // 显式空数据库（用于需要确保空状态的测试）
-  emptyDb: [async ({}, use) => {
-    await cleanDatabase();
-    await use();
-    await cleanDatabase();
-  }, {}],
 });
 
 /**
  * 清理数据库所有测试数据
  */
-async function cleanDatabase() {
+export async function cleanDatabase() {
   try {
-    // 获取所有成员
     const res = await fetch(`${API_BASE}/members`);
     if (!res.ok) return;
     
@@ -45,6 +34,10 @@ async function cleanDatabase() {
       await fetch(`${API_BASE}/members/${member.id}`, {
         method: 'DELETE',
       });
+    }
+    
+    if (members.length > 0) {
+      console.log(`已清理 ${members.length} 条成员数据`);
     }
   } catch (e) {
     console.warn('清理数据库失败（可能服务未启动）:', e);
@@ -75,15 +68,6 @@ export async function createTestMember(data: {
     throw new Error(`创建测试成员失败: ${res.statusText}`);
   }
   
-  return res.json();
-}
-
-/**
- * 获取所有成员
- */
-export async function getAllMembers() {
-  const res = await fetch(`${API_BASE}/members`);
-  if (!res.ok) return [];
   return res.json();
 }
 

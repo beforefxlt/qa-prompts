@@ -1,17 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, createTestMember } from './fixtures';
 
-test('首页 - 显示成员列表', async ({ page, request }) => {
+test('首页 - 显示成员列表', async ({ page }) => {
   // 创建成员
-  const memberResp = await request.post('http://127.0.0.1:8000/api/v1/members', {
-    data: {
-      name: 'E2E成员',
-      gender: 'female',
-      date_of_birth: '2018-01-01',
-      member_type: 'child',
-    },
-  });
-  expect(memberResp.ok()).toBeTruthy();
-  const memberData = await memberResp.json();
+  await createTestMember({ name: 'E2E成员', gender: 'female', member_type: 'child' });
 
   await page.goto('/');
   await page.waitForLoadState('networkidle');
@@ -19,23 +10,15 @@ test('首页 - 显示成员列表', async ({ page, request }) => {
   
   // 验证成员显示在列表中
   await expect(page.getByText('E2E成员')).toBeVisible({ timeout: 10000 });
-  await expect(page.getByText('儿童')).toBeVisible();
+  await expect(page.getByText('儿童').first()).toBeVisible();
   
   // 验证有添加成员按钮
   await expect(page.getByRole('button', { name: /添加.*成员/ })).toBeVisible();
 });
 
-test('成员卡片 - 点击可进入详情', async ({ page, request }) => {
+test('成员卡片 - 点击可进入详情', async ({ page }) => {
   // 创建成员
-  const memberResp = await request.post('http://127.0.0.1:8000/api/v1/members', {
-    data: {
-      name: '点击测试成员',
-      gender: 'male',
-      date_of_birth: '2019-01-01',
-      member_type: 'child',
-    },
-  });
-  const memberData = await memberResp.json();
+  const memberData = await createTestMember({ name: '点击测试成员', gender: 'male', member_type: 'child' });
 
   await page.goto('/');
   await page.waitForLoadState('networkidle');
