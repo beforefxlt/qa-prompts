@@ -14,6 +14,7 @@ class DocumentRecord(Base):
     member_id: Mapped[UUID] = mapped_column(ForeignKey("member_profiles.id"), index=True)
     file_url: Mapped[str] = mapped_column(String(512))
     desensitized_url: Mapped[Optional[str]] = mapped_column(String(512))
+    file_hash: Mapped[Optional[str]] = mapped_column(String(64), index=True)
     status: Mapped[str] = mapped_column(String(50), default="uploaded")
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

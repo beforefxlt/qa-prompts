@@ -7,7 +7,7 @@ import {
 
 type ChartPoint = {
   date: string;
-  left: number;
+  left?: number;
   right?: number;
   value?: number; // 兼容单列数据
 };

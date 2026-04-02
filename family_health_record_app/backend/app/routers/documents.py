@@ -2,6 +2,7 @@ import os
 import shutil
 import uuid
 import logging
+import hashlib
 from datetime import date
 from uuid import UUID
 from typing import Optional, List, Dict, Any
@@ -115,6 +116,23 @@ async def upload_document(
     # 读取文件内容
     file_content = file.file.read()
     
+    # 检查重复上传：计算文件哈希，如果同一成员已上传过相同文件则跳过
+    file_hash = hashlib.sha256(file_content).hexdigest()
+    existing_doc = await db.scalar(
+        select(DocumentRecord).where(
+            DocumentRecord.member_id == target_member_id,
+            DocumentRecord.file_hash == file_hash,
+            DocumentRecord.status.in_(["uploaded", "persisted", "rule_conflict", "approved"]),
+        )
+    )
+    if existing_doc:
+        logger.info(f"Duplicate upload detected for member {target_member_id}, hash {file_hash[:8]}...")
+        return DocumentUploadResponse(
+            document_id=str(existing_doc.id),
+            status="duplicate",
+            message="该检查单已上传过，请勿重复上传",
+        )
+    
     # 尝试上传到 MinIO，失败则存本地
     storage_client = get_storage_client()
     logger.info(f"Storage client: {storage_client}")
@@ -152,6 +170,7 @@ async def upload_document(
         member_id=target_member_id,
         file_url=file_url,
         desensitized_url=desensitized_url,
+        file_hash=file_hash,
         status="uploaded",
     )
     db.add(document)
