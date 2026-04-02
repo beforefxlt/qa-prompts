@@ -47,13 +47,40 @@ async def get_trends(member_id: UUID, metric: str, db: AsyncSession = Depends(ge
     reference_range = next((row.reference_range for row in trend_rows if row.reference_range), None)
     alert_status = "warning" if any(row.is_abnormal for row in trend_rows) else "normal"
 
+    # 按 exam_date 分组，只比较不同日期的数据
+    dates = sorted(set(row.exam_date for row in trend_rows))
+    
     comparison = None
-    if len(trend_rows) >= 2:
-        comparison = {
-            "current": trend_rows[-1].value_numeric,
-            "previous": trend_rows[-2].value_numeric,
-            "delta": round(trend_rows[-1].value_numeric - trend_rows[-2].value_numeric, 3),
-        }
+    if len(dates) >= 2:
+        # 获取最新和上次检查的所有 observation
+        latest_date = dates[-1]
+        previous_date = dates[-2]
+        
+        latest_rows = [row for row in trend_rows if row.exam_date == latest_date]
+        previous_rows = [row for row in trend_rows if row.exam_date == previous_date]
+        
+        # 比较相同 side 的值，如果没有 side 则比较第一个值
+        if latest_rows and previous_rows:
+            # 尝试匹配相同 side
+            for side in ['left', 'right', None]:
+                latest_val = next((r.value_numeric for r in latest_rows if r.side == side), None)
+                previous_val = next((r.value_numeric for r in previous_rows if r.side == side), None)
+                if latest_val is not None and previous_val is not None:
+                    comparison = {
+                        "current": latest_val,
+                        "previous": previous_val,
+                        "delta": round(latest_val - previous_val, 3),
+                    }
+                    break
+            # 如果无法匹配 side，使用第一个值
+            if comparison is None:
+                latest_val = latest_rows[0].value_numeric
+                previous_val = previous_rows[0].value_numeric
+                comparison = {
+                    "current": latest_val,
+                    "previous": previous_val,
+                    "delta": round(latest_val - previous_val, 3),
+                }
 
     return {
         "metric": metric,
