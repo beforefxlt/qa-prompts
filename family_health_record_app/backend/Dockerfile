@@ -1,9 +1,4 @@
-FROM python:3.13-slim
-
-ARG HTTP_PROXY
-ARG HTTPS_PROXY
-ENV http_proxy=$HTTP_PROXY \
-    https_proxy=$HTTPS_PROXY
+FROM python:3.11-slim
 
 WORKDIR /app
 

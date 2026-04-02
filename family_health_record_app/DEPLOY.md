@@ -1,79 +1,222 @@
 # 家庭检查单管理应用 - 部署指南
 
-## NAS 部署步骤
+## 部署方式
 
-### 1. 准备环境
+### 方式一：使用预构建镜像（推荐）
+
+预构建镜像已包含所有依赖，启动速度快。
+
+#### 1. 准备环境
 ```bash
-# 克隆代码到 NAS
+# 克隆代码
 git clone <your-repo-url> /path/to/health-record-app
 cd /path/to/health-record-app
 
-# 复制环境变量配置
-cp backend/.env.example backend/.env
-# 编辑 .env 文件，填入真实的 SILICONFLOW_API_KEY
-```
-
-### 2. 配置 Docker 代理 (如需要)
-```bash
-# 在 NAS 上创建 Docker daemon 配置
-sudo tee /etc/docker/daemon.json << 'EOF'
-{
-  "proxies": {
-    "http-proxy": "http://127.0.0.1:10800",
-    "https-proxy": "http://127.0.0.1:10800"
-  }
-}
-EOF
-
-# 重启 Docker
-sudo systemctl restart docker
-```
-
-### 3. 构建并启动
-```bash
-# 使用 docker-compose 构建并启动所有服务
+# 配置环境变量
 cd infra
-docker-compose up -d --build
-
-# 查看日志
-docker-compose logs -f
-
-# 停止服务
-docker-compose down
+cat > .env << EOF
+SILICONFLOW_API_KEY=your_api_key_here
+EOF
 ```
 
-### 4. 访问应用
-- 前端: http://<NAS-IP>:3001
-- 后端 API: http://<NAS-IP>:8000
-- MinIO 控制台: http://<NAS-IP>:9001 (minioadmin/minioadmin)
+#### 2. 启动服务
+```bash
+cd infra
+docker compose up -d
+```
+
+#### 3. 访问应用
+- 前端: http://localhost:3001
+- 后端 API: http://localhost:8000
+- API 文档: http://localhost:8000/docs
+- MinIO 控制台: http://localhost:9001 (minioadmin/minioadmin)
+
+### 方式二：从源码构建
+
+#### 1. 构建基础镜像
+```bash
+cd infra
+docker build -f Dockerfile.base -t qa-base:latest .
+```
+
+#### 2. 启动服务（自动安装依赖）
+```bash
+docker compose up -d --build
+```
+
+## Docker 镜像说明
+
+| 镜像 | 大小 | 说明 |
+|:---|:---|:---|
+| qa-base | 448MB | 基础镜像 (Python 3.11 + Node.js 20 + 国内源) |
+| qa-backend | 617MB | 后端镜像 (含 Python 依赖) |
+| qa-frontend | 1.32GB | 前端镜像 (含 Node.js 依赖) |
+
+### 镜像特性
+- ✅ **国内源加速**: 阿里云 apt/pip 源、淘宝 npm 源
+- ✅ **依赖预装**: 首次启动无需等待依赖安装
+- ✅ **热更新**: 源代码挂载，修改即时生效
+
+## 服务架构
+
+```
+┌─────────────────────────────────────────────────┐
+│                   Docker Network                 │
+├─────────────┬─────────────┬─────────────────────┤
+│  Frontend   │   Backend   │  Infrastructure     │
+│  Port 3001  │  Port 8000  │                     │
+│  Next.js    │  FastAPI    │  ┌───────────────┐  │
+│             │             │  │ PostgreSQL 16 │  │
+│             │             │  │ (内部 5432)   │  │
+│             │             │  └───────────────┘  │
+│             │             │  ┌───────────────┐  │
+│             │             │  │    MinIO      │  │
+│             │             │  │  Port 9000/1  │  │
+│             │             │  └───────────────┘  │
+└─────────────┴─────────────┴─────────────────────┘
+```
 
 ## 服务说明
 
-| 服务 | 端口 | 说明 |
-|:---|:---|:---|
-| backend | 8000 | FastAPI 后端 API |
-| frontend | 3001 | Next.js 前端 |
-| minio | 9000/9001 | 对象存储 (可选) |
-| postgres | 5432 | 数据库 (可选, 默认用 SQLite) |
+| 服务 | 镜像 | 端口 | 说明 |
+|:---|:---|:---|:---|
+| db | postgres:16-alpine | 内部 | PostgreSQL 数据库 |
+| minio | minio/minio | 9000/9001 | 对象存储 |
+| backend | qa-backend | 8000 | FastAPI 后端 API |
+| frontend | qa-frontend | 3001 | Next.js 前端 |
 
 ## 数据持久化
 
 数据存储在 Docker volumes 中:
-- `postgres_data/` - 数据库文件
-- `minio_data/` - 上传的文件
+- `postgres_data` - 数据库文件
+- `minio_data` - 上传的文件
 
-备份时只需备份这些 volumes。
+### 备份数据
+```bash
+# 备份 PostgreSQL
+docker exec health-record-db pg_dump -U health_record health_record > backup.sql
+
+# 备份 MinIO
+docker cp health-record-minio:/data ./minio_backup
+```
+
+### 恢复数据
+```bash
+# 恢复 PostgreSQL
+cat backup.sql | docker exec -i health-record-db psql -U health_record health_record
+```
+
+## 常用命令
+
+```bash
+# 查看服务状态
+docker compose ps
+
+# 查看日志
+docker compose logs -f
+docker compose logs -f backend  # 只看后端日志
+
+# 重启服务
+docker compose restart backend
+
+# 停止服务
+docker compose down
+
+# 停止并删除数据
+docker compose down -v
+
+# 进入容器调试
+docker exec -it health-record-backend bash
+docker exec -it health-record-frontend bash
+```
+
+## 测试
+
+### 运行后端测试
+```bash
+docker exec health-record-backend python -m pytest tests/ -v
+```
+
+### 运行 E2E 测试
+```bash
+# 确保服务已启动
+docker compose up -d
+
+# 运行 Playwright 测试
+cd family_health_record_app/frontend
+npx playwright test
+```
+
+### 健康检查
+```bash
+# 检查后端
+curl http://localhost:8000/api/v1/health
+
+# 检查前端
+curl http://localhost:3001
+```
 
 ## 故障排除
 
-### 常见问题
-
-1. **构建失败**: 检查代理设置是否正确
-2. **无法连接数据库**: 检查 .env 中的 DATABASE_URL 配置
-3. **OCR 不工作**: 检查 SILICONFLOW_API_KEY 是否正确
-
-### 查看日志
+### 1. 端口被占用
 ```bash
-docker-compose logs backend
-docker-compose logs frontend
+# 查看端口占用
+netstat -ano | findstr :8000
+netstat -ano | findstr :3001
+
+# 修改 docker-compose.yml 中的端口映射
+ports:
+  - "8080:8000"  # 改用 8080
 ```
+
+### 2. 容器启动失败
+```bash
+# 查看详细日志
+docker compose logs backend --tail 100
+
+# 重新构建
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+```
+
+### 3. 数据库连接失败
+```bash
+# 检查 PostgreSQL 状态
+docker exec health-record-db pg_isready -U health_record
+
+# 检查环境变量
+docker exec health-record-backend env | grep DATABASE_URL
+```
+
+### 4. 前端构建失败
+```bash
+# 清理缓存
+docker exec health-record-frontend rm -rf .next
+docker compose restart frontend
+```
+
+## 生产环境部署建议
+
+1. **修改默认密码**: 更改 PostgreSQL 和 MinIO 的默认密码
+2. **启用 HTTPS**: 使用 Nginx 反向代理 + SSL 证书
+3. **数据备份**: 定期备份 volumes
+4. **监控**: 添加健康检查和日志收集
+5. **资源限制**: 在 docker-compose.yml 中添加资源限制
+```yaml
+services:
+  backend:
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+```
+
+## 更新日志
+
+### v1.3.0 (2026-04-02)
+- ✅ 添加预构建 Docker 镜像支持
+- ✅ 配置国内源（阿里云 apt/pip、淘宝 npm）
+- ✅ 优化前端 ESLint 配置
+- ✅ 更新部署文档

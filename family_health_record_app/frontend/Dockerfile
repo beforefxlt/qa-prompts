@@ -1,9 +1,4 @@
-FROM node:20-alpine AS builder
-
-ARG HTTP_PROXY
-ARG HTTPS_PROXY
-ENV http_proxy=$HTTP_PROXY \
-    https_proxy=$HTTPS_PROXY
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
@@ -15,7 +10,7 @@ COPY . .
 ENV NEXT_PUBLIC_API_URL=http://localhost:8000
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM node:18-alpine AS runner
 
 WORKDIR /app
 

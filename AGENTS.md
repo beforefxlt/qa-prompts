@@ -5,10 +5,14 @@
 
 ---
 
-## 🔴 核心红线：Commit 前的文档一致性强校验 (Pre-Commit Sync)
+## 🔴 核心红线：双向守卫与指南先验加载 (Dual-Gating & Pre-Audit)
 
 **严禁在代码、架构或测试逻辑发生变更后，直接裸提 `git commit`。** 
-在执行任何 `git commit` 操作之前，Agent 必须强制执行以下“文档一致性拦截检查”：
+在执行任何操作之前，Agent 必须强制执行以下锁定协议：
+
+### 0. 宪法先行：技术指南加载 (Hitchhiker's Compliance)
+- **[最高准则]**：所有行动必须符合根目录 `ANTIGRAVITY_HITCHHIKER.md` 定义的技术栈规则。
+- **[强制动作]**：在处理 **数据库迁移、API 路由新增、E2E 测试编写** 等高风险任务前，Agent **必须首先读取 `ANTIGRAVITY_HITCHHIKER.md`**。若发现当前方案违反该指南（如误用同步驱动或硬编码端口），必须自我拦截并向用户报告。
 
 ### 1. 缺陷与工作日志 (Issue & Work Logs)
 - **分析 Bug 时**：产生的 Bug 分析单（如 BUG-001）属于单次应用产物，用于辅助诊断与沟通，**严禁上传至 Git 库**。

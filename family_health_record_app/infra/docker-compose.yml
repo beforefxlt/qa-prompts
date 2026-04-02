@@ -1,11 +1,3 @@
-version: "3.9"
-
-x-proxy-env: &proxy-env
-  HTTP_PROXY: http://127.0.0.1:10800
-  HTTPS_PROXY: http://127.0.0.1:10800
-  http_proxy: http://127.0.0.1:10800
-  https_proxy: http://127.0.0.1:10800
-
 services:
   db:
     image: postgres:16-alpine
@@ -14,8 +6,6 @@ services:
       POSTGRES_DB: health_record
       POSTGRES_USER: health_record
       POSTGRES_PASSWORD: health_record_password
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -43,13 +33,11 @@ services:
       retries: 5
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-      args:
-        HTTP_PROXY: http://127.0.0.1:10800
-        HTTPS_PROXY: http://127.0.0.1:10800
+    image: qa-backend:latest
     container_name: health-record-backend
+    working_dir: /app/backend
+    volumes:
+      - ../backend:/app/backend
     environment:
       DATABASE_URL: postgresql+asyncpg://health_record:health_record_password@db:5432/health_record
       MINIO_ENDPOINT: minio:9000
@@ -57,7 +45,7 @@ services:
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET: health-records
       SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY}
-      OCR_MODEL_NAME: deepseek-ai/DeepSeek-OCR
+      OCR_MODEL_NAME: Qwen/Qwen2.5-VL-32B-Instruct
     ports:
       - "8000:8000"
     depends_on:
@@ -65,21 +53,29 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        HTTP_PROXY: http://127.0.0.1:10800
-        HTTPS_PROXY: http://127.0.0.1:10800
+    image: qa-frontend:latest
     container_name: health-record-frontend
+    working_dir: /app/frontend
+    volumes:
+      - ../frontend/src:/app/frontend/src
+      - ../frontend/public:/app/frontend/public
+      - ../frontend/package.json:/app/frontend/package.json
+      - ../frontend/package-lock.json:/app/frontend/package-lock.json
+      - ../frontend/next.config.ts:/app/frontend/next.config.ts
+      - ../frontend/tsconfig.json:/app/frontend/tsconfig.json
+      - ../frontend/tailwind.config.ts:/app/frontend/tailwind.config.ts
+      - ../frontend/postcss.config.mjs:/app/frontend/postcss.config.mjs
+      - ../frontend/.eslintrc.json:/app/frontend/.eslintrc.json
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
     ports:
       - "3001:3001"
     depends_on:
       - backend
+    command: sh -c "rm -rf .next && npm run build && npm start -- -p 3001"
 
 volumes:
   postgres_data:
