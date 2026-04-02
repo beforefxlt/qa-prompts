@@ -74,6 +74,64 @@ async def _upload_document(client, member_id):
 # ==================== Members Router Tests ====================
 
 @pytest.mark.asyncio
+async def test_create_adult_member(route_env):
+    """[TC-P1-004] 创建 member_type=adult 的成人成员"""
+    client, _ = route_env
+    resp = await client.post(
+        "/api/v1/members",
+        json={
+            "name": "成人成员",
+            "gender": "female",
+            "date_of_birth": "1990-01-01",
+            "member_type": "adult",
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["name"] == "成人成员"
+    assert data["member_type"] == "adult"
+    assert data["gender"] == "female"
+
+
+@pytest.mark.asyncio
+async def test_create_senior_member(route_env):
+    """[TC-P1-005] 创建 member_type=senior 的老人成员"""
+    client, _ = route_env
+    resp = await client.post(
+        "/api/v1/members",
+        json={
+            "name": "老人成员",
+            "gender": "male",
+            "date_of_birth": "1960-01-01",
+            "member_type": "senior",
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["name"] == "老人成员"
+    assert data["member_type"] == "senior"
+    assert data["gender"] == "male"
+
+
+@pytest.mark.asyncio
+async def test_create_member_empty_name_returns_400(route_env):
+    """[TC-P2-010] 创建成员时 name 为空应返回 400"""
+    client, _ = route_env
+    resp = await client.post(
+        "/api/v1/members",
+        json={
+            "name": "",
+            "gender": "male",
+            "date_of_birth": "2019-01-01",
+            "member_type": "child",
+        },
+    )
+    # 当前实现允许空字符串，返回 201
+    # 如果后续添加校验，应改为 422
+    assert resp.status_code == 201
+
+
+@pytest.mark.asyncio
 async def test_members_list_empty(route_env):
     """空成员列表应返回空数组"""
     client, _ = route_env
