@@ -41,3 +41,4 @@ tmp/
 *.log
 *.pcap
 .repomix-output.txt
+.worktrees/
