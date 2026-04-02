@@ -162,7 +162,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
             disabled={loading}
             className="flex-[2] bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white py-4 px-8 rounded-2xl font-bold shadow-xl shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
-            {loading ? <span>正在保存...</span> : <span>保存并开始记录</span>}
+            {loading ? <span>正在保存...</span> : <span>{submitLabel}</span>}
           </button>
         </div>
       </form>
