@@ -73,6 +73,12 @@ async def get_review_task(task_id: UUID, db: AsyncSession = Depends(get_db)):
         select(OCRExtractionResult).where(OCRExtractionResult.document_id == task.document_id)
     )
 
+    # 获取脱敏图片URL
+    image_url = None
+    if task.document and task.document.desensitized_url:
+        # 返回图片预览API的URL
+        image_url = f"/api/v1/documents/{task.document_id}/preview"
+
     return {
         "id": str(task.id),
         "document_id": str(task.document_id),
@@ -85,6 +91,7 @@ async def get_review_task(task_id: UUID, db: AsyncSession = Depends(get_db)):
         "audit_trail": task.audit_trail,
         "created_at": task.created_at.isoformat() if task.created_at else None,
         "updated_at": task.updated_at.isoformat() if task.updated_at else None,
+        "image_url": image_url,
     }
 
 

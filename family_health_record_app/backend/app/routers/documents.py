@@ -174,6 +174,36 @@ async def get_document(document_id: UUID, db: AsyncSession = Depends(get_db)):
     )
 
 
+@router.get("/{document_id}/preview")
+async def preview_document(document_id: UUID, db: AsyncSession = Depends(get_db)):
+    """预览文档脱敏图片"""
+    from fastapi.responses import Response
+    
+    document = await db.scalar(select(DocumentRecord).where(DocumentRecord.id == document_id))
+    if document is None:
+        raise HTTPException(status_code=404, detail="检查单不存在")
+    
+    if not document.desensitized_url:
+        raise HTTPException(status_code=404, detail="脱敏图片不存在")
+    
+    # 从 MinIO 获取图片
+    from ..services.storage_client import storage_client, storage_settings
+    
+    # 处理 URL 格式
+    file_url = document.desensitized_url
+    if file_url.startswith(f"{storage_settings.MINIO_BUCKET}/"):
+        file_key = file_url[len(f"{storage_settings.MINIO_BUCKET}/"):]
+    else:
+        file_key = file_url
+    
+    try:
+        image_bytes = storage_client.get_file(file_key)
+        return Response(content=image_bytes, media_type="image/webp")
+    except Exception as e:
+        logger.error(f"获取脱敏图片失败: {e}")
+        raise HTTPException(status_code=404, detail="图片获取失败")
+
+
 @router.post("/{document_id}/submit-ocr", response_model=Dict[str, Any])
 async def submit_ocr(document_id: UUID, db: AsyncSession = Depends(get_db)):
     stmt = select(DocumentRecord).options(
