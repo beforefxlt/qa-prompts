@@ -82,26 +82,18 @@ services:
       - test
 
   frontend:
-    image: qa-frontend:latest
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
     container_name: health-record-frontend
-    working_dir: /app/frontend
-    volumes:
-      - ../frontend/src:/app/frontend/src
-      - ../frontend/public:/app/frontend/public
-      - ../frontend/package.json:/app/frontend/package.json
-      - ../frontend/package-lock.json:/app/frontend/package-lock.json
-      - ../frontend/next.config.ts:/app/frontend/next.config.ts
-      - ../frontend/tsconfig.json:/app/frontend/tsconfig.json
-      - ../frontend/tailwind.config.ts:/app/frontend/tailwind.config.ts
-      - ../frontend/postcss.config.mjs:/app/frontend/postcss.config.mjs
-      - ../frontend/.eslintrc.json:/app/frontend/.eslintrc.json
+    working_dir: /app
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
     ports:
       - "3001:3001"
     depends_on:
       - backend
-    command: sh -c "rm -rf .next && npm run build && npm start -- -p 3001"
+    command: npm start -- -p 3001
 
 volumes:
   postgres_data:
