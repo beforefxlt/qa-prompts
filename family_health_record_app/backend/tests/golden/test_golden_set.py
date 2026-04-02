@@ -135,7 +135,7 @@ async def test_golden_set_axial_length_persisted(integration_env, monkeypatch):
     document_id = UUID(upload_resp.json()["document_id"])
 
     # Mock OCR 返回
-    async def fake_ocr(doc_id, file_url):
+    async def fake_ocr(doc_id, file_url, document_type="eye_axial_length"):
         return _make_fake_ocr_result(doc_id)
 
     from app.services import ocr_orchestrator as ocr_module
@@ -203,7 +203,7 @@ async def test_golden_set_synthetic_upload_and_ocr(integration_env, image_name, 
     document_id = upload_resp.json()["document_id"]
 
     # Mock OCR 返回
-    async def fake_ocr(doc_id, file_url):
+    async def fake_ocr(doc_id, file_url, document_type="eye_axial_length"):
         return _make_fake_ocr_result(doc_id)
 
     from app.services import ocr_orchestrator as ocr_module

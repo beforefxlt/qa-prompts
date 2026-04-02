@@ -198,14 +198,23 @@ async def preview_document(document_id: UUID, db: AsyncSession = Depends(get_db)
     
     try:
         image_bytes = storage_client.get_file(file_key)
-        return Response(content=image_bytes, media_type="image/webp")
+        # 强制设置 content_type 确保浏览器渲染
+        return Response(content=image_bytes, media_type="image/webp", headers={"Cache-Control": "no-cache"})
     except Exception as e:
+        # 本地回退逻辑：如果 MinIO 404/网络不通，尝试从备份目录读取
+        try:
+            local_path = os.path.join("uploads", os.path.basename(file_key))
+            if os.path.exists(local_path):
+                with open(local_path, "rb") as f:
+                    return Response(content=f.read(), media_type="image/webp")
+        except:
+            pass
         logger.error(f"获取脱敏图片失败: {e}")
-        raise HTTPException(status_code=404, detail="图片获取失败")
+        raise HTTPException(status_code=404, detail="图片不可用")
 
 
 @router.post("/{document_id}/submit-ocr", response_model=Dict[str, Any])
-async def submit_ocr(document_id: UUID, db: AsyncSession = Depends(get_db)):
+async def submit_ocr(document_id: UUID, document_type: str = "eye_axial_length", db: AsyncSession = Depends(get_db)):
     stmt = select(DocumentRecord).options(
         selectinload(DocumentRecord.member)
     ).where(DocumentRecord.id == document_id)
@@ -215,7 +224,7 @@ async def submit_ocr(document_id: UUID, db: AsyncSession = Depends(get_db)):
 
     from ..services.ocr_orchestrator import ocr_orchestrator
 
-    result = await ocr_orchestrator.process_document(document.id, document.file_url)
+    result = await ocr_orchestrator.process_document(document.id, document.file_url, document_type)
 
     if result.get("status") == "error":
         raise HTTPException(status_code=500, detail=result.get("message", "AI processing failed"))
@@ -246,10 +255,29 @@ async def submit_ocr(document_id: UUID, db: AsyncSession = Depends(get_db)):
     elif result["status"] == "approved":
         processed_items = ocr_data["processed_items"]
         try:
-            exam_date = date.fromisoformat(processed_items["exam_date"])
-        except Exception:
+            # 强化解析逻辑：处理类似 "YYYY-MM-DD" 或带有说明字样的 JSON
+            exam_date_str = processed_items.get("exam_date")
+            if not exam_date_str and "date" in processed_items:
+                exam_date_str = processed_items["date"]
+            
+            # 如果 OCR 返回的是复杂结构，尝试提取字符串
+            if isinstance(exam_date_str, dict):
+                exam_date_str = exam_date_str.get("value") or list(exam_date_str.values())[0]
+
+            if not exam_date_str:
+                raise ValueError("Missing exam_date")
+            
+            # 清理可能的额外字符 (仅保留 YYYY-MM-DD 部分)
+            import re
+            match = re.search(r"(\d{4}-\d{1,2}-\d{1,2})", str(exam_date_str))
+            if match:
+                exam_date = date.fromisoformat(match.group(1))
+            else:
+                exam_date = date.fromisoformat(str(exam_date_str))
+        except Exception as e:
+            logger.warning(f"解析检查日期失败: {e}, processed_items: {processed_items}")
             document.status = "rule_conflict"
-            existing_ocr.rule_conflict_details = {"error": ["exam_date_invalid"]}
+            existing_ocr.rule_conflict_details = {"error": [f"exam_date_invalid: {str(e)}"]}
             await _ensure_review_task(db, document, "auto_created_from_invalid_exam_date")
             return {"document_id": str(document.id), "status": document.status}
 

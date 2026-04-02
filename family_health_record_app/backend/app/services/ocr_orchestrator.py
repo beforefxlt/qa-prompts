@@ -12,40 +12,14 @@ from dotenv import load_dotenv
 
 from .rule_engine import check_ocr_result
 from .image_processor import desensitize_image
+from .prompt_manager import prompt_manager
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 SILICONFLOW_API_KEY = os.getenv("SILICONFLOW_API_KEY")
-OCR_MODEL_NAME = os.getenv("OCR_MODEL_NAME", "deepseek-ai/DeepSeek-OCR")
-
-PROMPT_TEMPLATE = """
-你是一个专业的医疗检查单据识别专家。
-请从这张图片中提取眼科检查数据，并以严格的 JSON 格式输出。
-注意：只需要输出 JSON，不要输出任何解释性文字，不要使用 markdown 代码块包裹。
-
-必须提取的字段：
-{
-  "exam_date": "YYYY-MM-DD 或 null",
-  "institution": "检查机构名称或 null",
-  "observations": [
-    {"metric_code": "axial_length", "value_numeric": 24.35, "unit": "mm", "side": "right"},
-    {"metric_code": "axial_length", "value_numeric": 23.32, "unit": "mm", "side": "left"}
-  ]
-}
-
-metric_code 只能是以下值之一：
-- axial_length (眼轴长度)
-- vision_acuity (视力)
-- height (身高)
-- weight (体重)
-- blood_glucose (血糖)
-- intraocular_pressure (眼压)
-
-如果无法确定某个字段，请使用 null。
-observations 数组至少要有一项有效的观测数据，否则审核会失败。
-"""
+OCR_MODEL_NAME = os.getenv("OCR_MODEL_NAME", "Qwen/Qwen2.5-VL-32B-Instruct")
 
 class OCROrchestrator:
     """
@@ -56,11 +30,11 @@ class OCROrchestrator:
         with open(file_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
 
-    async def process_document(self, document_id: UUID, file_url: str) -> Dict[str, Any]:
+    async def process_document(self, document_id: UUID, file_url: str, document_type: str = "eye_axial_length") -> Dict[str, Any]:
         """
         开始全链路 OCR 流程。
         """
-        logger.info(f"开始处理文档 {document_id}, 文件路径: {file_url}")
+        logger.info(f"开始处理文档 {document_id}, 类型: {document_type}, 文件路径: {file_url}")
         
         # 从 MinIO 获取文件
         from .storage_client import storage_client, storage_settings
@@ -91,6 +65,8 @@ class OCROrchestrator:
                 if os.path.exists(tmp_path):
                     os.unlink(tmp_path)
             
+            prompt_content = prompt_manager.get_prompt(document_type)
+
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
                     "https://api.siliconflow.cn/v1/chat/completions",
@@ -104,7 +80,7 @@ class OCROrchestrator:
                             {
                                 "role": "user",
                                 "content": [
-                                    {"type": "text", "text": PROMPT_TEMPLATE},
+                                    {"type": "text", "text": prompt_content},
                                     {
                                         "type": "image_url",
                                         "image_url": {

@@ -16,9 +16,10 @@ def desensitize_image(image_bytes: bytes, mask_top_percent: float = 0.15, mask_b
     width, height = img.size
     draw = ImageDraw.Draw(img)
 
-    # 遮盖顶部区域
+    # 遮盖顶部区域 (仅遮盖左侧 60%，保留右侧 40% 给日期识别)
     top_mask_end = int(height * mask_top_percent)
-    draw.rectangle([0, 0, width, top_mask_end], fill="black")
+    right_edge_to_mask = int(width * 0.6)
+    draw.rectangle([0, 0, right_edge_to_mask, top_mask_end], fill="black")
 
     # 遮盖底部区域
     bottom_mask_start = int(height * (1 - mask_bottom_percent))

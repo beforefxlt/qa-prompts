@@ -119,24 +119,40 @@ function FieldEditor({
   type = 'text',
 }: {
   label: string;
-  value: string | number | undefined;
+  value: any;
   isConflict: boolean;
   onChange: (val: string) => void;
   type?: string;
 }) {
+  // 处理 [object Object] 问题：如果是数组（如 observations），将其转换为可读字符串
+  const displayValue = Array.isArray(value) 
+    ? value.map(v => `${FIELD_LABELS[v.metric_code] || v.metric_code}: ${v.value_numeric}${v.unit || ''}${v.side ? `(${v.side})` : ''}`).join(', ')
+    : typeof value === 'object' ? JSON.stringify(value) : value;
+
   return (
     <div className="space-y-1">
       <label className="text-xs font-bold text-slate-400 uppercase block">{label}</label>
-      <input
-        type={type}
-        value={value ?? ''}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full rounded-xl p-3 border transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${
-          isConflict
-            ? 'bg-red-50 border-red-300 text-red-800'
-            : 'bg-slate-50 border-transparent'
-        }`}
-      />
+      {Array.isArray(value) ? (
+        <div className={`w-full rounded-xl p-3 border text-sm ${isConflict ? 'bg-red-50 border-red-300' : 'bg-slate-50 border-transparent'}`}>
+            {value.map((v, i) => (
+                <div key={i} className="flex justify-between border-b last:border-0 border-slate-200 py-1">
+                    <span className="text-slate-600 font-medium">{FIELD_LABELS[v.metric_code] || v.metric_code}</span>
+                    <span className="text-blue-600 font-bold">{v.value_numeric}{v.unit} {v.side && <span className="text-[10px] opacity-50 uppercase">{v.side}</span>}</span>
+                </div>
+            ))}
+        </div>
+      ) : (
+        <input
+          type={type}
+          value={displayValue ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+          className={`w-full rounded-xl p-3 border transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+            isConflict
+              ? 'bg-red-50 border-red-300 text-red-800'
+              : 'bg-slate-50 border-transparent'
+          }`}
+        />
+      )}
     </div>
   );
 }
@@ -179,6 +195,7 @@ export default function ReviewPage() {
       setError(null);
       const data = await apiClient.getReviewTask(taskId);
       setDetail(data);
+      // 同时保留其它非 metric 字段如 exam_date, institution 等
       setEditedItems(data.ocr_processed_items || {});
     } catch (e: any) {
       console.error('Failed to load task detail:', e);
@@ -398,12 +415,16 @@ export default function ReviewPage() {
                 <Eye size={16} />
                 脱敏图预览
               </h2>
-              <div className="bg-slate-100 rounded-2xl aspect-[3/4] flex items-center justify-center overflow-hidden">
+              <div className="bg-slate-100 rounded-2xl aspect-[3/4] flex items-center justify-center overflow-hidden border border-slate-200">
                 {detail.image_url ? (
                   <img
-                    src={detail.image_url}
+                    src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${detail.image_url}`}
                     alt="脱敏文档预览"
                     className="w-full h-full object-contain"
+                    onError={(e) => {
+                      console.error('Image load failed');
+                      (e.target as HTMLImageElement).src = 'https://placehold.co/400x600/f1f5f9/94a3b8?text=Image+Load+Failed';
+                    }}
                   />
                 ) : (
                   <div className="text-center text-slate-400">
