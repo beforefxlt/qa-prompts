@@ -1,22 +1,13 @@
-import { test, expect, createTestMember } from './fixtures';
-
-/**
- * P5 用户体验测试
- * 验证空状态引导、错误提示、图表可读性等用户体验指标
- */
+import { test, expect, createTestMember, UI_TEXT } from './fixtures';
 
 test('TC-P5-001: 空状态引导文案清晰可读', async ({ page }) => {
   await page.goto('/');
   await page.waitForTimeout(2000);
   
-  // 验证欢迎文案存在且可读
-  await expect(page.getByText('欢迎使用家庭检查单管理')).toBeVisible();
-  
-  // 验证引导说明存在
+  await expect(page.getByText(UI_TEXT.WELCOME_TITLE)).toBeVisible();
   await expect(page.getByText('记录家人健康足迹')).toBeVisible();
   
-  // 验证操作按钮文案明确
-  const actionButton = page.getByRole('button', { name: '添加第一位成员' });
+  const actionButton = page.getByRole('button', { name: UI_TEXT.ADD_FIRST_MEMBER });
   await expect(actionButton).toBeVisible();
   await expect(actionButton).toBeEnabled();
 });
@@ -25,24 +16,18 @@ test('TC-P5-002: 成员创建表单字段标签清晰', async ({ page }) => {
   await page.goto('/members/new');
   await page.waitForTimeout(1500);
   
-  // 等待表单出现
-  await expect(page.getByText('添加新成员')).toBeVisible();
+  await expect(page.getByText(UI_TEXT.FORM_TITLE_CREATE)).toBeVisible();
   
-  // 验证所有字段标签存在
-  await expect(page.getByText('姓名', { exact: true })).toBeVisible();
-  await expect(page.getByText('性别', { exact: true })).toBeVisible();
-  await expect(page.getByText('出生年月', { exact: true })).toBeVisible();
-  await expect(page.getByText('成员类型', { exact: true })).toBeVisible();
+  await expect(page.getByText(UI_TEXT.LABEL_NAME, { exact: true })).toBeVisible();
+  await expect(page.getByText(UI_TEXT.LABEL_GENDER, { exact: true })).toBeVisible();
+  await expect(page.getByText(UI_TEXT.LABEL_DOB, { exact: true })).toBeVisible();
+  await expect(page.getByText(UI_TEXT.LABEL_TYPE, { exact: true })).toBeVisible();
   
-  // 验证 placeholder 提示存在
-  await expect(page.getByPlaceholder('请输入姓名')).toBeVisible();
-  
-  // 验证提交按钮文案明确
-  await expect(page.getByRole('button', { name: '保存并开始记录' })).toBeVisible();
+  await expect(page.getByPlaceholder(UI_TEXT.PLACEHOLDER_NAME)).toBeVisible();
+  await expect(page.getByRole('button', { name: UI_TEXT.FORM_SUBMIT_CREATE })).toBeVisible();
 });
 
 test('TC-P5-011: 错误提示友好可读', async ({ page }) => {
-  // 模拟 API 报错情况
   await page.route('**/api/v1/members', route => route.fulfill({
     status: 500,
     contentType: 'application/json',
@@ -52,32 +37,24 @@ test('TC-P5-011: 错误提示友好可读', async ({ page }) => {
   await page.goto('/');
   await page.waitForTimeout(1000);
   
-  // 验证显示了错误状态卡片
-  await expect(page.getByText('服务连接异常')).toBeVisible();
-  await expect(page.getByRole('button', { name: '重试连接' })).toBeVisible();
+  await expect(page.getByText(UI_TEXT.ERROR_TITLE)).toBeVisible();
+  await expect(page.getByRole('button', { name: UI_TEXT.ERROR_RETRY })).toBeVisible();
 });
 
 test('TC-P5-020: 审核页布局清晰', async ({ page }) => {
   await page.goto('/review');
   await page.waitForTimeout(1000);
   
-  // 验证页面标题
-  await expect(page.getByText('OCR 识别结果审核')).toBeVisible();
+  await expect(page.getByText(UI_TEXT.REVIEW_TITLE)).toBeVisible();
 });
 
 test('TC-P5-024: 成员卡片信息完整', async ({ page }) => {
-  // 创建成员
   await createTestMember({ name: '卡片测试成员' });
   
   await page.goto('/');
   await page.waitForTimeout(2000);
   
-  // 验证成员卡片包含必要信息
   await expect(page.getByText('卡片测试成员')).toBeVisible();
-  
-  // 验证成员类型标签（使用更精确的选择器）
-  await expect(page.getByText('儿童').first()).toBeVisible();
-  
-  // 验证无记录提示
-  await expect(page.getByText('尚无记录')).toBeVisible();
+  await expect(page.getByText(UI_TEXT.MEMBER_TYPE_CHILD).first()).toBeVisible();
+  await expect(page.getByText(UI_TEXT.NO_RECORDS)).toBeVisible();
 });
