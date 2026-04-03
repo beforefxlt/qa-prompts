@@ -183,6 +183,45 @@ async def get_vision_dashboard(member_id: UUID, db: AsyncSession = Depends(get_d
             if axial_comparison["left"] is None and axial_comparison["right"] is None:
                 axial_comparison = None
 
+    # 计算视力最近两次检查的左右眼对比
+    # vision_acuity 的 value 可能来自 value_text (字符串) 或 value_numeric，需统一转为 float
+    def _parse_vision_value(row):
+        if row.value_numeric is not None:
+            return row.value_numeric
+        if row.value_text is not None:
+            try:
+                return float(row.value_text)
+            except (ValueError, TypeError):
+                return None
+        return None
+
+    vision_comparison = None
+    if len(vision_rows) >= 2:
+        dates = sorted(set(row.exam_date for row in vision_rows))
+        if len(dates) >= 2:
+            latest_date = dates[-1]
+            previous_date = dates[-2]
+            
+            latest_rows = [row for row in vision_rows if row.exam_date == latest_date]
+            previous_rows = [row for row in vision_rows if row.exam_date == previous_date]
+            
+            vision_comparison = {"left": None, "right": None}
+            
+            for side in ["left", "right"]:
+                latest_val = next((_parse_vision_value(r) for r in latest_rows if r.side == side), None)
+                previous_val = next((_parse_vision_value(r) for r in previous_rows if r.side == side), None)
+                
+                if latest_val is not None and previous_val is not None:
+                    vision_comparison[side] = {
+                        "current": latest_val,
+                        "previous": previous_val,
+                        "delta": round(latest_val - previous_val, 3),
+                    }
+            
+            # 如果左右眼都没有数据，设为 null
+            if vision_comparison["left"] is None and vision_comparison["right"] is None:
+                vision_comparison = None
+
     return {
         "member_id": str(member_id),
         "member_type": member.member_type,
@@ -202,6 +241,9 @@ async def get_vision_dashboard(member_id: UUID, db: AsyncSession = Depends(get_d
                 {"date": row.exam_date.isoformat(), "value": row.value_text or row.value_numeric, "side": row.side}
                 for row in vision_rows
             ],
+            "reference_range": next((row.reference_range for row in vision_rows if row.reference_range), None),
+            "alert_status": "warning" if any(row.is_abnormal for row in vision_rows) else "normal",
+            "comparison": vision_comparison,
         },
         "growth_deviation": derived.value_json if derived else None,
     }
@@ -231,6 +273,30 @@ def _calculate_growth_rate(rows):
     last_avg = sum(r.value_numeric for r in last_rows) / len(last_rows)
     
     return round((last_avg - first_avg) / years_diff, 2)
+
+
+def _build_single_comparison(rows):
+    """计算单维度指标（如身高/体重）最近两次检查对比"""
+    if len(rows) < 2:
+        return None
+    
+    dates = sorted(set(row.exam_date for row in rows))
+    if len(dates) < 2:
+        return None
+    
+    latest_date = dates[-1]
+    previous_date = dates[-2]
+    
+    latest_val = next((r.value_numeric for r in rows if r.exam_date == latest_date), None)
+    previous_val = next((r.value_numeric for r in rows if r.exam_date == previous_date), None)
+    
+    if latest_val is not None and previous_val is not None:
+        return {
+            "current": latest_val,
+            "previous": previous_val,
+            "delta": round(latest_val - previous_val, 3),
+        }
+    return None
 
 
 @router.get("/{member_id}/growth-dashboard")
@@ -271,6 +337,7 @@ async def get_growth_dashboard(member_id: UUID, db: AsyncSession = Depends(get_d
             "reference_range": next((row.reference_range for row in height_rows if row.reference_range), None),
             "alert_status": "warning" if any(row.is_abnormal for row in height_rows) else "normal",
             "growth_rate": _calculate_growth_rate(height_rows),
+            "comparison": _build_single_comparison(height_rows),
         },
         "weight": {
             "series": [
@@ -280,5 +347,6 @@ async def get_growth_dashboard(member_id: UUID, db: AsyncSession = Depends(get_d
             "reference_range": next((row.reference_range for row in weight_rows if row.reference_range), None),
             "alert_status": "warning" if any(row.is_abnormal for row in weight_rows) else "normal",
             "growth_rate": _calculate_growth_rate(weight_rows),
+            "comparison": _build_single_comparison(weight_rows),
         },
     }

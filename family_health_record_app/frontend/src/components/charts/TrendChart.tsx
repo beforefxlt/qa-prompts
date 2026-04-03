@@ -4,6 +4,7 @@ import React from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceArea
 } from 'recharts';
+import { EyeMode } from './EyeModeToggle';
 
 type ChartPoint = {
   date: string;
@@ -17,18 +18,19 @@ interface TrendChartProps {
   metric: string;
   height?: number | string;
   referenceRange?: string;
+  eyeMode?: EyeMode;
 }
 
 const METRIC_LABELS: Record<string, string> = {
-  axial_length: '眼轴 (Axial Length)',
-  height: '身高 (Height)',
-  weight: '体重 (Weight)',
-  vision_acuity: '视力 (Vision Acuity)',
-  glucose: '血糖 (Glucose)',
-  tc: '总胆固醇 (TC)',
-  tg: '甘油三酯 (TG)',
-  hdl: '高密度脂蛋白 (HDL)',
-  ldl: '低密度脂蛋白 (LDL)',
+  axial_length: '眼轴',
+  height: '身高',
+  weight: '体重',
+  vision_acuity: '视力',
+  glucose: '血糖',
+  tc: '总胆固醇',
+  tg: '甘油三酯',
+  hdl: '高密度脂蛋白',
+  ldl: '低密度脂蛋白',
 };
 
 const METRIC_UNITS: Record<string, string> = {
@@ -42,7 +44,7 @@ const METRIC_UNITS: Record<string, string> = {
   ldl: 'mmol/L',
 };
 
-export const TrendChart: React.FC<TrendChartProps> = ({ data, metric, height = 240 }) => {
+export const TrendChart: React.FC<TrendChartProps> = ({ data, metric, height = 240, eyeMode = 'both' }) => {
   const label = METRIC_LABELS[metric] || metric;
 
   if (!data || data.length === 0) {
@@ -98,96 +100,46 @@ export const TrendChart: React.FC<TrendChartProps> = ({ data, metric, height = 2
             )}
             
             {/* 左眼/主数据线 */}
-            <Line 
-              type="monotone" 
-              dataKey={data[0].left !== undefined ? "left" : "value"} 
-              stroke="#3b82f6" 
-              strokeWidth={3} 
-              dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} 
-              activeDot={{ r: 6, strokeWidth: 0 }} 
-            />
+            {data[0].left !== undefined && (
+              <Line 
+                type="monotone" 
+                dataKey="left" 
+                stroke={eyeMode === 'right' ? '#cbd5e1' : '#3b82f6'} 
+                strokeWidth={eyeMode === 'right' ? 1 : 3} 
+                strokeOpacity={eyeMode === 'right' ? 0.3 : 1}
+                dot={{ r: eyeMode === 'right' ? 3 : 4, fill: eyeMode === 'right' ? '#cbd5e1' : '#3b82f6', strokeWidth: 2, stroke: '#fff' }} 
+                activeDot={{ r: eyeMode === 'right' ? 4 : 6, strokeWidth: 0 }} 
+              />
+            )}
             
             {/* 右眼线 (如有) */}
             {data[0].right !== undefined && (
               <Line 
                 type="monotone" 
                 dataKey="right" 
-                stroke="#60a5fa" 
-                strokeDasharray="5 5" 
-                strokeWidth={2} 
-                dot={{ r: 4, fill: '#60a5fa', strokeWidth: 2, stroke: '#fff' }} 
+                stroke={eyeMode === 'left' ? '#cbd5e1' : (eyeMode === 'both' ? '#60a5fa' : '#3b82f6')}
+                strokeDasharray={eyeMode === 'both' ? '5 5' : 'none'}
+                strokeWidth={eyeMode === 'left' ? 1 : (eyeMode === 'both' ? 2 : 3)} 
+                strokeOpacity={eyeMode === 'left' ? 0.3 : 1}
+                dot={{ r: eyeMode === 'left' ? 3 : 4, fill: eyeMode === 'left' ? '#cbd5e1' : (eyeMode === 'both' ? '#60a5fa' : '#3b82f6'), strokeWidth: 2, stroke: '#fff' }} 
+                activeDot={{ r: eyeMode === 'left' ? 4 : 6, strokeWidth: 0 }} 
+              />
+            )}
+
+            {/* 非眼部指标（身高/体重等） */}
+            {data[0].value !== undefined && data[0].left === undefined && data[0].right === undefined && (
+              <Line 
+                type="monotone" 
+                dataKey="value" 
+                stroke="#3b82f6" 
+                strokeWidth={3} 
+                dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} 
+                activeDot={{ r: 6, strokeWidth: 0 }} 
               />
             )}
           </LineChart>
         </ResponsiveContainer>
       </div>
-
-      {/* 左右眼区分展示 */}
-      {data[0].left !== undefined && data[0].right !== undefined ? (
-        <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-100">
-          <div>
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-2">左眼</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-[10px] text-slate-400 font-bold">当前</p>
-                <p className="text-lg font-bold text-slate-800">
-                  {(data[data.length - 1].left ?? 0).toFixed(2)}
-                  <span className="text-xs font-normal text-slate-400 ml-0.5">{METRIC_UNITS[metric] || ''}</span>
-                </p>
-              </div>
-              {data.length > 1 && (
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold">上次</p>
-                  <p className="text-lg font-bold text-slate-600">
-                    {(data[data.length - 2].left ?? 0).toFixed(2)}
-                    <span className="text-xs font-normal text-slate-400 ml-0.5">{METRIC_UNITS[metric] || ''}</span>
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="border-l border-slate-100 pl-4">
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-2">右眼</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-[10px] text-slate-400 font-bold">当前</p>
-                <p className="text-lg font-bold text-slate-800">
-                  {(data[data.length - 1].right ?? 0).toFixed(2)}
-                  <span className="text-xs font-normal text-slate-400 ml-0.5">{METRIC_UNITS[metric] || ''}</span>
-                </p>
-              </div>
-              {data.length > 1 && (
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold">上次</p>
-                  <p className="text-lg font-bold text-slate-600">
-                    {(data[data.length - 2].right ?? 0).toFixed(2)}
-                    <span className="text-xs font-normal text-slate-400 ml-0.5">{METRIC_UNITS[metric] || ''}</span>
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-100">
-          <div>
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">当前数值</p>
-            <p className="text-2xl font-bold text-slate-800 tracking-tighter">
-              {(data[data.length - 1].left ?? data[data.length - 1].value ?? 0).toFixed(2)}
-              <span className="text-sm font-normal text-slate-400 ml-1">{METRIC_UNITS[metric] || ''}</span>
-            </p>
-          </div>
-          {data.length > 1 && (
-            <div>
-              <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">上次数值</p>
-              <p className="text-2xl font-bold text-slate-600 tracking-tighter">
-                {(data[data.length - 2].left ?? data[data.length - 2].value ?? 0).toFixed(2)}
-                <span className="text-sm font-normal text-slate-400 ml-1">{METRIC_UNITS[metric] || ''}</span>
-              </p>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };

@@ -1,8 +1,8 @@
 # 家庭检查单管理应用 API 契约
 
-> **版本**: v2.1.0
+> **版本**: v2.3.0
 > **最后更新**: 2026-04-03
-> **变更说明**: 补充 revised_items 格式规范、数值区间约束表、前后端契约约束
+> **变更说明**: growth-dashboard 增加 height/weight.comparison、vision-dashboard 增加 vision_acuity.comparison/alert_status/reference_range、手动录入支持双眼并排输入
 
 ## 1. 资源对象
 
@@ -245,13 +245,58 @@
     }
   },
   "vision_acuity": {
-    "series": []
+    "series": [
+      { "date": "2024-09-21", "value": "0.8", "side": "left" },
+      { "date": "2024-09-21", "value": "1.0", "side": "right" }
+    ],
+    "reference_range": "0.8-1.2",
+    "alert_status": "normal",
+    "comparison": {
+      "left": { "current": 0.9, "previous": 0.8, "delta": 0.1 },
+      "right": { "current": 1.0, "previous": 1.0, "delta": 0.0 }
+    }
   },
   "growth_deviation": null
 }
 ```
 
 > **说明**: `axial_length.comparison` 按左右眼分组（`left`/`right`），每组包含 `current`（当前值）、`previous`（上次值）、`delta`（差值）。若某侧只有一组数据则为 `null`；若两侧均无数据则整个 `comparison` 为 `null`。
+
+> **说明**: `vision_acuity.comparison` 结构同 `axial_length.comparison`，但 value 可能为字符串（如 "0.8"），comparison 中的值统一转为数字。
+
+> **说明**: `growth-dashboard` 的 `height.comparison` 和 `weight.comparison` 为单维度对比结构：`{current, previous, delta}`。
+
+---
+
+**响应体 - growth-dashboard**:
+```json
+{
+  "member_id": "uuid",
+  "member_type": "child",
+  "height": {
+    "series": [
+      { "date": "2025-11-06", "value": 135.0 },
+      { "date": "2026-04-03", "value": 140.0 }
+    ],
+    "reference_range": null,
+    "alert_status": "normal",
+    "growth_rate": 12.0,
+    "comparison": {
+      "current": 140.0,
+      "previous": 135.0,
+      "delta": 5.0
+    }
+  },
+  "weight": {
+    "series": [...],
+    "comparison": {
+      "current": 35.0,
+      "previous": 32.5,
+      "delta": 2.5
+    }
+  }
+}
+```
 
 ## 3. 状态流转
 

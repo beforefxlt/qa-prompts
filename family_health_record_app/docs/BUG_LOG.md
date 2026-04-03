@@ -428,3 +428,26 @@
 - **验证状态**: ✅ 已验证，OCR 返回 200，成功提取眼轴 24.35mm/23.32mm 等数据
 - **UT 覆盖**: ⏳ 待补充
 - **教训**: **修改代码后必须重启服务再测试，不能依赖 --reload 热加载所有变更**
+
+---
+
+## 📅 v2.4.0 视力左右眼分离增强期记录 (2026-04-03)
+
+### [BUG-042] 视力数据缺少左右眼对比展示与单眼聚焦能力
+- **现象**: 
+  1. Dashboard 儿童页面只展示眼轴趋势卡片，视力数据被忽略
+  2. 图表只能双眼合并展示（实线 vs 虚线），无法单独查看某只眼趋势
+  3. 手动录入需要逐条添加左右眼记录，效率低
+- **根由**: 
+  1. `vision-dashboard` API 的 `vision_acuity` 只返回 series，缺少 `comparison`/`alert_status`/`reference_range`
+  2. `TrendChart` 组件没有 eyeMode prop，无法切换单眼/双眼模式
+  3. `ManualEntryOverlay` 使用侧向下拉框选择左右眼，非并排输入
+- **修复**: 
+  1. **后端** `trends.py:get_vision_dashboard` — 为 `vision_acuity` 增加 `comparison`、`alert_status`、`reference_range` 字段，逻辑与 `axial_length` 对称
+  2. **前端新增** `EyeModeToggle.tsx` — 双眼/左眼/右眼切换器组件
+  3. **前端修改** `TrendChart.tsx` — 增加 `eyeMode` prop，单眼模式下选中眼正常显示，另一眼淡化为灰色背景线
+  4. **前端修改** `page.tsx` (Dashboard) — 增加视力趋势卡片，与眼轴卡片并列展示，各带 EyeModeToggle
+  5. **前端修改** `trends/page.tsx` — 集成 EyeModeToggle，仅眼部指标显示切换器
+  6. **前端重写** `ManualEntryOverlay.tsx` — 眼轴/视力改为左右眼并排输入框，非眼部指标保持单输入
+- **验证状态**: ✅ 后端 128 passed (新增 3 个 UT)，前端 TypeScript 编译通过
+- **UT 覆盖**: ✅ `test_vision_dashboard_returns_vision_acuity_comparison` + `test_vision_dashboard_comparison_same_date_no_comparison` + `test_vision_dashboard_acuity_string_value_comparison`

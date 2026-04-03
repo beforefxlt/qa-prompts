@@ -1,15 +1,26 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Save, Calendar, Landmark, Activity } from 'lucide-react';
+import { X, Plus, Trash2, Save, Calendar, Landmark, Activity, Eye } from 'lucide-react';
 import { UI_TEXT } from '@/constants/ui-text';
 
-type ObservationInput = {
+type SingleObservationInput = {
   metric_code: string;
   value_numeric: number;
   unit: string;
-  side: string | null;
+  side: null;
 };
+
+type EyeObservationInput = {
+  metric_code: 'axial_length' | 'vision_acuity';
+  left_value: number | null;
+  right_value: number | null;
+  unit: string;
+};
+
+type ObservationRow = {
+  id: string;
+} & (SingleObservationInput | EyeObservationInput);
 
 const METRIC_OPTIONS = [
   { code: 'height', label: '身高', unit: 'cm', min: 30, max: 250 },
@@ -18,71 +29,126 @@ const METRIC_OPTIONS = [
   { code: 'vision_acuity', label: '视力', unit: 'decimal' },
 ];
 
-export function ManualEntryOverlay({ 
-  memberId, 
-  onClose, 
+const EYE_METRICS = ['axial_length', 'vision_acuity'];
+
+function isEyeInput(row: ObservationRow): row is ObservationRow & EyeObservationInput {
+  return EYE_METRICS.includes(row.metric_code);
+}
+
+let rowIdCounter = 0;
+
+export function ManualEntryOverlay({
+  memberId,
+  onClose,
   onSuccess,
-  apiClient 
-}: { 
-  memberId: string; 
-  onClose: () => void; 
+  apiClient
+}: {
+  memberId: string;
+  onClose: () => void;
   onSuccess: () => void;
   apiClient: any;
 }) {
   const [examDate, setExamDate] = useState(new Date().toISOString().split('T')[0]);
   const [institution, setInstitution] = useState('');
-  const [observations, setObservations] = useState<ObservationInput[]>([
-    { metric_code: 'height', value_numeric: NaN as any, unit: 'cm', side: null }
+  const [rows, setRows] = useState<ObservationRow[]>([
+    { id: `row-${rowIdCounter++}`, metric_code: 'height', value_numeric: NaN as any, unit: 'cm', side: null }
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-    const addObservation = () => {
-    setObservations([...observations, { metric_code: 'height', value_numeric: NaN as any, unit: 'cm', side: null }]);
+  const addRow = () => {
+    setRows([...rows, { id: `row-${rowIdCounter++}`, metric_code: 'height', value_numeric: NaN as any, unit: 'cm', side: null }]);
   };
 
-  const removeObservation = (index: number) => {
-    setObservations(observations.filter((_, i) => i !== index));
+  const removeRow = (id: string) => {
+    setRows(rows.filter(r => r.id !== id));
   };
 
-  const updateObservation = (index: number, field: keyof ObservationInput, value: any) => {
-    const newObs = [...observations];
-    if (field === 'metric_code') {
-      const option = METRIC_OPTIONS.find(o => o.code === value);
-      newObs[index].metric_code = value;
-      newObs[index].unit = option?.unit || '';
-    } else {
-      (newObs[index] as any)[field] = value;
-    }
-    setObservations(newObs);
+  const updateMetricCode = (id: string, newCode: string) => {
+    const option = METRIC_OPTIONS.find(o => o.code === newCode);
+    setRows(rows.map(r => {
+      if (r.id !== id) return r;
+      if (EYE_METRICS.includes(newCode)) {
+        return { id: r.id, metric_code: newCode as 'axial_length' | 'vision_acuity', left_value: null, right_value: null, unit: option?.unit || '' };
+      }
+      return { id: r.id, metric_code: newCode, value_numeric: NaN as any, unit: option?.unit || '', side: null };
+    }));
   };
 
   const handleSubmit = async () => {
-    if (observations.length === 0) {
-        setError('请至少添加一个指标');
-        return;
+    if (rows.length === 0) {
+      setError('请至少添加一个指标');
+      return;
     }
-    
-    const hasInvalidValue = observations.some(o => {
-      if (isNaN(o.value_numeric) || o.value_numeric <= 0) return true;
-      const metric = METRIC_OPTIONS.find(m => m.code === o.metric_code);
-      if (metric?.min !== undefined && metric?.max !== undefined) {
-        return o.value_numeric < metric.min || o.value_numeric > metric.max;
+
+    const observations: Array<{ metric_code: string; value_numeric: number; unit: string; side: string | null }> = [];
+
+    for (const row of rows) {
+      if (isEyeInput(row)) {
+        if (row.left_value !== null) {
+          const metric = METRIC_OPTIONS.find(m => m.code === row.metric_code);
+          if (metric?.min !== undefined && metric?.max !== undefined) {
+            if (row.left_value < metric.min || row.left_value > metric.max) {
+              setError(`${metric.label} 左眼数值 ${row.left_value} 超出合理范围 (${metric.min}-${metric.max})`);
+              return;
+            }
+          }
+          observations.push({
+            metric_code: row.metric_code,
+            value_numeric: row.left_value,
+            unit: row.unit,
+            side: 'left',
+          });
+        }
+        if (row.right_value !== null) {
+          const metric = METRIC_OPTIONS.find(m => m.code === row.metric_code);
+          if (metric?.min !== undefined && metric?.max !== undefined) {
+            if (row.right_value < metric.min || row.right_value > metric.max) {
+              setError(`${metric.label} 右眼数值 ${row.right_value} 超出合理范围 (${metric.min}-${metric.max})`);
+              return;
+            }
+          }
+          observations.push({
+            metric_code: row.metric_code,
+            value_numeric: row.right_value,
+            unit: row.unit,
+            side: 'right',
+          });
+        }
+      } else {
+        if (isNaN(row.value_numeric) || row.value_numeric <= 0) {
+          const metric = METRIC_OPTIONS.find(m => m.code === row.metric_code);
+          setError(`请为「${metric?.label || row.metric_code}」填写有效数值（必须大于 0 且在合理范围内）`);
+          return;
+        }
+        const metric = METRIC_OPTIONS.find(m => m.code === row.metric_code);
+        if (metric?.min !== undefined && metric?.max !== undefined) {
+          if (row.value_numeric < metric.min || row.value_numeric > metric.max) {
+            setError(`${metric.label} 数值 ${row.value_numeric} 超出合理范围 (${metric.min}-${metric.max})`);
+            return;
+          }
+        }
+        observations.push({
+          metric_code: row.metric_code,
+          value_numeric: row.value_numeric,
+          unit: row.unit,
+          side: null,
+        });
       }
-      return false;
-    });
-    if (hasInvalidValue) {
-        setError('请为所有指标填写有效数值（必须大于 0 且在合理范围内）');
-        return;
     }
-    
+
+    if (observations.length === 0) {
+      setError('请至少填写一个指标的数值');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
       await apiClient.createManualExam(memberId, {
         exam_date: examDate,
         institution_name: institution,
-        observations: observations
+        observations,
       });
       onSuccess();
       onClose();
@@ -125,8 +191,8 @@ export function ManualEntryOverlay({
               <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1.5 px-1">
                 <Calendar size={12} /> {UI_TEXT.LABEL_EXAM_DATE}
               </label>
-              <input 
-                type="date" 
+              <input
+                type="date"
                 value={examDate}
                 onChange={e => setExamDate(e.target.value)}
                 className="w-full bg-slate-50 border-transparent focus:bg-white focus:ring-2 focus:ring-blue-500 rounded-2xl p-3.5 text-sm transition-all"
@@ -136,8 +202,8 @@ export function ManualEntryOverlay({
               <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1.5 px-1">
                 <Landmark size={12} /> {UI_TEXT.LABEL_INSTITUTION}
               </label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="例如：市第一眼科医院"
                 value={institution}
                 onChange={e => setInstitution(e.target.value)}
@@ -149,8 +215,8 @@ export function ManualEntryOverlay({
           <div className="space-y-4">
             <div className="flex items-center justify-between px-1">
               <label className="text-xs font-bold text-slate-400 uppercase">{UI_TEXT.LABEL_OBSERVATIONS}</label>
-              <button 
-                onClick={addObservation}
+              <button
+                onClick={addRow}
                 className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:bg-blue-50 px-3 py-1.5 rounded-full transition-all"
               >
                 <Plus size={14} /> {UI_TEXT.BTN_ADD_METRIC}
@@ -158,53 +224,80 @@ export function ManualEntryOverlay({
             </div>
 
             <div className="space-y-3">
-              {observations.map((obs, idx) => (
-                <div key={idx} className="bg-slate-50 rounded-2xl p-4 flex flex-wrap md:flex-nowrap items-end gap-3 border border-transparent hover:border-slate-200 transition-all">
-                  <div className="flex-1 min-w-[120px] space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase px-1">类型</label>
-                    <select 
-                      value={obs.metric_code}
-                      onChange={e => updateObservation(idx, 'metric_code', e.target.value)}
-                      className="w-full bg-white rounded-xl p-2.5 text-sm border-transparent focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
-                    >
-                      {METRIC_OPTIONS.map(opt => (
-                        <option key={opt.code} value={opt.code}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex-1 min-w-[100px] space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase px-1">数值 ({obs.unit})</label>
-                    <input 
-                      type="number" 
-                      step="0.01"
-                      value={obs.value_numeric || ''}
-                      onChange={e => updateObservation(idx, 'value_numeric', parseFloat(e.target.value))}
-                      className="w-full bg-white rounded-xl p-2.5 text-sm border-transparent focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
-                    />
-                  </div>
-
-                  {['axial_length', 'vision_acuity'].includes(obs.metric_code) && (
-                    <div className="w-24 space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase px-1">侧向</label>
-                      <select 
-                        value={obs.side || ''}
-                        onChange={e => updateObservation(idx, 'side', e.target.value || null)}
+              {rows.map((row) => (
+                <div key={row.id} className="bg-slate-50 rounded-2xl p-4 border border-transparent hover:border-slate-200 transition-all">
+                  <div className="flex items-start gap-3">
+                    <div className="w-36 space-y-1 shrink-0">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase px-1">类型</label>
+                      <select
+                        value={row.metric_code}
+                        onChange={e => updateMetricCode(row.id, e.target.value)}
                         className="w-full bg-white rounded-xl p-2.5 text-sm border-transparent focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
                       >
-                        <option value="">通用</option>
-                        <option value="left">左眼</option>
-                        <option value="right">右眼</option>
+                        {METRIC_OPTIONS.map(opt => (
+                          <option key={opt.code} value={opt.code}>{opt.label}</option>
+                        ))}
                       </select>
                     </div>
-                  )}
 
-                  <button 
-                    onClick={() => removeObservation(idx)}
-                    className="p-2.5 text-slate-300 hover:text-red-500 transition-colors mb-0.5"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                    {isEyeInput(row) ? (
+                      <div className="flex-1 grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase px-1 flex items-center gap-1">
+                            <Eye size={10} /> 左眼 ({row.unit})
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="—"
+                            value={row.left_value ?? ''}
+                            onChange={e => {
+                              const val = e.target.value === '' ? null : parseFloat(e.target.value);
+                              setRows(rows.map(r => r.id === row.id ? { ...r, left_value: val } : r));
+                            }}
+                            className="w-full bg-white rounded-xl p-2.5 text-sm border-transparent focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase px-1 flex items-center gap-1">
+                            <Eye size={10} /> 右眼 ({row.unit})
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="—"
+                            value={row.right_value ?? ''}
+                            onChange={e => {
+                              const val = e.target.value === '' ? null : parseFloat(e.target.value);
+                              setRows(rows.map(r => r.id === row.id ? { ...r, right_value: val } : r));
+                            }}
+                            className="w-full bg-white rounded-xl p-2.5 text-sm border-transparent focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex-1 space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase px-1">数值 ({row.unit})</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={row.value_numeric || ''}
+                          onChange={e => {
+                            const val = e.target.value === '' ? NaN : parseFloat(e.target.value);
+                            setRows(rows.map(r => r.id === row.id ? { ...r, value_numeric: val } : r));
+                          }}
+                          className="w-full bg-white rounded-xl p-2.5 text-sm border-transparent focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+                        />
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() => removeRow(row.id)}
+                      className="p-2.5 text-slate-300 hover:text-red-500 transition-colors mt-5 shrink-0"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -213,13 +306,13 @@ export function ManualEntryOverlay({
 
         {/* Footer */}
         <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
-          <button 
+          <button
             onClick={onClose}
             className="px-6 py-3 rounded-2xl text-slate-500 font-bold hover:bg-slate-200 transition-all active:scale-95 text-sm"
           >
             取消
           </button>
-          <button 
+          <button
             onClick={handleSubmit}
             disabled={loading}
             className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 rounded-2xl shadow-lg shadow-blue-600/20 font-bold flex items-center gap-2 active:scale-95 disabled:opacity-50 transition-all text-sm"

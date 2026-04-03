@@ -857,3 +857,128 @@ async def test_review_reject_already_approved(route_env):
     resp = await client.post(f"/api/v1/review-tasks/{task_id}/reject")
     assert resp.status_code == 409
 
+
+@pytest.mark.asyncio
+async def test_vision_dashboard_returns_vision_acuity_comparison(route_env, monkeypatch):
+    """vision-dashboard 应返回 vision_acuity 的 comparison 字段"""
+    client, session_factory = route_env
+    member = await _create_member(client)
+    member_uuid = UUID(member["id"])
+
+    async with session_factory() as session:
+        exam1 = ExamRecord(
+            id=uuid4(),
+            document_id=uuid4(),
+            member_id=member_uuid,
+            exam_date=date(2026, 1, 1),
+            baseline_age_months=84,
+        )
+        session.add(exam1)
+        await session.flush()
+
+        exam2 = ExamRecord(
+            id=uuid4(),
+            document_id=uuid4(),
+            member_id=member_uuid,
+            exam_date=date(2026, 3, 1),
+            baseline_age_months=86,
+        )
+        session.add(exam2)
+        await session.flush()
+
+        session.add_all([
+            Observation(id=uuid4(), exam_record_id=exam1.id, metric_code="vision_acuity", value_numeric=0.8, unit="decimal", side="left", is_abnormal=False, confidence_score=1.0),
+            Observation(id=uuid4(), exam_record_id=exam1.id, metric_code="vision_acuity", value_numeric=1.0, unit="decimal", side="right", is_abnormal=False, confidence_score=1.0),
+            Observation(id=uuid4(), exam_record_id=exam2.id, metric_code="vision_acuity", value_numeric=0.9, unit="decimal", side="left", is_abnormal=False, confidence_score=1.0),
+            Observation(id=uuid4(), exam_record_id=exam2.id, metric_code="vision_acuity", value_numeric=1.0, unit="decimal", side="right", is_abnormal=False, confidence_score=1.0),
+        ])
+        await session.commit()
+
+    resp = await client.get(f"/api/v1/members/{member['id']}/vision-dashboard")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "vision_acuity" in data
+    assert "comparison" in data["vision_acuity"]
+    assert data["vision_acuity"]["comparison"] is not None
+    assert "left" in data["vision_acuity"]["comparison"]
+    assert "right" in data["vision_acuity"]["comparison"]
+    assert data["vision_acuity"]["comparison"]["left"]["current"] == 0.9
+    assert data["vision_acuity"]["comparison"]["left"]["previous"] == 0.8
+    assert data["vision_acuity"]["comparison"]["left"]["delta"] == 0.1
+    assert data["vision_acuity"]["comparison"]["right"]["current"] == 1.0
+    assert data["vision_acuity"]["comparison"]["right"]["previous"] == 1.0
+    assert data["vision_acuity"]["comparison"]["right"]["delta"] == 0.0
+
+
+@pytest.mark.asyncio
+async def test_vision_dashboard_comparison_same_date_no_comparison(route_env, monkeypatch):
+    """同次检查的左右眼视力不产生 comparison"""
+    client, session_factory = route_env
+    member = await _create_member(client)
+    member_uuid = UUID(member["id"])
+
+    async with session_factory() as session:
+        exam = ExamRecord(
+            id=uuid4(),
+            document_id=uuid4(),
+            member_id=member_uuid,
+            exam_date=date(2026, 3, 1),
+            baseline_age_months=84,
+        )
+        session.add(exam)
+        await session.flush()
+
+        session.add_all([
+            Observation(id=uuid4(), exam_record_id=exam.id, metric_code="vision_acuity", value_numeric=0.8, unit="decimal", side="left", is_abnormal=False, confidence_score=1.0),
+            Observation(id=uuid4(), exam_record_id=exam.id, metric_code="vision_acuity", value_numeric=1.0, unit="decimal", side="right", is_abnormal=False, confidence_score=1.0),
+        ])
+        await session.commit()
+
+    resp = await client.get(f"/api/v1/members/{member['id']}/vision-dashboard")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["vision_acuity"]["comparison"] is None
+
+
+@pytest.mark.asyncio
+async def test_vision_dashboard_acuity_string_value_comparison(route_env, monkeypatch):
+    """vision_acuity 的 value 为字符串时 comparison 正确计算"""
+    client, session_factory = route_env
+    member = await _create_member(client)
+    member_uuid = UUID(member["id"])
+
+    async with session_factory() as session:
+        exam1 = ExamRecord(
+            id=uuid4(),
+            document_id=uuid4(),
+            member_id=member_uuid,
+            exam_date=date(2026, 1, 1),
+            baseline_age_months=84,
+        )
+        session.add(exam1)
+        await session.flush()
+
+        exam2 = ExamRecord(
+            id=uuid4(),
+            document_id=uuid4(),
+            member_id=member_uuid,
+            exam_date=date(2026, 3, 1),
+            baseline_age_months=86,
+        )
+        session.add(exam2)
+        await session.flush()
+
+        session.add_all([
+            Observation(id=uuid4(), exam_record_id=exam1.id, metric_code="vision_acuity", value_numeric=0.8, value_text="0.8", unit="decimal", side="left", is_abnormal=False, confidence_score=1.0),
+            Observation(id=uuid4(), exam_record_id=exam2.id, metric_code="vision_acuity", value_numeric=0.9, value_text="0.9", unit="decimal", side="left", is_abnormal=False, confidence_score=1.0),
+        ])
+        await session.commit()
+
+    resp = await client.get(f"/api/v1/members/{member['id']}/vision-dashboard")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["vision_acuity"]["comparison"] is not None
+    assert data["vision_acuity"]["comparison"]["left"]["current"] == 0.9
+    assert data["vision_acuity"]["comparison"]["left"]["previous"] == 0.8
+    assert data["vision_acuity"]["comparison"]["left"]["delta"] == 0.1
+

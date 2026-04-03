@@ -9,6 +9,7 @@ import {
 import { apiClient } from '@/app/api/client';
 import { UI_TEXT } from '@/constants/ui-text';
 import { TrendChart } from '@/components/charts/TrendChart';
+import { EyeModeToggle, EyeMode } from '@/components/charts/EyeModeToggle';
 import { UploadOverlay } from '@/components/upload/UploadOverlay';
 
 
@@ -26,6 +27,8 @@ export default function MemberDashboard() {
   const [showUpload, setShowUpload] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [axialEyeMode, setAxialEyeMode] = useState<EyeMode>('both');
+  const [visionEyeMode, setVisionEyeMode] = useState<EyeMode>('both');
 
   useEffect(() => {
     if (id) {
@@ -102,7 +105,7 @@ export default function MemberDashboard() {
           </div>
           <div>
             <h1 className="text-xl font-bold font-sans tracking-tight text-slate-800" data-testid="member-name">{member?.name}</h1>
-            <p className="text-xs text-slate-500">{member?.date_of_birth} · {member?.gender}</p>
+            <p className="text-xs text-slate-500">{member?.date_of_birth} · {member?.gender === 'male' ? '男' : member?.gender === 'female' ? '女' : member?.gender}</p>
           </div>
         </div>
         <button 
@@ -151,8 +154,11 @@ export default function MemberDashboard() {
           
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div className="glass-card rounded-[32px] p-6 space-y-4 hover:shadow-xl transition-all group">
-                  <TrendChart data={transformSeries(visionData?.axial_length?.series || [])} metric="axial_length" height={180} />
-                  {visionData?.axial_length?.comparison && (
+                  <div className="flex items-center justify-end mb-2">
+                    <EyeModeToggle mode={axialEyeMode} onChange={setAxialEyeMode} />
+                  </div>
+                  <TrendChart data={transformSeries(visionData?.axial_length?.series || [])} metric="axial_length" height={180} eyeMode={axialEyeMode} />
+                  {visionData?.axial_length?.comparison && axialEyeMode === 'both' && (
                     <div className="pt-4 border-t border-slate-200">
                       <p className="text-xs font-bold text-slate-500 mb-3">最近两次检查对比</p>
                       <div className="grid grid-cols-2 gap-3">
@@ -184,30 +190,44 @@ export default function MemberDashboard() {
                     </div>
                   )}
                </div>
-             
-             <div className="glass-card rounded-[32px] p-6 flex flex-col justify-between hover:shadow-xl transition-all">
-                 <div className="flex items-center justify-between mb-4">
-                   <h3 className="font-bold text-slate-700">生长速度预警</h3>
-                   <div className={`p-1.5 rounded-lg ${growthData?.height?.alert_status === 'warning' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}`}>
-                     <AlertCircle size={18} />
-                   </div>
-                 </div>
-                 {growthData?.height?.growth_rate != null ? (
-                   <div className="space-y-4">
-                     <div className="p-4 bg-slate-50 rounded-2xl">
-                       <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">预计年身高增长</p>
-                       <p className="text-3xl font-black text-slate-800 tracking-tighter">
-                         {growthData.height.growth_rate >= 0 ? '+' : ''}{growthData.height.growth_rate.toFixed(2)}
-                         <span className="text-sm font-normal text-slate-400 ml-1">cm/year</span>
-                       </p>
-                     </div>
-                   </div>
-                 ) : (
-                   <div className="text-sm text-slate-400 py-8 text-center italic">
-                     近期数据不足，无法计算增长率
-                   </div>
-                 )}
-              </div>
+
+               <div className="glass-card rounded-[32px] p-6 space-y-4 hover:shadow-xl transition-all group">
+                  <div className="flex items-center justify-end mb-2">
+                    <EyeModeToggle mode={visionEyeMode} onChange={setVisionEyeMode} />
+                  </div>
+                  <TrendChart data={transformSeries(visionData?.vision_acuity?.series || [])} metric="vision_acuity" height={180} eyeMode={visionEyeMode} />
+                  {visionData?.vision_acuity?.comparison && visionEyeMode === 'both' && (
+                    <div className="pt-4 border-t border-slate-200">
+                      <p className="text-xs font-bold text-slate-500 mb-3">最近两次检查对比</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {['left', 'right'].map((side) => {
+                          const data = visionData.vision_acuity.comparison[side];
+                          if (!data) return null;
+                          const sideLabel = side === 'left' ? '左眼' : '右眼';
+                          const deltaColor = data.delta > 0 ? 'text-green-500' : data.delta < 0 ? 'text-red-500' : 'text-slate-400';
+                          const deltaSign = data.delta >= 0 ? '+' : '';
+                          return (
+                            <div key={side} className="bg-slate-50 rounded-2xl p-3">
+                              <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">{sideLabel}</p>
+                              <div className="flex justify-between items-center text-xs mb-1">
+                                <span className="text-slate-500">当前</span>
+                                <span className="font-bold text-slate-800">{data.current.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs mb-1">
+                                <span className="text-slate-500">上次</span>
+                                <span className="font-bold text-slate-800">{data.previous.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs pt-1 border-t border-slate-200">
+                                <span className="text-slate-500">差值</span>
+                                <span className={`font-black ${deltaColor}`}>{deltaSign}{data.delta.toFixed(3)}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+               </div>
           </div>
         </section>
       )}
@@ -266,11 +286,31 @@ export default function MemberDashboard() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="glass-card rounded-[32px] p-6 hover:shadow-xl transition-all">
+            <div className="glass-card rounded-[32px] p-6 hover:shadow-xl transition-all space-y-4">
               <TrendChart data={transformSeries(growthData?.height?.series || [])} metric="height" height={180} />
+              {growthData?.height?.comparison && (
+                <div className="pt-4 border-t border-slate-200">
+                  <p className="text-xs font-bold text-slate-500 mb-3">最近两次检查对比</p>
+                  <div className="flex justify-between items-center">
+                    <div><p className="text-xs text-slate-400">当前</p><p className="text-lg font-bold text-slate-800">{growthData.height.comparison.current?.toFixed(1)}cm</p></div>
+                    <div><p className="text-xs text-slate-400">上次</p><p className="text-lg font-bold text-slate-600">{growthData.height.comparison.previous?.toFixed(1)}cm</p></div>
+                    <div><p className="text-xs text-slate-400">差值</p><p className={`text-lg font-bold ${growthData.height.comparison.delta >= 0 ? 'text-green-500' : 'text-red-500'}`}>{growthData.height.comparison.delta >= 0 ? '+' : ''}{growthData.height.comparison.delta?.toFixed(2)}cm</p></div>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="glass-card rounded-[32px] p-6 hover:shadow-xl transition-all">
+            <div className="glass-card rounded-[32px] p-6 hover:shadow-xl transition-all space-y-4">
               <TrendChart data={transformSeries(growthData?.weight?.series || [])} metric="weight" height={180} />
+              {growthData?.weight?.comparison && (
+                <div className="pt-4 border-t border-slate-200">
+                  <p className="text-xs font-bold text-slate-500 mb-3">最近两次检查对比</p>
+                  <div className="flex justify-between items-center">
+                    <div><p className="text-xs text-slate-400">当前</p><p className="text-lg font-bold text-slate-800">{growthData.weight.comparison.current?.toFixed(1)}kg</p></div>
+                    <div><p className="text-xs text-slate-400">上次</p><p className="text-lg font-bold text-slate-600">{growthData.weight.comparison.previous?.toFixed(1)}kg</p></div>
+                    <div><p className="text-xs text-slate-400">差值</p><p className={`text-lg font-bold ${growthData.weight.comparison.delta >= 0 ? 'text-green-500' : 'text-red-500'}`}>{growthData.weight.comparison.delta >= 0 ? '+' : ''}{growthData.weight.comparison.delta?.toFixed(2)}kg</p></div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>

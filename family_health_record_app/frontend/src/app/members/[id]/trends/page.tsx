@@ -10,6 +10,7 @@ import {
 import { apiClient } from '@/app/api/client';
 import { UI_TEXT } from '@/constants/ui-text';
 import { TrendChart } from '@/components/charts/TrendChart';
+import { EyeModeToggle, EyeMode } from '@/components/charts/EyeModeToggle';
 import { EditObservationOverlay } from '@/components/records/EditObservationOverlay';
 
 export default function TrendPage() {
@@ -21,6 +22,7 @@ export default function TrendPage() {
   const [trendData, setTrendData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editingObs, setEditingObs] = useState<{ id: string, value: number, label: string, unit: string } | null>(null);
+  const [eyeMode, setEyeMode] = useState<EyeMode>('both');
 
   useEffect(() => {
     loadTrendData();
@@ -69,6 +71,7 @@ export default function TrendPage() {
       case 'vision_acuity': return '视力变化趋势';
       case 'height': return '身高增长轨迹';
       case 'weight': return '体重变化轨迹';
+      case 'weight': return '体重变化轨迹';
       default: return '指标趋势';
     }
   };
@@ -116,13 +119,13 @@ export default function TrendPage() {
           </div>
         </div>
         <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex gap-1">
-           {['axial_length', 'vision_acuity', 'height'].map(m => (
+           {['axial_length', 'vision_acuity', 'height', 'weight'].map(m => (
               <button 
                 key={m}
                 onClick={() => router.push(`/members/${id}/trends?metric=${m}`)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${metric === m ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-50'}`}
               >
-                {m === 'axial_length' ? '眼轴' : m === 'vision_acuity' ? '视力' : '身高'}
+                {m === 'axial_length' ? '眼轴' : m === 'vision_acuity' ? '视力' : m === 'height' ? '身高' : '体重'}
              </button>
            ))}
         </div>
@@ -140,12 +143,17 @@ export default function TrendPage() {
                 <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Statistical Analysis</p>
               </div>
            </div>
-           {trendData?.growth_rate !== undefined && (
-             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black ${trendData.growth_rate >= 0 ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>
-                {trendData.growth_rate >= 0 ? <ArrowUpRight size={14}/> : <ArrowDownRight size={14}/>}
-                {Math.abs(trendData.growth_rate).toFixed(2)} {unit}/年
-             </div>
-           )}
+           <div className="flex items-center gap-3">
+             {trendData?.growth_rate !== undefined && (
+               <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black ${trendData.growth_rate >= 0 ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>
+                  {trendData.growth_rate >= 0 ? <ArrowUpRight size={14}/> : <ArrowDownRight size={14}/>}
+                  {Math.abs(trendData.growth_rate).toFixed(2)} {unit}/年
+               </div>
+             )}
+             {['axial_length', 'vision_acuity'].includes(metric) && (
+               <EyeModeToggle mode={eyeMode} onChange={setEyeMode} />
+             )}
+           </div>
         </div>
         
         <div className="h-[300px] w-full">
@@ -153,43 +161,13 @@ export default function TrendPage() {
             data={trendData?.series || []} 
             metric={metric}
             referenceRange={trendData?.reference_range}
+            eyeMode={['axial_length', 'vision_acuity'].includes(metric) ? eyeMode : undefined}
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
-            {/* Comparison Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-               {trendData?.comparison && Object.entries(trendData.comparison).map(([side, data]: [string, any]) => {
-                  const isPositive = data.delta > 0;
-                  const deltaColor = isPositive ? 'text-amber-600 bg-amber-50' : 'text-green-600 bg-green-50';
-                  const deltaSign = isPositive ? '+' : '';
-                  const sideLabel = side === 'left' ? UI_TEXT.LABEL_LEFT_EYE : UI_TEXT.LABEL_RIGHT_EYE;
-
-                  return (
-                    <div key={side} className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100">
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="text-xs font-bold text-slate-500">{sideLabel}</span>
-                        <span className={`text-xs font-black px-2 py-0.5 rounded-full bg-white border border-slate-100 ${deltaColor}`}>
-                          {deltaSign}{data.delta.toFixed(3)}{unit}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                           <p className="text-[10px] text-slate-400 font-bold uppercase">{UI_TEXT.LABEL_CURRENT}</p>
-                           <p className="text-lg font-bold text-slate-800">{data.current.toFixed(2)}<span className="text-[10px] ml-0.5">{unit}</span></p>
-                        </div>
-                        <div>
-                           <p className="text-[10px] text-slate-400 font-bold uppercase">{UI_TEXT.LABEL_PREVIOUS}</p>
-                           <p className="text-lg font-bold text-slate-600">{data.previous.toFixed(2)}<span className="text-[10px] ml-0.5">{unit}</span></p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-
             {trendData?.alert_status === 'warning' && (
               <div className="glass-card rounded-[32px] p-6 border-l-4 border-red-500 bg-red-50/20">
                  <div className="flex items-start gap-4">
@@ -225,8 +203,8 @@ export default function TrendPage() {
                               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">检查记录</p>
                            </div>
                         </div>
-                        <div className="flex items-center gap-6 sm:gap-12">
-                          <div className="flex gap-4 sm:gap-8 overflow-x-auto no-scrollbar">
+                        <div className="flex items-center gap-4 sm:gap-8 flex-wrap">
+                          <div className="flex gap-4 sm:gap-8">
                              {s.left !== undefined && (
                                <div className="flex flex-col items-end group/item">
                                   <span className="text-[10px] text-slate-400 font-bold uppercase transition-colors group-hover/item:text-blue-500">{UI_TEXT.LABEL_LEFT_EYE}</span>
@@ -292,26 +270,35 @@ export default function TrendPage() {
             </div>
           </div>
           
-          <div className="space-y-6">
-             <div className="glass-card rounded-[32px] p-6 bg-white border border-slate-100 space-y-4">
-                <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                  <Activity size={18} className="text-blue-500" /> 指标概览
-                </h3>
-                <div className="space-y-3">
-                   <div className="p-4 bg-slate-50 rounded-2xl">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">{UI_TEXT.LABEL_LIMIT_RANGE}</p>
-                      <p className="text-sm font-bold text-slate-700 mt-1">{trendData?.reference_range || UI_TEXT.NO_RECORDS}</p>
-                   </div>
-                   <div className="p-4 bg-slate-50 rounded-2xl">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">最新状态</p>
-                      <div className="flex items-center gap-2 mt-1">
-                         <div className={`w-2 h-2 rounded-full ${trendData?.alert_status === 'warning' ? 'bg-red-500' : 'bg-green-500'}`} />
-                         <span className="text-sm font-bold text-slate-700">{trendData?.alert_status === 'warning' ? '需要关注' : '正常'}</span>
+           <div className="space-y-6">
+              <div className="glass-card rounded-[32px] p-6 bg-white border border-slate-100 space-y-4">
+                 <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                   <Activity size={18} className="text-blue-500" /> 指标概览
+                 </h3>
+                 <div className="space-y-3">
+                    <div className="p-4 bg-slate-50 rounded-2xl">
+                       <p className="text-[10px] text-slate-400 font-bold uppercase">{UI_TEXT.LABEL_LIMIT_RANGE}</p>
+                       <p className="text-sm font-bold text-slate-700 mt-1">{trendData?.reference_range || UI_TEXT.NO_RECORDS}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded-2xl">
+                       <p className="text-[10px] text-slate-400 font-bold uppercase">最新状态</p>
+                       <div className="flex items-center gap-2 mt-1">
+                          <div className={`w-2 h-2 rounded-full ${trendData?.alert_status === 'warning' ? 'bg-red-500' : 'bg-green-500'}`} />
+                          <span className="text-sm font-bold text-slate-700">{trendData?.alert_status === 'warning' ? '需要关注' : '正常'}</span>
+                       </div>
+                    </div>
+                    {metric === 'height' && trendData?.growth_rate !== undefined && (
+                      <div className="p-4 bg-slate-50 rounded-2xl">
+                         <p className="text-[10px] text-slate-400 font-bold uppercase">预计年增长</p>
+                         <p className="text-2xl font-black text-slate-800 tracking-tighter mt-1">
+                           {trendData.growth_rate >= 0 ? '+' : ''}{trendData.growth_rate.toFixed(2)}
+                           <span className="text-sm font-normal text-slate-400 ml-1">cm/年</span>
+                         </p>
                       </div>
-                   </div>
-                </div>
-             </div>
-          </div>
+                    )}
+                 </div>
+              </div>
+           </div>
       </div>
 
       {editingObs && (
