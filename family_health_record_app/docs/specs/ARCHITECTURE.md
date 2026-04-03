@@ -33,7 +33,7 @@
 1. 原始文件上传到 MinIO
 2. 后台任务在私有服务内执行脱敏处理
 3. 生成 `ocr_safe_image`
-4. 调用 SiliconFlow API + Qwen2.5-VL-32B-Instruct 模型进行候选结构化抽取
+4. 调用 SiliconFlow API + Qwen/Qwen3-VL-30B-A3B-Instruct 模型进行候选结构化抽取
 5. 对返回 JSON 执行本地规则校验
 6. 写入原始抽取结果表
 7. 通过审核后写入正式 observation 表
