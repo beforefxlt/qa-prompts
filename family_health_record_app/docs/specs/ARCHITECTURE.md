@@ -75,7 +75,9 @@
 ### 6.2 派生值（已实现）
 - 眼轴增长率（growth_rate）：基于首次和末次检查的平均值计算年增长率
 - 身高/体重年增长速度（growth_rate）：同上逻辑
-- 两次检查差值（comparison）：用于趋势 API，展示同侧或首值的前后差
+- 两次检查差值（comparison）：
+  - 趋势 API：展示同侧或首值的前后差
+  - vision-dashboard API：按左右眼分组（`left`/`right`），每组包含 `current`、`previous`、`delta`
 
 ### 6.3 计算规则
 - 年增长率：需至少2组不同日期的数据才能计算，否则返回 null

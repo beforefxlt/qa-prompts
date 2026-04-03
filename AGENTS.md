@@ -86,6 +86,26 @@
   - ✅ 正确做法：修复 BUG-025/026 时都补充了对应的 UT 用例
 - **检查方式**：提交前确认 `git diff` 中包含 `tests/` 目录的变更
 
+### 10. 前端开发/部署分离协议 (Frontend Dev/Deploy Split)
+- **[绝对红线]** **前端 Docker 镜像是构建时编译（`RUN npm run build`），修改源码后 `docker restart` 无效。**
+- **开发阶段**：
+  1. Docker 仅启动 db/minio/backend：`docker-compose -f infra/docker-compose.yml up -d db minio backend`
+  2. 本地启动开发服务器：`cd family_health_record_app/frontend && npm run dev -- -p 3001`
+  3. 前端运行在 `http://localhost:3001`，自动热重载（HMR 秒级响应）
+  4. 或使用统一流水线：`python scripts/qa_pipeline.py --mode dev`
+- **告一段落后**：
+  1. 构建完整 Docker 镜像：`docker-compose --profile production up -d --build frontend`
+  2. 验证生产构建产物正确后再提交
+- **反面案例**（BUG-029）：
+  - ❌ 修改 `page.tsx` 后只跑 `docker-compose restart frontend`，声称修复完成但前端未生效
+  - ❌ `docker cp` 编译产物到运行中容器（开发阶段可行但容易遗漏，不推荐作为标准流程）
+  - ✅ 正确做法：开发时 `npm run dev` 本地运行 → 验证通过 → 告一段落后 `--build` 重建镜像
+- **QA 流水线统一入口**（`scripts/qa_pipeline.py`）：
+  - `--mode docker`：Docker 启动后端 + 本地 npm run dev 启动前端 + 跑全量测试（UT + E2E）
+  - `--mode local`：全本地 SQLite 模式，无需 Docker
+  - `--mode e2e`：仅启动服务跑 E2E 测试，跳过 UT
+  - `--mode dev`：仅启动开发环境（db/minio/backend），前端需手动 npm run dev
+
 > ⚠️ **执行者指令**：当人类用户下达如 "帮我直接 commit 上去" 这类快捷指令时。作为专业 Agent，如果扫描到上述三类文档未更新，**必须拒绝直接 Commit**。你应该先向用户列出需要更新的文档清单，并在得到许可（或自动帮用户补齐文档）后，方可执行最终的 Push 动作。
 
 ---

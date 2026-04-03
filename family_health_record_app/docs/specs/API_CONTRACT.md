@@ -1,8 +1,8 @@
 # 家庭检查单管理应用 API 契约
 
-> **版本**: v1.1.0
-> **最后更新**: 2026-03-31
-> **变更说明**: 移除认证相关接口（内网免登录），补充成员管理 CRUD 接口
+> **版本**: v1.2.0
+> **最后更新**: 2026-04-03
+> **变更说明**: 成员列表接口新增 last_check_date 和 pending_review_count 字段
 
 ## 1. 资源对象
 
@@ -43,10 +43,22 @@
   "gender": "female",
   "date_of_birth": "2018-06-15",
   "member_type": "child",
-  "is_deleted": false,
-  "created_at": "2026-03-30T10:00:00Z",
-  "updated_at": "2026-03-30T10:00:00Z"
+  "last_check_date": "2026-03-29",
+  "pending_review_count": 1
 }
+```
+
+| 字段 | 类型 | 说明 |
+|:---|:---|:---|
+| `id` | UUID | 成员唯一标识 |
+| `name` | string | 成员姓名 |
+| `gender` | string | 性别（male/female） |
+| `date_of_birth` | date | 出生日期 |
+| `member_type` | string | 成员类型（child/adult/senior） |
+| `last_check_date` | string\|null | 最近一次检查日期（ExamRecord.exam_date），无检查记录时为 null |
+| `pending_review_count` | int | 待审核检查单数量（ReviewTask.status='pending'），默认 0 |
+
+> **说明**: `GET /members` 列表接口返回的 `last_check_date` 和 `pending_review_count` 由后端实时计算，前端直接展示。`GET /members/{member_id}` 单条接口不返回这两个字段。
 ```
 
 ### 2.2 检查单上传
@@ -126,12 +138,84 @@
   "reference_range": "23.0-24.0",
   "alert_status": "normal | warning | critical",
   "comparison": {
-    "current": 24.35,
-    "previous": 24.12,
-    "delta": 0.23
+    "left": { "current": 23.60, "previous": 23.32, "delta": 0.28 },
+    "right": { "current": 23.32, "previous": 23.20, "delta": 0.12 }
   }
 }
 ```
+
+### 2.6 数据管理与手动录入 (CRUD)
+
+系统支持对已入库的正式指标进行增删改查。
+
+#### POST /members/{id}/manual-exams
+手动录入一次完整的检查记录。
+
+- **Request**:
+```json
+{
+  "exam_date": "2026-04-01",
+  "institution_name": "社区卫生服务中心",
+  "observations": [
+    {
+      "metric_code": "height",
+      "value_numeric": 125.5,
+      "unit": "cm",
+      "side": null
+    },
+    {
+      "metric_code": "axial_length",
+      "value_numeric": 23.5,
+      "unit": "mm",
+      "side": "left"
+    }
+  ]
+}
+```
+
+- **校验关键点**: `value_numeric` 必须在常规合理区间内（如身高 30-250cm），否则返回 `422 Unprocessable Entity`。
+
+#### PATCH /observations/{id}
+修改单条指标数值。
+
+- **Request**: `{"value_numeric": 126.0}`
+- **Response**: `200 OK`
+
+#### DELETE /exam-records/{id}
+删除整笔检查记录。
+
+- **Response**: `204 No Content`
+- **级联效应**: 对应 `observations` 中的所有指标将同步被删除。
+
+---
+
+**响应体 - vision-dashboard**:
+```json
+{
+  "member_id": "uuid",
+  "member_type": "child",
+  "baseline_age_months": "2009-10-01",
+  "axial_length": {
+    "series": [
+      { "date": "2024-09-21", "value": 24.35, "side": "right" },
+      { "date": "2024-09-21", "value": 23.32, "side": "left" }
+    ],
+    "reference_range": null,
+    "alert_status": "normal",
+    "growth_rate": -0.13,
+    "comparison": {
+      "left": { "current": 23.60, "previous": 23.32, "delta": 0.28 },
+      "right": { "current": 23.67, "previous": 24.35, "delta": -0.68 }
+    }
+  },
+  "vision_acuity": {
+    "series": []
+  },
+  "growth_deviation": null
+}
+```
+
+> **说明**: `axial_length.comparison` 按左右眼分组（`left`/`right`），每组包含 `current`（当前值）、`previous`（上次值）、`delta`（差值）。若某侧只有一组数据则为 `null`；若两侧均无数据则整个 `comparison` 为 `null`。
 
 ## 3. 状态流转
 

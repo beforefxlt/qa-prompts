@@ -6,7 +6,7 @@ from typing import List, Dict, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, func, distinct
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -14,7 +14,7 @@ from ..db import get_db
 from ..models.member import MemberProfile
 from ..models.document import DocumentRecord, OCRExtractionResult, ReviewTask
 from ..models.observation import ExamRecord, Observation, DerivedMetric
-from ..schemas.member import MemberCreate, MemberUpdate, MemberResponse
+from ..schemas.member import MemberCreate, MemberUpdate, MemberResponse, MemberDetailResponse
 
 UPLOAD_DIR = "uploads"
 if not os.path.exists(UPLOAD_DIR):
@@ -63,19 +63,36 @@ async def _ensure_review_task(db: AsyncSession, document: DocumentRecord, reason
 async def list_members(db: AsyncSession = Depends(get_db)):
     stmt = select(MemberProfile).where(MemberProfile.is_deleted.is_(False)).order_by(MemberProfile.created_at.desc())
     members = (await db.scalars(stmt)).all()
-    return [
-        MemberResponse(
+    
+    result = []
+    for m in members:
+        last_check = await db.scalar(
+            select(func.max(ExamRecord.exam_date)).where(
+                ExamRecord.member_id == m.id
+            )
+        )
+        pending_count = await db.scalar(
+            select(func.count(ReviewTask.id)).join(
+                DocumentRecord, ReviewTask.document_id == DocumentRecord.id
+            ).where(
+                DocumentRecord.member_id == m.id,
+                ReviewTask.status == "pending"
+            )
+        ) or 0
+        
+        result.append(MemberResponse(
             id=m.id,
             name=m.name,
             gender=m.gender,
             date_of_birth=m.date_of_birth,
             member_type=m.member_type,
-        )
-        for m in members
-    ]
+            last_check_date=last_check.isoformat() if last_check else None,
+            pending_review_count=pending_count,
+        ))
+    return result
 
 
-@router.post("", response_model=MemberResponse, status_code=201)
+@router.post("", response_model=MemberDetailResponse, status_code=201)
 async def create_member(data: MemberCreate, db: AsyncSession = Depends(get_db)):
     member = MemberProfile(
         name=data.name,
@@ -86,7 +103,7 @@ async def create_member(data: MemberCreate, db: AsyncSession = Depends(get_db)):
     db.add(member)
     await db.flush()
     await db.refresh(member)
-    return MemberResponse(
+    return MemberDetailResponse(
         id=member.id,
         name=member.name,
         gender=member.gender,
@@ -95,13 +112,13 @@ async def create_member(data: MemberCreate, db: AsyncSession = Depends(get_db)):
     )
 
 
-@router.get("/{member_id}", response_model=MemberResponse)
+@router.get("/{member_id}", response_model=MemberDetailResponse)
 async def get_member(member_id: UUID, db: AsyncSession = Depends(get_db)):
     stmt = select(MemberProfile).where(MemberProfile.id == member_id, MemberProfile.is_deleted.is_(False))
     member = await db.scalar(stmt)
     if member is None:
         raise HTTPException(status_code=404, detail="成员不存在")
-    return MemberResponse(
+    return MemberDetailResponse(
         id=member.id,
         name=member.name,
         gender=member.gender,
@@ -110,7 +127,7 @@ async def get_member(member_id: UUID, db: AsyncSession = Depends(get_db)):
     )
 
 
-@router.put("/{member_id}", response_model=MemberResponse)
+@router.put("/{member_id}", response_model=MemberDetailResponse)
 async def update_member(member_id: UUID, data: MemberUpdate, db: AsyncSession = Depends(get_db)):
     stmt = select(MemberProfile).where(MemberProfile.id == member_id, MemberProfile.is_deleted.is_(False))
     member = await db.scalar(stmt)
@@ -124,7 +141,7 @@ async def update_member(member_id: UUID, data: MemberUpdate, db: AsyncSession = 
     await db.flush()
     await db.commit()
     await db.refresh(member)
-    return MemberResponse(
+    return MemberDetailResponse(
         id=member.id,
         name=member.name,
         gender=member.gender,
