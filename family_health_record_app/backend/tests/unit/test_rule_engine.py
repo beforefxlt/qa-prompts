@@ -82,3 +82,56 @@ def test_high_confidence_auto_approve():
     assert result.is_valid is True
     assert result.status_suggestion == "approved"
     assert result.conflicts == []
+
+
+def test_validate_observation_hemoglobin():
+    """[TC-NEW-001] 验证血红蛋白校验（新增指标）"""
+    is_valid, error = validate_observation("hemoglobin", 135.0, "g/L")
+    assert is_valid is True
+    assert error is None
+
+
+def test_validate_observation_hemoglobin_out_of_range():
+    """[TC-NEW-002] 验证血红蛋白数值越界"""
+    is_valid, error = validate_observation("hemoglobin", 280.0, "g/L")
+    assert is_valid is False
+    assert "数值越界" in error
+
+
+def test_validate_observation_hemoglobin_wrong_unit():
+    """[TC-NEW-003] 验证血红蛋白单位错误"""
+    is_valid, error = validate_observation("hemoglobin", 135.0, "g/dL")
+    assert is_valid is False
+    assert "单位不匹配" in error
+
+
+def test_validate_observation_glucose_and_ldl():
+    """[TC-NEW-004] 验证血糖和LDL校验（已有规则引擎定义，手动录入支持）"""
+    is_valid_glucose, error_glucose = validate_observation("glucose", 5.6, "mmol/L")
+    assert is_valid_glucose is True
+    assert error_glucose is None
+    
+    is_valid_ldl, error_ldl = validate_observation("ldl", 3.0, "mmol/L")
+    assert is_valid_ldl is True
+    assert error_ldl is None
+
+
+def test_validate_observation_hba1c():
+    """[TC-NEW-005] 验证糖化血红蛋白 HbA1c 校验"""
+    is_valid, error = validate_observation("hba1c", 5.6, "%")
+    assert is_valid is True
+    assert error is None
+
+
+def test_validate_observation_hba1c_out_of_range():
+    """[TC-NEW-006] 验证 HbA1c 数值越界"""
+    is_valid, error = validate_observation("hba1c", 16.0, "%")
+    assert is_valid is False
+    assert "数值越界" in error
+
+
+def test_validate_observation_hba1c_wrong_unit():
+    """[TC-NEW-007] 验证 HbA1c 单位错误"""
+    is_valid, error = validate_observation("hba1c", 5.6, "mmol/mol")
+    assert is_valid is False
+    assert "单位不匹配" in error

@@ -71,7 +71,10 @@ export default function TrendPage() {
       case 'vision_acuity': return '视力变化趋势';
       case 'height': return '身高增长轨迹';
       case 'weight': return '体重变化轨迹';
-      case 'weight': return '体重变化轨迹';
+      case 'glucose': return '血糖变化趋势';
+      case 'ldl': return '低密度脂蛋白趋势';
+      case 'hemoglobin': return '血红蛋白趋势';
+      case 'hba1c': return '糖化血红蛋白趋势';
       default: return '指标趋势';
     }
   };
@@ -81,6 +84,9 @@ export default function TrendPage() {
       case 'axial_length': return 'mm';
       case 'height': return 'cm';
       case 'weight': return 'kg';
+      case 'glucose': case 'tc': case 'tg': case 'hdl': case 'ldl': return 'mmol/L';
+      case 'hemoglobin': return 'g/L';
+      case 'hba1c': return '%';
       default: return '';
     }
   };
@@ -118,15 +124,15 @@ export default function TrendPage() {
             <p className="text-xs text-slate-400 font-medium">数据更新至: {new Date().toLocaleDateString()}</p>
           </div>
         </div>
-        <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex gap-1">
-           {['axial_length', 'vision_acuity', 'height', 'weight'].map(m => (
-              <button 
-                key={m}
-                onClick={() => router.push(`/members/${id}/trends?metric=${m}`)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${metric === m ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-50'}`}
-              >
-                {m === 'axial_length' ? '眼轴' : m === 'vision_acuity' ? '视力' : m === 'height' ? '身高' : '体重'}
-             </button>
+        <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex gap-1 flex-wrap">
+           {['axial_length', 'vision_acuity', 'height', 'weight', 'glucose', 'ldl', 'hemoglobin', 'hba1c'].map(m => (
+               <button 
+                 key={m}
+                 onClick={() => router.push(`/members/${id}/trends?metric=${m}`)}
+                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${metric === m ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-50'}`}
+               >
+                 {m === 'axial_length' ? '眼轴' : m === 'vision_acuity' ? '视力' : m === 'height' ? '身高' : m === 'weight' ? '体重' : m === 'glucose' ? '血糖' : m === 'ldl' ? 'LDL' : m === 'hemoglobin' ? '血红蛋白' : 'HbA1c'}
+              </button>
            ))}
         </div>
       </header>

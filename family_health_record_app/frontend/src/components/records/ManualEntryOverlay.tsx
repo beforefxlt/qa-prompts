@@ -27,6 +27,10 @@ const METRIC_OPTIONS = [
   { code: 'weight', label: '体重', unit: 'kg', min: 2, max: 500 },
   { code: 'axial_length', label: '眼轴长度', unit: 'mm', min: 15, max: 35 },
   { code: 'vision_acuity', label: '视力', unit: 'decimal' },
+  { code: 'glucose', label: '血糖', unit: 'mmol/L', min: 0.1, max: 50.0 },
+  { code: 'ldl', label: '低密度脂蛋白', unit: 'mmol/L', min: 0.1, max: 10.0 },
+  { code: 'hemoglobin', label: '血红蛋白', unit: 'g/L', min: 30, max: 250 },
+  { code: 'hba1c', label: '糖化血红蛋白', unit: '%', min: 3.0, max: 15.0 },
 ];
 
 const EYE_METRICS = ['axial_length', 'vision_acuity'];

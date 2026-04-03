@@ -203,11 +203,13 @@
   | `weight` | 体重 | kg | 2.0 ~ 500.0 | 同上 |
   | `axial_length` | 眼轴长度 | mm | 15.0 ~ 35.0 | 同上 |
   | `vision_acuity` | 视力 | decimal | 无区间校验 | — |
-  | `glucose` | 血糖 | mmol/L | 无区间校验 | — |
-  | `tc` | 总胆固醇 | mmol/L | 无区间校验 | — |
-  | `tg` | 甘油三酯 | mmol/L | 无区间校验 | — |
-  | `hdl` | 高密度脂蛋白 | mmol/L | 无区间校验 | — |
-  | `ldl` | 低密度脂蛋白 | mmol/L | 无区间校验 | — |
+  | `glucose` | 血糖 | mmol/L | 0.1 ~ 50.0 | `rule_engine.py` |
+  | `tc` | 总胆固醇 | mmol/L | 0.1 ~ 30.0 | `rule_engine.py` |
+  | `tg` | 甘油三酯 | mmol/L | 0.1 ~ 30.0 | `rule_engine.py` |
+  | `hdl` | 高密度脂蛋白 | mmol/L | 0.1 ~ 10.0 | `rule_engine.py` |
+  | `ldl` | 低密度脂蛋白 | mmol/L | 0.1 ~ 10.0 | `rule_engine.py` |
+  | `hemoglobin` | 血红蛋白 | g/L | 30.0 ~ 250.0 | `rule_engine.py` |
+  | `hba1c` | 糖化血红蛋白 | % | 3.0 ~ 15.0 | `rule_engine.py` |
 
   > **⚠️ 前后端契约约束**：前端手动录入表单（`ManualEntryOverlay`）必须在提交前执行与后端相同的区间校验，不可依赖后端 422 作为用户反馈。
 

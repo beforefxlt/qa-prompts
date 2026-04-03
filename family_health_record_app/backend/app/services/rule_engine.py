@@ -15,6 +15,8 @@ METRIC_REGISTRY: Dict[str, MetricRule] = {
     "tg": MetricRule(min_val=0.1, max_val=30.0, standard_unit="mmol/L"),
     "hdl": MetricRule(min_val=0.1, max_val=10.0, standard_unit="mmol/L"),
     "ldl": MetricRule(min_val=0.1, max_val=10.0, standard_unit="mmol/L"),
+    "hemoglobin": MetricRule(min_val=30.0, max_val=250.0, standard_unit="g/L"),
+    "hba1c": MetricRule(min_val=3.0, max_val=15.0, standard_unit="%"),
     "axial_length": MetricRule(min_val=15.0, max_val=40.0, standard_unit="mm"),
 }
 

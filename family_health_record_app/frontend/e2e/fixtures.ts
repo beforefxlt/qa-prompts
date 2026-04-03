@@ -1,7 +1,7 @@
 import { test as base, expect } from '@playwright/test';
 import { UI_TEXT } from '../src/constants/ui-text';
 
-const API_BASE = 'http://127.0.0.1:8000/api/v1';
+const API_BASE = 'http://localhost:8000/api/v1';
 
 /**
  * E2E 测试 fixtures

@@ -103,7 +103,7 @@
 | :--- | :--- | :--- |
 | `id` | UUID | 主键 |
 | `exam_record_id` | UUID | 外键，关联 `exam_records.id` |
-| `metric_code` | VARCHAR | 字典枚举项，如：`height`, `weight`, `axial_length` 等 |
+| `metric_code` | VARCHAR | 字典枚举项，如：`height`, `weight`, `axial_length`, `glucose`, `ldl`, `hemoglobin` 等 |
 | `value_numeric` | FLOAT | 标准化后的数值型结果 |
 | `value_text` | VARCHAR | 原始表达文字或无法量化的符号串 |
 | `unit` | VARCHAR | 计量单位 |

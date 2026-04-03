@@ -31,6 +31,8 @@ const METRIC_LABELS: Record<string, string> = {
   tg: '甘油三酯',
   hdl: '高密度脂蛋白',
   ldl: '低密度脂蛋白',
+  hemoglobin: '血红蛋白',
+  hba1c: '糖化血红蛋白',
 };
 
 const METRIC_UNITS: Record<string, string> = {
@@ -42,6 +44,8 @@ const METRIC_UNITS: Record<string, string> = {
   tg: 'mmol/L',
   hdl: 'mmol/L',
   ldl: 'mmol/L',
+  hemoglobin: 'g/L',
+  hba1c: '%',
 };
 
 export const TrendChart: React.FC<TrendChartProps> = ({ data, metric, height = 240, eyeMode = 'both' }) => {
