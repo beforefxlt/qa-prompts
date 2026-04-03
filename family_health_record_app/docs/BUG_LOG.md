@@ -394,6 +394,22 @@
 - **验证状态**: ✅ 128 passed, 0 failed
 - **UT 覆盖**: ✅ 本身就是测试用例修复
 
+### [BUG-041] 趋势分析页面身高/视力指标无折线图
+- **现象**: 从成员 Dashboard 点击"身高"或"视力"卡片进入趋势分析页，折线图不显示数据，但下方历史列表有数据
+- **根由**: 
+  1. `trends/page.tsx:32` 调用 `apiClient.getVisionDashboard()` 获取数据
+  2. `getVisionDashboard` 只返回 `axial_length` 和 `vision_acuity` 两个 key
+  3. 当 `metric=height` 时，`data["height"]` 为 `undefined`，导致 `series` 为空数组
+  4. 正确的做法是调用 `apiClient.getTrends(id, metric)`，该接口接受任意 metric 参数
+  5. 指标切换按钮使用了错误的 metric 名称 `vision_va`（后端实际是 `vision_acuity`）
+- **修复**: 
+  1. `trends/page.tsx:32` 将 `getVisionDashboard()` 改为 `getTrends(id, metric)`
+  2. 同步更新 series 分组逻辑以适配 `getTrends` 返回的扁平结构
+  3. 指标切换按钮 `vision_va` → `vision_acuity`
+  4. `getMetricLabel` 和 tab 标签同步更新
+- **验证状态**: ⏳ 待前端部署后验证
+- **UT 覆盖**: ⏳ 待补充
+
 ---
 
 ## 📅 v2.2.0 OCR 模型升级期记录 (2026-04-03)

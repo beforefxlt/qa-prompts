@@ -29,24 +29,33 @@ export default function TrendPage() {
   const loadTrendData = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getVisionDashboard(id as string);
-      const metricData = (data as any)[metric];
+      const data = await apiClient.getTrends(id as string, metric);
       
-      // 将扁平 series [{date, value, side}] 按日期分组为 [{date, left, right}]
-      const rawSeries = metricData?.series || [];
+      // getTrends 返回 { metric, series: [{date, value, side}], comparison, reference_range, alert_status }
+      // 需要将 series [{date, value, side}] 按日期分组为 [{date, left, right}] 或 [{date, value}]
+      const rawSeries = (data as any).series || [];
       const byDate = new Map<string, any>();
       rawSeries.forEach((s: any) => {
         if (!byDate.has(s.date)) {
           byDate.set(s.date, { date: s.date });
         }
         const entry = byDate.get(s.date);
-        if (s.side === 'left') entry.left = s.value;
-        else if (s.side === 'right') entry.right = s.value;
-        else entry.value = s.value;
+        if (s.side === 'left') {
+          entry.left = s.value;
+          entry.left_obs_id = s.observation_id;
+        } else if (s.side === 'right') {
+          entry.right = s.value;
+          entry.right_obs_id = s.observation_id;
+        } else {
+          entry.value = s.value;
+          entry.obs_id = s.observation_id;
+        }
+        // 保存 exam_record_id
+        entry.exam_record_id = s.exam_record_id;
       });
       const groupedSeries = Array.from(byDate.values()).sort((a: any, b: any) => a.date.localeCompare(b.date));
       
-      setTrendData({ ...metricData, series: groupedSeries });
+      setTrendData({ ...(data as any), series: groupedSeries });
     } catch (err) {
       console.error('Failed to load trend data:', err);
     } finally {
@@ -57,7 +66,7 @@ export default function TrendPage() {
   const getMetricLabel = () => {
     switch(metric) {
       case 'axial_length': return '眼轴长度趋势';
-      case 'vision_va': return '视力变化趋势';
+      case 'vision_acuity': return '视力变化趋势';
       case 'height': return '身高增长轨迹';
       case 'weight': return '体重变化轨迹';
       default: return '指标趋势';
@@ -107,13 +116,13 @@ export default function TrendPage() {
           </div>
         </div>
         <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex gap-1">
-           {['axial_length', 'vision_va', 'height'].map(m => (
-             <button 
-               key={m}
-               onClick={() => router.push(`/members/${id}/trends?metric=${m}`)}
-               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${metric === m ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-50'}`}
-             >
-               {m === 'axial_length' ? '眼轴' : m === 'vision_va' ? '视力' : '身高'}
+           {['axial_length', 'vision_acuity', 'height'].map(m => (
+              <button 
+                key={m}
+                onClick={() => router.push(`/members/${id}/trends?metric=${m}`)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${metric === m ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-50'}`}
+              >
+                {m === 'axial_length' ? '眼轴' : m === 'vision_acuity' ? '视力' : '身高'}
              </button>
            ))}
         </div>
