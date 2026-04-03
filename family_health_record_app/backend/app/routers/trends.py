@@ -30,6 +30,8 @@ async def get_trends(member_id: UUID, metric: str, db: AsyncSession = Depends(ge
             Observation.reference_range,
             Observation.is_abnormal,
             Observation.side,
+            Observation.id.label("observation_id"),
+            Observation.exam_record_id,
         )
         .join(Observation, Observation.exam_record_id == ExamRecord.id)
         .where(ExamRecord.member_id == member_id, Observation.metric_code == metric)
@@ -41,6 +43,8 @@ async def get_trends(member_id: UUID, metric: str, db: AsyncSession = Depends(ge
             "date": row.exam_date.isoformat(),
             "value": row.value_numeric,
             "side": row.side,
+            "exam_record_id": row.exam_record_id,
+            "observation_id": row.observation_id,
         }
         for row in trend_rows
     ]
@@ -52,35 +56,36 @@ async def get_trends(member_id: UUID, metric: str, db: AsyncSession = Depends(ge
     
     comparison = None
     if len(dates) >= 2:
-        # 获取最新和上次检查的所有 observation
         latest_date = dates[-1]
         previous_date = dates[-2]
         
         latest_rows = [row for row in trend_rows if row.exam_date == latest_date]
         previous_rows = [row for row in trend_rows if row.exam_date == previous_date]
         
-        # 比较相同 side 的值，如果没有 side 则比较第一个值
-        if latest_rows and previous_rows:
-            # 尝试匹配相同 side
-            for side in ['left', 'right', None]:
-                latest_val = next((r.value_numeric for r in latest_rows if r.side == side), None)
-                previous_val = next((r.value_numeric for r in previous_rows if r.side == side), None)
-                if latest_val is not None and previous_val is not None:
-                    comparison = {
-                        "current": latest_val,
-                        "previous": previous_val,
-                        "delta": round(latest_val - previous_val, 3),
-                    }
-                    break
-            # 如果无法匹配 side，使用第一个值
-            if comparison is None:
-                latest_val = latest_rows[0].value_numeric
-                previous_val = previous_rows[0].value_numeric
-                comparison = {
+        comparison = {}
+        for side in ["left", "right"]:
+            latest_val = next((r.value_numeric for r in latest_rows if r.side == side), None)
+            previous_val = next((r.value_numeric for r in previous_rows if r.side == side), None)
+            
+            if latest_val is not None and previous_val is not None:
+                comparison[side] = {
                     "current": latest_val,
                     "previous": previous_val,
                     "delta": round(latest_val - previous_val, 3),
                 }
+        
+        # 针对无 side 的指标 (如身高)
+        val_latest = next((r.value_numeric for r in latest_rows if r.side is None), None)
+        val_previous = next((r.value_numeric for r in previous_rows if r.side is None), None)
+        if val_latest is not None and val_previous is not None:
+            comparison["value"] = {
+                "current": val_latest,
+                "previous": val_previous,
+                "delta": round(val_latest - val_previous, 3),
+            }
+            
+        if not comparison:
+            comparison = None
 
     return {
         "metric": metric,
@@ -150,6 +155,34 @@ async def get_vision_dashboard(member_id: UUID, db: AsyncSession = Depends(get_d
                 # 计算年增长率
                 growth_rate = round((last_avg - first_avg) / years_diff, 2)
 
+    # 计算最近两次检查的左右眼对比
+    axial_comparison = None
+    if len(axial_rows) >= 2:
+        dates = sorted(set(row.exam_date for row in axial_rows))
+        if len(dates) >= 2:
+            latest_date = dates[-1]
+            previous_date = dates[-2]
+            
+            latest_rows = [row for row in axial_rows if row.exam_date == latest_date]
+            previous_rows = [row for row in axial_rows if row.exam_date == previous_date]
+            
+            axial_comparison = {"left": None, "right": None}
+            
+            for side in ["left", "right"]:
+                latest_val = next((r.value_numeric for r in latest_rows if r.side == side), None)
+                previous_val = next((r.value_numeric for r in previous_rows if r.side == side), None)
+                
+                if latest_val is not None and previous_val is not None:
+                    axial_comparison[side] = {
+                        "current": latest_val,
+                        "previous": previous_val,
+                        "delta": round(latest_val - previous_val, 3),
+                    }
+            
+            # 如果左右眼都没有数据，设为 null
+            if axial_comparison["left"] is None and axial_comparison["right"] is None:
+                axial_comparison = None
+
     return {
         "member_id": str(member_id),
         "member_type": member.member_type,
@@ -162,6 +195,7 @@ async def get_vision_dashboard(member_id: UUID, db: AsyncSession = Depends(get_d
             "reference_range": next((row.reference_range for row in axial_rows if row.reference_range), None),
             "alert_status": "warning" if any(row.is_abnormal for row in axial_rows) else "normal",
             "growth_rate": growth_rate,
+            "comparison": axial_comparison,
         },
         "vision_acuity": {
             "series": [

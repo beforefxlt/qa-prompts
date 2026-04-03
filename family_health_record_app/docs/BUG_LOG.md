@@ -210,3 +210,51 @@
   2. 上传时计算文件哈希，同一成员已上传过相同文件则返回 `status: "duplicate"`
 - **验证状态**: ✅ 重复上传返回 duplicate 状态
 - **UT 覆盖**: ✅ `test_upload_duplicate_document_returns_duplicate`
+
+### [BUG-029] 生长速度预警页面展示眼轴数据而非身高增长数据
+- **现象**: "生长速度预警"卡片显示眼轴年增长（mm/year），而非身高年增长（cm/year）
+- **根由**: 
+  1. `page.tsx` 中生长速度预警卡片错误读取 `visionData.axial_length` 而非 `growthData.height`
+  2. 单位显示为 `mm/year`（眼轴单位），应为 `cm/year`（身高单位）
+  3. 数据门控条件 `visionData?.growth_deviation` 是眼轴专属指标，导致身高数据充足时仍显示"数据不足"
+- **修复**: 
+  1. `alert_status` 改为 `growthData?.height?.alert_status`
+  2. `growth_rate` 改为 `growthData?.height?.growth_rate`
+  3. 门控条件改为 `growthData?.height?.growth_rate != null`
+  4. 单位从 `mm/year` 改为 `cm/year`
+  5. 文案从"预计年增长"改为"预计年身高增长"
+- **验证状态**: ✅ 已验证，API 正确返回 comparison 数据，前端正确展示
+- **UT 覆盖**: ⏳ 待补充
+
+### [BUG-030] 老人成员 Dashboard 展示不合理的视力/生长发育看板
+- **现象**: 老人成员（member_type=senior）的 Dashboard 页面仍然展示"近视防控看板"和"生长发育看板"，与老人健康场景不符
+- **根由**: 前端未根据 member_type 区分看板展示逻辑，生长发育看板无条件渲染
+- **修复**: 
+  1. `member_type === 'child'`：展示近视防控看板 + 生长速度预警 + 生长发育看板
+  2. `member_type === 'senior'`：隐藏视力/生长发育看板，改为"指标详情"区域，动态展示已有数据的指标卡片
+  3. 无数据的指标卡片不展示，空状态显示"暂无指标数据，请上传检查单"
+- **验证状态**: ⏳ 待前端部署后验证
+- **UT 覆盖**: ⏳ 待补充
+
+### [BUG-031] 首页成员卡片显示"尚无记录"，即使成员已有检查数据
+- **现象**: 儿童成员已有 2 组视力数据，但首页成员卡片底部显示"尚无记录"
+- **根由**: 
+  1. 前端 `page.tsx:166` 依赖 `m.last_check_date` 字段判断是否显示最后检查日期
+  2. 后端 `MemberResponse` schema 仅包含 id/name/gender/date_of_birth/member_type 共 5 个字段
+  3. `GET /members` 接口从未计算并返回 `last_check_date` 和 `pending_review_count`
+- **修复**: 
+  1. `MemberResponse` 新增 `last_check_date` (Optional[str]) 和 `pending_review_count` (int, 默认 0) 字段
+  2. `list_members` 接口通过子查询计算每个成员的最后检查日期和待审核数量
+  3. 前端根据 `last_check_date` 正确显示"X月X日 最后检查"或"尚无记录"
+- **验证状态**: ✅ 已验证，API 正确返回 last_check_date，首页卡片显示正确
+- **UT 覆盖**: ✅ `test_list_members_returns_last_check_date` + `test_list_members_returns_pending_review_count`
+
+### [BUG-032] 趋势分析页面"当前数值/上次数值"不区分左右眼
+- **现象**: 趋势分析页面底部"当前数值"和"上次数值"只显示左眼数据，右眼数据被忽略
+- **根由**: `TrendChart.tsx:124-141` 底部数值展示区只取 `data[x].left ?? data[x].value`，未处理左右眼同时存在的场景
+- **修复**: 
+  1. 当数据同时包含 `left` 和 `right` 时，分两列展示左眼和右眼的当前值/上次值
+  2. 单列数据（无 side 指标如身高体重）保持原有"当前数值/上次数值"布局
+  3. 右眼列加左边框分隔，视觉清晰
+- **验证状态**: ✅ 已验证，趋势分析页面正确展示左右眼数据
+- **UT 覆盖**: ⏳ 待补充

@@ -95,6 +95,8 @@ services:
     depends_on:
       - backend
     command: npm start -- -p 3001
+    profiles:
+      - production
 
 volumes:
   postgres_data:

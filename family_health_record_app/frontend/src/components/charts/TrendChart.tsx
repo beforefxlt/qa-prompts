@@ -121,24 +121,72 @@ export const TrendChart: React.FC<TrendChartProps> = ({ data, metric, height = 2
         </ResponsiveContainer>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-100">
-        <div>
-          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">当前数值</p>
-          <p className="text-2xl font-bold text-slate-800 tracking-tighter">
-            {(data[data.length - 1].left ?? data[data.length - 1].value ?? 0).toFixed(2)}
-            <span className="text-sm font-normal text-slate-400 ml-1">{METRIC_UNITS[metric] || ''}</span>
-          </p>
-        </div>
-        {data.length > 1 && (
+      {/* 左右眼区分展示 */}
+      {data[0].left !== undefined && data[0].right !== undefined ? (
+        <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-100">
           <div>
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">上次数值</p>
-            <p className="text-2xl font-bold text-slate-600 tracking-tighter">
-              {(data[data.length - 2].left ?? data[data.length - 2].value ?? 0).toFixed(2)}
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-2">左眼</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold">当前</p>
+                <p className="text-lg font-bold text-slate-800">
+                  {(data[data.length - 1].left ?? 0).toFixed(2)}
+                  <span className="text-xs font-normal text-slate-400 ml-0.5">{METRIC_UNITS[metric] || ''}</span>
+                </p>
+              </div>
+              {data.length > 1 && (
+                <div>
+                  <p className="text-[10px] text-slate-400 font-bold">上次</p>
+                  <p className="text-lg font-bold text-slate-600">
+                    {(data[data.length - 2].left ?? 0).toFixed(2)}
+                    <span className="text-xs font-normal text-slate-400 ml-0.5">{METRIC_UNITS[metric] || ''}</span>
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="border-l border-slate-100 pl-4">
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-2">右眼</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[10px] text-slate-400 font-bold">当前</p>
+                <p className="text-lg font-bold text-slate-800">
+                  {(data[data.length - 1].right ?? 0).toFixed(2)}
+                  <span className="text-xs font-normal text-slate-400 ml-0.5">{METRIC_UNITS[metric] || ''}</span>
+                </p>
+              </div>
+              {data.length > 1 && (
+                <div>
+                  <p className="text-[10px] text-slate-400 font-bold">上次</p>
+                  <p className="text-lg font-bold text-slate-600">
+                    {(data[data.length - 2].right ?? 0).toFixed(2)}
+                    <span className="text-xs font-normal text-slate-400 ml-0.5">{METRIC_UNITS[metric] || ''}</span>
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-100">
+          <div>
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">当前数值</p>
+            <p className="text-2xl font-bold text-slate-800 tracking-tighter">
+              {(data[data.length - 1].left ?? data[data.length - 1].value ?? 0).toFixed(2)}
               <span className="text-sm font-normal text-slate-400 ml-1">{METRIC_UNITS[metric] || ''}</span>
             </p>
           </div>
-        )}
-      </div>
+          {data.length > 1 && (
+            <div>
+              <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">上次数值</p>
+              <p className="text-2xl font-bold text-slate-600 tracking-tighter">
+                {(data[data.length - 2].left ?? data[data.length - 2].value ?? 0).toFixed(2)}
+                <span className="text-sm font-normal text-slate-400 ml-1">{METRIC_UNITS[metric] || ''}</span>
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
