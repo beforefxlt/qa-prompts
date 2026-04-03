@@ -126,9 +126,8 @@ async def test_create_member_empty_name_returns_400(route_env):
             "member_type": "child",
         },
     )
-    # 当前实现允许空字符串，返回 201
-    # 如果后续添加校验，应改为 422
-    assert resp.status_code == 201
+    # 添加了 min_length=1 校验后，空姓名应返回 422
+    assert resp.status_code == 422
 
 
 @pytest.mark.asyncio
@@ -536,7 +535,8 @@ async def test_trends_comparison_data(route_env, monkeypatch):
     assert resp.status_code == 200
     data = resp.json()
     assert data["comparison"] is not None
-    assert data["comparison"]["delta"] == 0.5
+    # 无 side 的指标（如身高）使用 comparison["value"] 结构
+    assert data["comparison"]["value"]["delta"] == 0.5
 
 
 @pytest.mark.asyncio

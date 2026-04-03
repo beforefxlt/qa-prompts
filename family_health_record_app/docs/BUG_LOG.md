@@ -379,6 +379,23 @@
 
 ---
 
+## 📅 v2.3.0 测试修复期记录 (2026-04-03)
+
+### [BUG-040] 集成测试 2 例失败：测试断言与代码实现不同步
+- **现象**: 后端全量测试 128 例中 2 例失败
+  1. `test_create_member_empty_name_returns_400` — 期望 201 但实际返回 422
+  2. `test_trends_comparison_data` — 期望 `comparison.delta` 但实际是 `comparison.value.delta`
+- **根由**: 
+  1. 测试注释写着"当前实现允许空字符串"，但后续添加了 `min_length=1` 校验后未同步更新测试
+  2. BUG-027 修复后 comparison 结构从扁平改为按 side 分组（`left`/`right`/`value`），测试断言未同步
+- **修复**: 
+  1. `test_routes.py:131` 断言从 `201` 改为 `422`
+  2. `test_routes.py:539` 断言从 `comparison["delta"]` 改为 `comparison["value"]["delta"]`
+- **验证状态**: ✅ 128 passed, 0 failed
+- **UT 覆盖**: ✅ 本身就是测试用例修复
+
+---
+
 ## 📅 v2.2.0 OCR 模型升级期记录 (2026-04-03)
 
 ### [BUG-039] OCR 提交 500 错误：模型切换后 httpx 代理参数不兼容
