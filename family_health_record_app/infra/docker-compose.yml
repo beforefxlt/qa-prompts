@@ -33,7 +33,7 @@ services:
       retries: 5
 
   backend:
-    image: qa-backend:latest
+    image: qa-backend:v2.4.0
     container_name: health-record-backend
     working_dir: /app/backend
     volumes:
@@ -58,7 +58,7 @@ services:
 
   # 测试专用后端容器
   backend-test:
-    image: qa-backend:latest
+    image: qa-backend:v2.4.0
     container_name: health-record-backend-test
     working_dir: /app/backend
     volumes:
@@ -82,9 +82,7 @@ services:
       - test
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: infra-frontend:v2.4.0
     container_name: health-record-frontend
     working_dir: /app
     environment:
