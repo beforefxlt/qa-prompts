@@ -206,17 +206,39 @@ export default function ReviewPage() {
   }
 
   function handleFieldChange(field: string, value: string) {
-    setEditedItems((prev) => ({ ...prev, [field]: value }));
+    const num = parseFloat(value);
+    setEditedItems((prev) => ({ ...prev, [field]: !isNaN(num) && value !== '' ? num : value }));
   }
 
   async function handleAction(action: 'approve' | 'reject' | 'draft') {
     if (!selectedTaskId) return;
     setActionLoading(action);
     try {
-      const revisedItems = Object.entries(editedItems).map(([key, value]) => ({
-        field: key,
-        value,
-      }));
+      const revisedItems: any[] = [];
+      
+      for (const [key, value] of Object.entries(editedItems)) {
+        if (key === 'exam_date') {
+          revisedItems.push({ metric_code: 'exam_date', value });
+        } else if (key === 'observations' && Array.isArray(value)) {
+          for (const obs of value) {
+            revisedItems.push({
+              metric_code: obs.metric_code,
+              side: obs.side || null,
+              value_numeric: typeof obs.value_numeric === 'string' ? parseFloat(obs.value_numeric) : obs.value_numeric,
+              unit: obs.unit || '',
+            });
+          }
+        } else if (typeof value === 'string') {
+          const num = parseFloat(value);
+          if (!isNaN(num)) {
+            revisedItems.push({ metric_code: key, value_numeric: num });
+          } else {
+            revisedItems.push({ metric_code: key, value });
+          }
+        } else if (typeof value === 'number') {
+          revisedItems.push({ metric_code: key, value_numeric: value });
+        }
+      }
 
       switch (action) {
         case 'approve':

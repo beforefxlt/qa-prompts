@@ -258,3 +258,121 @@
   3. 右眼列加左边框分隔，视觉清晰
 - **验证状态**: ✅ 已验证，趋势分析页面正确展示左右眼数据
 - **UT 覆盖**: ⏳ 待补充
+
+### [BUG-033] 手动录入 NaN 输入、校验逻辑重复及数据库约束缺失
+- **现象**: 
+  1. 手动录入清空输入框时发送 NaN 到后端，用户看到不友好的"数值越界"错误
+  2. Pydantic schema 和路由函数 `check_metric_sanity` 包含相同的区间校验逻辑
+  3. `ObservationUpdate` schema 校验不完整（TODO 状态）
+  4. 多个测试文件重复定义 `route_env` fixture
+  5. 手动录入返回 500 错误（`document_id` NOT NULL 约束冲突）
+- **根由**: 
+  1. `ManualEntryOverlay.tsx` 未拦截空值/NaN 输入
+  2. 创建流程中 Pydantic validator 和路由层双重校验，职责不清
+  3. 测试 fixture 未统一放到 conftest.py
+  4. 模型层 `document_id` 已设为 `nullable=True`，但 PostgreSQL 数据库未执行迁移，列约束仍为 NOT NULL
+- **修复**: 
+  1. 前端 `handleSubmit` 增加 `isNaN` 和 `<= 0` 拦截，给出友好提示
+  2. 创建流程移除路由层重复校验（Pydantic schema 已覆盖）
+  3. PATCH 路由保留 `check_metric_sanity`（schema 层无 metric_code 上下文）
+  4. `ObservationUpdate` 校验改为 `> 0` 且 `<= 1000`，移除 TODO
+  5. conftest.py 新增 `route_env` 别名，删除测试文件中的重复 fixture 定义
+  6. 执行 `ALTER TABLE exam_records ALTER COLUMN document_id DROP NOT NULL` 同步数据库约束
+- **验证状态**: ✅ 已验证，手动录入功能正常工作
+- **UT 覆盖**: ✅ 22 个相关测试全部通过
+
+---
+
+## 📅 v2.1.0 契约对齐期记录 (2026-04-03)
+
+### [BUG-034] 创建成员 422 错误：性别字段中英文不匹配
+- **现象**: `POST /api/v1/members` 返回 422，前端发送 `gender: "男"` 但后端要求 `"male"/"female"`
+- **根由**: 
+  1. 前端 `MemberForm.tsx` select 选项使用中文 `"男"/"女"`
+  2. 提交时直接发送中文值，未转换为后端期望的英文枚举
+  3. 后端 `MemberCreate` schema 有 `pattern="^(male|female)$"` 校验
+  4. 后端虽有 `to_lower` 转换器但只做小写转换，不做中文翻译
+- **修复**: 
+  1. `MemberForm.tsx` 添加 `genderMap` 在提交时转换 `"男"→"male"`, `"女"→"female"`
+  2. `MemberForm.tsx` 添加 `reverseGenderMap` 在编辑模式下将后端返回的 `"male"` 转回 `"男"` 以正确显示
+  3. 添加 `maxLength={50}` 限制姓名字段长度（对齐后端 `max_length=50` 约束）
+- **验证状态**: ✅ 已验证，创建成员成功返回 201
+- **UT 覆盖**: ⏳ 待补充（前端表单转换逻辑测试）
+
+### [BUG-035] 趋势图 422 错误：TrendChartProps 缺少 referenceRange 属性
+- **现象**: `npm run build` 编译失败，`Property 'referenceRange' does not exist on type 'IntrinsicAttributes & TrendChartProps'`
+- **根由**: 
+  1. `page.tsx:146` 向 `<TrendChart />` 传递 `referenceRange` 属性
+  2. `TrendChart.tsx` 的 Props 接口从未定义该属性
+  3. TypeScript 类型检查不通过导致 Next.js 生产构建失败
+  4. **之前 agent 失误**：提交 `d1cf7b6` 声称修复了 TypeScript 类型错误，但只改了 `ChartPoint.left` 的可选性，漏掉了真正缺失的 `referenceRange` 属性，且**未跑构建验证**
+- **修复**: 
+  1. `TrendChart.tsx:19` 添加 `referenceRange?: string` 到 Props 接口
+  2. 执行 `npx tsc --noEmit` 和 `npm run build` 验证通过
+- **验证状态**: ✅ 已验证，Docker 构建成功，前端服务正常启动
+- **UT 覆盖**: ❌ 不适用（TypeScript 类型定义问题）
+- **教训**: **声称修复后必须跑完整构建验证，不能只改局部代码就认为修好了**
+
+### [BUG-036] 手动录入 422 错误：默认值 value_numeric=0 不满足后端区间校验
+- **现象**: `POST /manual-exams` 返回 422，用户打开手动录入表单直接点保存就报错
+- **根由**: 
+  1. `ManualEntryOverlay.tsx` 默认值设为 `value_numeric: 0`
+  2. 后端 `observation.py:validate_sanity_range` 要求 `height ≥ 30`, `weight ≥ 2`, `axial_length ≥ 15`
+  3. 前端只检查了 `> 0`，未与后端区间校验对齐
+  4. **契约断裂**：后端区间校验未同步到前端，API 契约文档未标注数值区间约束
+- **修复**: 
+  1. `ManualEntryOverlay.tsx` 默认值改为 `NaN`，用户必须手动填写
+  2. `METRIC_OPTIONS` 增加 `min/max` 字段，前端提交前执行区间校验
+  3. 错误提示从"必须大于 0"改为"必须大于 0 且在合理范围内"
+  4. `API_CONTRACT.md` 补充完整的数值区间约束表（9 个指标）
+- **验证状态**: ✅ 已验证，手动录入功能正常工作
+- **UT 覆盖**: ✅ 新增 `test_manual_exam_zero_value_rejected` 和 `test_manual_exam_negative_value_rejected`
+
+### [BUG-037] Review 页面 revised_items 格式完全错误（P0 级阻断缺陷）
+- **现象**: 审核页面点击"确认入库"后，所有 observation 数值修改不生效
+- **根由**: 
+  1. 前端发送 `{ field: "xxx", value: "yyy" }` 格式
+  2. 后端期望 `{ metric_code: "xxx", side: "left", value_numeric: 23.5, unit: "mm" }` 格式
+  3. 后端用 `metric_code` + `side` 匹配 observation，但前端发送的是 `field` 字段
+  4. 前端将整个 `observations` 数组作为一个条目发送，后端无法解析
+  5. 前端所有 input 值都是字符串类型，`value_numeric: "23.5"` 而非 `23.5`
+- **修复**: 
+  1. 重写 `review/page.tsx:handleAction` 函数，正确构造 `revised_items` 数组
+  2. `exam_date` 使用 `{ metric_code: "exam_date", value: "YYYY-MM-DD" }` 格式
+  3. observations 拆分为独立条目，每个包含 `metric_code` + `side` + `value_numeric` + `unit`
+  4. `handleFieldChange` 增加数值类型转换（string → number）
+  5. `API_CONTRACT.md` 补充 `revised_items` 格式规范（5 条强制约束）
+- **验证状态**: ⏳ 待审核流程测试验证
+- **UT 覆盖**: ⏳ 待补充
+
+### [BUG-038] EditObservationOverlay 接受 value=0 但后端要求 >0
+- **现象**: 用户在趋势图点击编辑指标，输入 `0` 后保存，后端返回 422
+- **根由**: 
+  1. `EditObservationOverlay.tsx:29` 只检查 `isNaN(num)`
+  2. 后端 `ObservationUpdate` schema 要求 `0.0 < v <= 1000.0`（严格大于 0）
+  3. 前端无 `> 0` 校验，允许 `0` 提交到后端
+- **修复**: 
+  1. `EditObservationOverlay.tsx:29` 增加 `num <= 0` 拦截
+  2. 错误提示从"请输入有效数字"改为"请输入有效数字（必须大于 0）"
+- **验证状态**: ⏳ 待趋势图编辑功能验证
+- **UT 覆盖**: ⏳ 待补充
+
+---
+
+## 📊 契约对齐期 5-Why 根因分析
+
+| Why 层级 | 问题 | 答案 |
+|----------|------|------|
+| **Why 1** | 为什么 POST 请求返回 422？ | 请求体不符合后端 Pydantic schema 校验 |
+| **Why 2** | 为什么不符合？ | 前后端对同一字段的值域约定不一致 |
+| **Why 3** | 为什么不一致？ | 后端加了校验规则，前端不知道（契约未同步） |
+| **Why 4** | 为什么没测到？ | 测试用例传的都是合法值，没覆盖默认值/边界路径 |
+| **Why 5** | 为什么没文档？ | API_CONTRACT.md 只定义了字段名和类型，没写数值区间约束 |
+
+**根本原因**: 契约断裂 — 后端校验规则未同步到前端，API 契约文档缺少数值约束定义
+
+**预防措施**:
+1. 所有后端 Pydantic 校验规则必须同步到 `API_CONTRACT.md`
+2. 前端表单必须在提交前执行与后端相同的校验
+3. 新增校验规则时，必须同步更新契约文档和前端校验逻辑
+4. 测试用例必须覆盖默认值、边界值、异常值场景

@@ -11,13 +11,16 @@
 - 产品、UI、架构、数据库、API、OCR、测试策略规格文档
 - 面向 AI 开发的实施计划
 - OCR Golden Set 与测试资产目录
-- **前端 Next.js 15 玻璃拟态界面与降级容灾逻辑**
-- **后端 FastAPI + PostgreSQL 四层六表架构实现**
+- **前端 Next.js 15 玻璃拟态界面、降级容灾逻辑与手动录入组件**
+- **后端 FastAPI + SQLite/PostgreSQL 异步架构实现与指标 CRUD 接口**
+- **手动录入功能：支持动态指标添加、常规合理性校验与级联物理删除**
 - **Python 基础规则引擎与图片隐私脱敏机制**
+- **Docker Compose 私有化部署编排（PostgreSQL + MinIO + Backend + Frontend）**
+- **契约对齐：API_CONTRACT.md 补充数值区间约束、revised_items 格式规范**
 
 尚未启动的内容：
-- 自动化测试脚本补充
-- Docker 私有化部署脚本
+- 审核流程 E2E 测试补充
+- CI/CD 自动化流水线
 
 ## 推荐开发顺序
 
@@ -25,8 +28,9 @@
 2. 再阅读 `docs/specs/UI_SPEC.md`
 3. 再阅读 `docs/specs/ARCHITECTURE.md`
 4. 再阅读 `docs/specs/DATABASE_SCHEMA.md`
-5. 再阅读 `docs/specs/TEST_STRATEGY.md`
-6. 最后执行 `docs/specs/IMPLEMENTATION_PLAN.md`
+5. 再阅读 `docs/specs/API_CONTRACT.md` ⚠️ **前后端开发必读**
+6. 再阅读 `docs/specs/TEST_STRATEGY.md`
+7. 最后执行 `docs/specs/IMPLEMENTATION_PLAN.md`
 
 ## 目录
 
@@ -41,8 +45,8 @@ family_health_record_app/
 │   └── src/components/         # 核心组件 (TrendChart/MemberForm/UploadOverlay)
 ├── infra/                      # Docker Compose 与部署编排
 └── docs/
-    ├── BUG_LOG.md              # [SSOT] 17 个缺陷根因分析
-    └── specs/                  # 8 个规格文档 (已标记 v2.0.0 完备性)
+    ├── BUG_LOG.md              # [SSOT] 38 个缺陷根因分析（含 5-Why 分析）
+    └── specs/                  # 8 个规格文档 (v2.1.0 契约对齐版)
 ```
 
 ## 部署脚本（CI/CD 入口）
@@ -68,13 +72,24 @@ cd infra && docker compose up -d
 
 详细部署说明请参考 [`DEPLOY.md`](./DEPLOY.md)。
 
+## 快速启动（Docker Compose）
+
+```bash
+# 启动全部服务（db + minio + backend + frontend）
+cd infra && docker compose up -d
+
+# 访问地址
+# 前端: http://localhost:3001
+# 后端 API: http://localhost:8000
+# 后端文档: http://localhost:8000/docs
+# MinIO 控制台: http://localhost:9001
+```
 
 ## 技术基线
 
-- 前端：`Next.js App Router + TypeScript + Apache ECharts`
-- 后端：`FastAPI + Pydantic`
+- 前端：`Next.js App Router + TypeScript + Recharts`
+- 后端：`FastAPI + Pydantic + SQLAlchemy + PostgreSQL`
 - 存储：`PostgreSQL + MinIO`
-- 队列：`Redis + Celery`
 - OCR：`多模态大模型 + 本地脱敏 + 规则引擎`
 - 部署：`Docker Compose`
 
@@ -85,3 +100,4 @@ cd infra && docker compose up -d
 - 所有 OCR 结果必须经过规则校验与人工审核
 - 先写测试与样本，再进入实现
 - 多 Subagent 并行时必须严格拆分文件写域
+- **前后端契约优先：修改校验规则必须同步更新 API_CONTRACT.md**

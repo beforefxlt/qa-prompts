@@ -1,8 +1,8 @@
 # 家庭检查单管理应用 API 契约
 
-> **版本**: v1.2.0
+> **版本**: v2.1.0
 > **最后更新**: 2026-04-03
-> **变更说明**: 成员列表接口新增 last_check_date 和 pending_review_count 字段
+> **变更说明**: 补充 revised_items 格式规范、数值区间约束表、前后端契约约束
 
 ## 1. 资源对象
 
@@ -111,13 +111,34 @@
 {
   "revised_items": [
     {
-      "metric_code": "glucose",
-      "value_numeric": 5.6,
-      "unit": "mmol/L"
+      "metric_code": "exam_date",
+      "value": "2026-04-01"
+    },
+    {
+      "metric_code": "axial_length",
+      "side": "left",
+      "value_numeric": 23.55,
+      "unit": "mm"
+    },
+    {
+      "metric_code": "axial_length",
+      "side": "right",
+      "value_numeric": 23.20,
+      "unit": "mm"
     }
   ]
 }
 ```
+
+> **⚠️ revised_items 格式规范（前端必须遵守）**：
+> 
+> 1. **`exam_date` 修改**：使用 `{ "metric_code": "exam_date", "value": "YYYY-MM-DD" }` 格式
+> 2. **Observation 数值修改**：必须包含 `metric_code` + `side` 来匹配目标记录，用 `value_numeric` 传递新数值
+> 3. **数值类型**：`value_numeric` 必须是 **number 类型**（如 `23.5`），不能是字符串 `"23.5"`
+> 4. **禁止格式**：不能发送 `{ "field": "xxx", "value": "yyy" }` — 后端不识别 `field` 字段
+> 5. **禁止格式**：不能将整个 `observations` 数组作为一个条目发送 — 必须拆分为独立条目
+> 
+> **后端匹配逻辑**：遍历 `revised_items`，用 `metric_code` + `side` 在 `ocr_processed_items.observations` 数组中查找匹配项，然后更新 `value_numeric`。
 
 ### 2.5 趋势查询
 
@@ -173,7 +194,22 @@
 }
 ```
 
-- **校验关键点**: `value_numeric` 必须在常规合理区间内（如身高 30-250cm），否则返回 `422 Unprocessable Entity`。
+- **校验关键点**: `value_numeric` 必须在常规合理区间内，否则返回 `422 Unprocessable Entity`。
+  各指标数值区间约束如下：
+
+  | metric_code | 指标名称 | 单位 | 合理区间 | 校验位置 |
+  |:---|:---|:---|:---|:---|
+  | `height` | 身高 | cm | 30.0 ~ 250.0 | `observation.py:validate_sanity_range` |
+  | `weight` | 体重 | kg | 2.0 ~ 500.0 | 同上 |
+  | `axial_length` | 眼轴长度 | mm | 15.0 ~ 35.0 | 同上 |
+  | `vision_acuity` | 视力 | decimal | 无区间校验 | — |
+  | `glucose` | 血糖 | mmol/L | 无区间校验 | — |
+  | `tc` | 总胆固醇 | mmol/L | 无区间校验 | — |
+  | `tg` | 甘油三酯 | mmol/L | 无区间校验 | — |
+  | `hdl` | 高密度脂蛋白 | mmol/L | 无区间校验 | — |
+  | `ldl` | 低密度脂蛋白 | mmol/L | 无区间校验 | — |
+
+  > **⚠️ 前后端契约约束**：前端手动录入表单（`ManualEntryOverlay`）必须在提交前执行与后端相同的区间校验，不可依赖后端 422 作为用户反馈。
 
 #### PATCH /observations/{id}
 修改单条指标数值。

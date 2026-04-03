@@ -16,6 +16,7 @@ interface TrendChartProps {
   data: ChartPoint[];
   metric: string;
   height?: number | string;
+  referenceRange?: string;
 }
 
 const METRIC_LABELS: Record<string, string> = {

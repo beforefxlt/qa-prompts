@@ -1,9 +1,10 @@
 # 家庭检查单管理应用 P1-P5 测试策略矩阵
 
-> **版本**: v1.1.0
+> **版本**: v2.1.0
 > **生成日期**: 2026-03-31
-> **最后更新**: 2026-04-02
+> **最后更新**: 2026-04-03
 > **关联文档**: PRD.md, UI_SPEC.md, API_CONTRACT.md, TEST_STRATEGY.md
+> **变更说明**: 新增契约对齐期测试用例（BUG-034~038 回归测试）
 
 ---
 
@@ -81,6 +82,13 @@
 | TC-P2-031 | 趋势查询时 range 参数非法 | P2 | API | GET trends?range=invalid，验证返回 400 或使用默认值 |
 | TC-P2-032 | 编辑成员时姓名超长（>50 字符） | P2 | API/前端 | 验证返回 400 或前端输入框限制长度 |
 | TC-P2-033 | 审核通过时 revised_items 值为负数 | P2 | API | 验证负数值被规则引擎拦截或标记异常 |
+| TC-P2-034 | 创建成员时性别为中文"男"/"女" | P2 | API/E2E | POST /api/v1/members 带 gender="男"，验证返回 422（后端要求 male/female）|
+| TC-P2-035 | 编辑成员时性别下拉框正确显示当前值 | P2 | E2E/前端 | 验证从 API 加载 member 后，性别 select 正确显示"男"或"女"而非空白 |
+| TC-P2-036 | 手动录入默认值 value_numeric=0 被拦截 | P2 | API/E2E | POST /manual-exams 带 value_numeric=0，验证返回 422 |
+| TC-P2-037 | 手动录入 value_numeric 为负数被拦截 | P2 | API/E2E | POST /manual-exams 带 value_numeric=-10，验证返回 422 |
+| TC-P2-038 | 审核通过 revised_items 使用正确格式 | P2 | API/E2E | 验证发送 {metric_code, side, value_numeric} 格式而非 {field, value} |
+| TC-P2-039 | 审核通过 revised_items 中 value_numeric 为 number 类型 | P2 | API/E2E | 验证发送 value_numeric: 23.5 (number) 而非 "23.5" (string) |
+| TC-P2-040 | 编辑指标时 value=0 被前端拦截 | P2 | E2E/前端 | 验证 EditObservationOverlay 输入 0 时显示"必须大于 0"错误提示 |
 
 ---
 
@@ -182,12 +190,12 @@
 
 | 优先级 | 用例数量 | 占比 |
 |:---|:---:|:---:|
-| P1 - 标准主路径 | 30 | 28.0% |
-| P2 - 异常分支 | 33 | 30.8% |
-| P3 - 基建容灾 | 18 | 16.8% |
-| P4 - 边界值 | 30 | 28.0% |
-| P5 - 交付视角 | 25 | 23.4% |
-| **合计** | **107** | **100%** |
+| P1 - 标准主路径 | 30 | 26.1% |
+| P2 - 异常分支 | 40 | 34.8% |
+| P3 - 基建容灾 | 18 | 15.7% |
+| P4 - 边界值 | 30 | 26.1% |
+| P5 - 交付视角 | 25 | 21.7% |
+| **合计** | **115** | **100%** |
 
 ## 测试方式分布
 

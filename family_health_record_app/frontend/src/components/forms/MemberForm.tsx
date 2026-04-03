@@ -27,9 +27,10 @@ export const MemberForm: React.FC<MemberFormProps> = ({
   const [isMounted, setIsMounted] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const reverseGenderMap: Record<string, string> = { 'male': '男', 'female': '女' };
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
-    gender: initialData?.gender || '男',
+    gender: reverseGenderMap[initialData?.gender || ''] || initialData?.gender || '男',
     birthYear: initialData?.date_of_birth ? initialData.date_of_birth.split('-')[0] : '',
     birthMonth: initialData?.date_of_birth ? parseInt(initialData.date_of_birth.split('-')[1]).toString() : '',
     member_type: initialData?.member_type || 'child',
@@ -49,9 +50,12 @@ export const MemberForm: React.FC<MemberFormProps> = ({
     setLoading(true);
     try {
       const formattedDate = `${formData.birthYear}-${formData.birthMonth.padStart(2, '0')}-01`;
+      const genderMap: Record<string, string> = { '男': 'male', '女': 'female' };
       await onSubmit({
-        ...formData,
-        date_of_birth: formattedDate
+        name: formData.name,
+        gender: genderMap[formData.gender] || formData.gender,
+        date_of_birth: formattedDate,
+        member_type: formData.member_type,
       });
     } catch (err) {
       console.error('Submit failed:', err);
@@ -92,6 +96,7 @@ export const MemberForm: React.FC<MemberFormProps> = ({
           <input
             type="text"
             required
+            maxLength={50}
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 transition-all focus:bg-white focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/5 outline-none font-medium"
