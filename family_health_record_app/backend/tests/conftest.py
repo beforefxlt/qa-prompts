@@ -89,3 +89,9 @@ async def state_client():
         yield client, session_factory
     app.dependency_overrides.clear()
     await engine.dispose()
+
+
+# 别名：兼容旧测试文件中使用的 route_env 名称
+@pytest_asyncio.fixture
+async def route_env(state_client):
+    return state_client

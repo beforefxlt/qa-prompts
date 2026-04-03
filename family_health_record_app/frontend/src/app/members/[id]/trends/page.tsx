@@ -1,273 +1,309 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { 
-  ChevronLeft, TrendingUp, Calendar, Info, ArrowUpRight, 
-  Trash2, Edit, Save, X 
+  ChevronLeft, TrendingUp, Calendar, AlertCircle, 
+  ArrowUpRight, ArrowDownRight, Info, Edit, Trash2,
+  Activity, BarChart3
 } from 'lucide-react';
 import { apiClient } from '@/app/api/client';
+import { UI_TEXT } from '@/constants/ui-text';
 import { TrendChart } from '@/components/charts/TrendChart';
 import { EditObservationOverlay } from '@/components/records/EditObservationOverlay';
 
-const METRICS = [
-  { key: 'axial_length', label: '眼轴' },
-  { key: 'height', label: '身高' },
-  { key: 'weight', label: '体重' },
-  { key: 'vision_acuity', label: '视力' },
-];
-
-function TrendsContent() {
-  const router = useRouter();
+export default function TrendPage() {
   const { id } = useParams();
   const searchParams = useSearchParams();
-  const initialMetric = searchParams.get('metric') || 'axial_length';
+  const metric = searchParams.get('metric') || 'axial_length';
+  const router = useRouter();
   
-  const [member, setMember] = useState<any>(null);
-  const [selectedMetric, setSelectedMetric] = useState(initialMetric);
   const [trendData, setTrendData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [editingObs, setEditingObs] = useState<{ id: string; value: number; label: string; unit: string } | null>(null);
+  const [editingObs, setEditingObs] = useState<{ id: string, value: number, label: string, unit: string } | null>(null);
 
   useEffect(() => {
-    if (id) {
-      loadMemberAndTrends();
-    }
-  }, [id, selectedMetric]);
+    loadTrendData();
+  }, [id, metric]);
 
-  const loadMemberAndTrends = async () => {
-    setLoading(true);
+  const loadTrendData = async () => {
     try {
-      const [m, t] = await Promise.all([
-        apiClient.getMember(id as string),
-        apiClient.getTrends(id as string, selectedMetric)
-      ]);
-      setMember(m);
+      setLoading(true);
+      const data = await apiClient.getVisionDashboard(id as string);
+      const metricData = (data as any)[metric];
       
+      // 将扁平 series [{date, value, side}] 按日期分组为 [{date, left, right}]
+      const rawSeries = metricData?.series || [];
       const byDate = new Map<string, any>();
-      (t.series || []).forEach((s: any) => {
-        const dateKey = s.date;
-        if (!byDate.has(dateKey)) {
-          byDate.set(dateKey, { date: dateKey, exam_record_id: s.exam_record_id });
+      rawSeries.forEach((s: any) => {
+        if (!byDate.has(s.date)) {
+          byDate.set(s.date, { date: s.date });
         }
-        const entry = byDate.get(dateKey);
-        if (s.side === 'left') {
-          entry.left = s.value;
-          entry.left_obs_id = s.observation_id;
-        } else if (s.side === 'right') {
-          entry.right = s.value;
-          entry.right_obs_id = s.observation_id;
-        } else {
-          entry.value = s.value;
-          entry.obs_id = s.observation_id;
-        }
+        const entry = byDate.get(s.date);
+        if (s.side === 'left') entry.left = s.value;
+        else if (s.side === 'right') entry.right = s.value;
+        else entry.value = s.value;
       });
+      const groupedSeries = Array.from(byDate.values()).sort((a: any, b: any) => a.date.localeCompare(b.date));
       
-      const series = Array.from(byDate.values()).sort((a: any, b: any) => a.date.localeCompare(b.date));
-      setTrendData({ ...t, series });
+      setTrendData({ ...metricData, series: groupedSeries });
     } catch (err) {
-      console.error('Failed to load trends:', err);
+      console.error('Failed to load trend data:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (examRecordId: string) => {
-    if (!confirm('确定要删除这条检查记录及其所有指标吗？此操作不可撤销。')) return;
-    try {
-      await apiClient.deleteExamRecord(examRecordId);
-      loadMemberAndTrends();
-    } catch (err: any) {
-      alert(err.message || '删除失败');
+  const getMetricLabel = () => {
+    switch(metric) {
+      case 'axial_length': return '眼轴长度趋势';
+      case 'vision_va': return '视力变化趋势';
+      case 'height': return '身高增长轨迹';
+      case 'weight': return '体重变化轨迹';
+      default: return '指标趋势';
     }
   };
 
   const getUnitLabel = () => {
-    switch (selectedMetric) {
+    switch(metric) {
       case 'axial_length': return 'mm';
       case 'height': return 'cm';
       case 'weight': return 'kg';
-      case 'vision_acuity': return 'decimal';
       default: return '';
     }
   };
 
+  const handleDeleteRecord = async (examRecordId: string) => {
+    if (!confirm(UI_TEXT.CONFIRM_DELETE_RECORD)) return;
+    try {
+      await apiClient.deleteExamRecord(examRecordId);
+      loadTrendData();
+    } catch (err) {
+      alert('删除失败');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin text-blue-600"><TrendingUp size={32} /></div>
+      </div>
+    );
+  }
+
+  const unit = getUnitLabel();
+
   return (
-    <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-6 bg-slate-50 min-h-screen">
+    <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 pb-32 bg-slate-50 min-h-screen">
+      {/* Header */}
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button onClick={() => router.back()} className="p-2 hover:bg-white rounded-full transition-all text-slate-400">
             <ChevronLeft size={24} />
           </button>
-          <div className="bg-blue-600 rounded-full p-2 text-white shadow-lg shadow-blue-500/10">
-            <TrendingUp size={20} />
-          </div>
           <div>
-            <h1 className="text-xl font-bold font-sans tracking-tight text-slate-800">趋势分析</h1>
-            <p className="text-xs text-slate-500">{member?.name}</p>
+            <h1 className="text-xl font-bold text-slate-800">{getMetricLabel()}</h1>
+            <p className="text-xs text-slate-400 font-medium">数据更新至: {new Date().toLocaleDateString()}</p>
           </div>
+        </div>
+        <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex gap-1">
+           {['axial_length', 'vision_va', 'height'].map(m => (
+             <button 
+               key={m}
+               onClick={() => router.push(`/members/${id}/trends?metric=${m}`)}
+               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${metric === m ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-50'}`}
+             >
+               {m === 'axial_length' ? '眼轴' : m === 'vision_va' ? '视力' : '身高'}
+             </button>
+           ))}
         </div>
       </header>
 
-      <div className="flex gap-2 overflow-x-auto pb-4 -mx-4 px-4 no-scrollbar">
-        {METRICS.map((m) => (
-          <button
-            key={m.key}
-            onClick={() => setSelectedMetric(m.key)}
-            className={`px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all border-2 ${
-              selectedMetric === m.key
-                ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/20'
-                : 'bg-white text-slate-500 border-transparent hover:border-slate-200'
-            }`}
-          >
-            {m.label}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className="glass-card rounded-[32px] p-12 flex items-center justify-center">
-            <div className="animate-pulse text-slate-300 font-bold">数据加载中...</div>
-        </div>
-      ) : (
-        <section className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-           <div className="glass-card rounded-[32px] p-6 shadow-xl shadow-slate-900/5">
-              <TrendChart data={trendData?.series || []} metric={selectedMetric} height={320} />
-              
-              {trendData?.comparison && (
-                <div className="mt-8 pt-6 border-t border-slate-100">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">最近两次检查对比分析</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {['left', 'right', 'value'].map((side) => {
-                      const data = trendData.comparison[side];
-                      if (!data) return null;
-                      const sideLabel = side === 'left' ? '左眼' : side === 'right' ? '右眼' : '检查值';
-                      const deltaColor = data.delta > 0 ? 'text-red-500' : data.delta < 0 ? 'text-green-500' : 'text-slate-400';
-                      const deltaSign = data.delta > 0 ? '+' : '';
-                      const unit = getUnitLabel();
-                      
-                      return (
-                        <div key={side} className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100">
-                          <div className="flex justify-between items-center mb-3">
-                            <span className="text-xs font-bold text-slate-500">{sideLabel}</span>
-                            <span className={`text-xs font-black px-2 py-0.5 rounded-full bg-white border border-slate-100 ${deltaColor}`}>
-                              {deltaSign}{data.delta.toFixed(3)}{unit}
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                               <p className="text-[10px] text-slate-400 font-bold uppercase">当前</p>
-                               <p className="text-lg font-bold text-slate-800">{data.current.toFixed(2)}<span className="text-[10px] ml-0.5">{unit}</span></p>
-                            </div>
-                            <div>
-                               <p className="text-[10px] text-slate-400 font-bold uppercase">上次</p>
-                               <p className="text-lg font-bold text-slate-600">{data.previous.toFixed(2)}<span className="text-[10px] ml-0.5">{unit}</span></p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-           </div>
-
-           {trendData?.alert_status === 'warning' && (
-             <div className="glass-card rounded-[32px] p-6 border-l-4 border-red-500 bg-red-50/20">
-                <div className="flex items-start gap-4">
-                  <div className="bg-red-50 p-2 rounded-xl text-red-500">
-                    <Info size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-800">异常提醒</h3>
-                    <p className="text-sm text-slate-500 mt-1 leading-relaxed">
-                      当前观测指标超出了建议参考区间（{trendData.reference_range || '未定义'}）。建议咨询专业医生意见，并保持定期监测。
-                    </p>
-                  </div>
-                </div>
-             </div>
-           )}
-
-           <div className="space-y-4">
-              <h2 className="text-lg font-bold text-slate-800 px-2 flex items-center gap-2">
-                <Calendar size={18} className="text-blue-500" /> 历史记录清单
-              </h2>
-              <div className="space-y-3">
-                 {(trendData?.series || []).slice().reverse().map((s: any, idx: number) => (
-                    <div 
-                      key={idx} 
-                      className="glass-card rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-lg transition-all border border-transparent hover:border-slate-100"
-                    >
-                       <div className="flex items-center gap-4">
-                          <div className="bg-blue-50 text-blue-500 p-2.5 rounded-xl">
-                             <Calendar size={20} />
-                          </div>
-                          <div>
-                             <p className="font-bold text-slate-800">{s.date}</p>
-                             <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">检查记录</p>
-                          </div>
-                       </div>
-                       <div className="flex items-center gap-6 sm:gap-12">
-                         <div className="flex gap-4 sm:gap-8 overflow-x-auto no-scrollbar">
-                            {s.left !== undefined && (
-                              <div className="flex flex-col items-end group/item">
-                                 <span className="text-[10px] text-slate-400 font-bold uppercase transition-colors group-hover/item:text-blue-500">左眼</span>
-                                 <div className="flex items-center gap-1.5 translate-x-1.5">
-                                   <span className="text-lg font-black text-slate-800 tracking-tighter">{s.left.toFixed(2)}</span>
-                                   <button 
-                                     onClick={() => setEditingObs({ id: s.left_obs_id, value: s.left, label: '左眼指标', unit: getUnitLabel() })}
-                                     className="opacity-0 group-hover/item:opacity-100 p-1 rounded-md hover:bg-slate-100 text-blue-600 transition-all"
-                                   >
-                                     <Edit size={12} />
-                                   </button>
-                                 </div>
-                              </div>
-                            )}
-                            {s.right !== undefined && (
-                              <div className="flex flex-col items-end border-l border-slate-100 pl-4 sm:pl-8 group/item">
-                                 <span className="text-[10px] text-slate-400 font-bold uppercase transition-colors group-hover/item:text-blue-500">右眼</span>
-                                 <div className="flex items-center gap-1.5 translate-x-1.5">
-                                   <span className="text-lg font-black text-slate-800 tracking-tighter">{s.right.toFixed(2)}</span>
-                                   <button 
-                                     onClick={() => setEditingObs({ id: s.right_obs_id, value: s.right, label: '右眼指标', unit: getUnitLabel() })}
-                                     className="opacity-0 group-hover/item:opacity-100 p-1 rounded-md hover:bg-slate-100 text-blue-600 transition-all"
-                                   >
-                                     <Edit size={12} />
-                                   </button>
-                                 </div>
-                              </div>
-                            )}
-                            {s.value !== undefined && (
-                              <div className="flex flex-col items-end group/item">
-                                 <span className="text-[10px] text-slate-400 font-bold uppercase transition-colors group-hover/item:text-blue-500">数值</span>
-                                 <div className="flex items-center gap-1.5 translate-x-1.5">
-                                   <span className="text-lg font-black text-slate-800 tracking-tighter">{s.value.toFixed(2)}</span>
-                                   <button 
-                                     onClick={() => setEditingObs({ id: s.obs_id, value: s.value, label: '指标数值', unit: getUnitLabel() })}
-                                     className="opacity-0 group-hover/item:opacity-100 p-1 rounded-md hover:bg-slate-100 text-blue-600 transition-all"
-                                   >
-                                     <Edit size={12} />
-                                   </button>
-                                 </div>
-                              </div>
-                            )}
-                         </div>
-                         <div className="flex items-center border-l border-slate-100 pl-4">
-                            <button 
-                              onClick={() => handleDelete(s.exam_record_id)}
-                              className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                              title="删除记录"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                         </div>
-                       </div>
-                    </div>
-                 ))}
+      {/* Chart Card */}
+      <div className="glass-card rounded-[40px] p-6 md:p-10 shadow-2xl shadow-blue-900/5 relative overflow-hidden bg-white">
+        <div className="flex items-center justify-between mb-8">
+           <div className="flex items-center gap-3">
+              <div className="bg-blue-50 p-2.5 rounded-2xl text-blue-600">
+                <BarChart3 size={20} />
+              </div>
+              <div>
+                <h2 className="font-bold text-slate-800">趋势分析图</h2>
+                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Statistical Analysis</p>
               </div>
            </div>
-        </section>
-      )}
+           {trendData?.growth_rate !== undefined && (
+             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black ${trendData.growth_rate >= 0 ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>
+                {trendData.growth_rate >= 0 ? <ArrowUpRight size={14}/> : <ArrowDownRight size={14}/>}
+                {Math.abs(trendData.growth_rate).toFixed(2)} {unit}/年
+             </div>
+           )}
+        </div>
+        
+        <div className="h-[300px] w-full">
+          <TrendChart 
+            data={trendData?.series || []} 
+            metric={metric}
+            referenceRange={trendData?.reference_range}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 space-y-6">
+            {/* Comparison Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+               {trendData?.comparison && Object.entries(trendData.comparison).map(([side, data]: [string, any]) => {
+                  const isPositive = data.delta > 0;
+                  const deltaColor = isPositive ? 'text-amber-600 bg-amber-50' : 'text-green-600 bg-green-50';
+                  const deltaSign = isPositive ? '+' : '';
+                  const sideLabel = side === 'left' ? UI_TEXT.LABEL_LEFT_EYE : UI_TEXT.LABEL_RIGHT_EYE;
+
+                  return (
+                    <div key={side} className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100">
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-xs font-bold text-slate-500">{sideLabel}</span>
+                        <span className={`text-xs font-black px-2 py-0.5 rounded-full bg-white border border-slate-100 ${deltaColor}`}>
+                          {deltaSign}{data.delta.toFixed(3)}{unit}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                           <p className="text-[10px] text-slate-400 font-bold uppercase">{UI_TEXT.LABEL_CURRENT}</p>
+                           <p className="text-lg font-bold text-slate-800">{data.current.toFixed(2)}<span className="text-[10px] ml-0.5">{unit}</span></p>
+                        </div>
+                        <div>
+                           <p className="text-[10px] text-slate-400 font-bold uppercase">{UI_TEXT.LABEL_PREVIOUS}</p>
+                           <p className="text-lg font-bold text-slate-600">{data.previous.toFixed(2)}<span className="text-[10px] ml-0.5">{unit}</span></p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+
+            {trendData?.alert_status === 'warning' && (
+              <div className="glass-card rounded-[32px] p-6 border-l-4 border-red-500 bg-red-50/20">
+                 <div className="flex items-start gap-4">
+                   <div className="bg-red-50 p-2 rounded-xl text-red-500">
+                     <Info size={20} />
+                   </div>
+                   <div>
+                     <h3 className="font-bold text-slate-800">{UI_TEXT.LABEL_ALERT_TITLE}</h3>
+                     <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+                       当前观测指标超出了建议参考区间（{trendData.reference_range || UI_TEXT.NO_RECORDS}）。建议咨询专业医生意见，并保持定期监测。
+                     </p>
+                   </div>
+                 </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
+               <h2 className="text-lg font-bold text-slate-800 px-2 flex items-center gap-2">
+                 <Calendar size={18} className="text-blue-500" /> {UI_TEXT.LABEL_HISTORICAL_LIST}
+               </h2>
+               <div className="space-y-3">
+                  {(trendData?.series || []).slice().reverse().map((s: any, idx: number) => (
+                     <div 
+                       key={idx} 
+                       className="glass-card rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-lg transition-all border border-transparent hover:border-slate-100"
+                     >
+                        <div className="flex items-center gap-4">
+                           <div className="bg-blue-50 text-blue-500 p-2.5 rounded-xl">
+                              <Calendar size={20} />
+                           </div>
+                           <div>
+                              <p className="font-bold text-slate-800">{s.date}</p>
+                              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">检查记录</p>
+                           </div>
+                        </div>
+                        <div className="flex items-center gap-6 sm:gap-12">
+                          <div className="flex gap-4 sm:gap-8 overflow-x-auto no-scrollbar">
+                             {s.left !== undefined && (
+                               <div className="flex flex-col items-end group/item">
+                                  <span className="text-[10px] text-slate-400 font-bold uppercase transition-colors group-hover/item:text-blue-500">{UI_TEXT.LABEL_LEFT_EYE}</span>
+                                  <div className="flex items-center gap-1.5 translate-x-1.5">
+                                    <span className="text-lg font-black text-slate-800 tracking-tighter">{s.left.toFixed(2)}</span>
+                                    <button 
+                                      onClick={() => setEditingObs({ id: s.left_obs_id, value: s.left, label: UI_TEXT.LABEL_LEFT_EYE, unit: unit })}
+                                      className="opacity-0 group-hover/item:opacity-100 p-1 rounded-md hover:bg-slate-100 text-blue-600 transition-all"
+                                      data-testid={`edit-obs-${s.left_obs_id}`}
+                                      title={UI_TEXT.ACTION_EDIT_VALUE}
+                                    >
+                                      <Edit size={12} />
+                                    </button>
+                                  </div>
+                               </div>
+                             )}
+                             {s.right !== undefined && (
+                               <div className="flex flex-col items-end border-l border-slate-100 pl-4 sm:pl-8 group/item">
+                                  <span className="text-[10px] text-slate-400 font-bold uppercase transition-colors group-hover/item:text-blue-500">{UI_TEXT.LABEL_RIGHT_EYE}</span>
+                                  <div className="flex items-center gap-1.5 translate-x-1.5">
+                                    <span className="text-lg font-black text-slate-800 tracking-tighter">{s.right.toFixed(2)}</span>
+                                    <button 
+                                      onClick={() => setEditingObs({ id: s.right_obs_id, value: s.right, label: UI_TEXT.LABEL_RIGHT_EYE, unit: unit })}
+                                      className="opacity-0 group-hover/item:opacity-100 p-1 rounded-md hover:bg-slate-100 text-blue-600 transition-all"
+                                      data-testid={`edit-obs-${s.right_obs_id}`}
+                                      title={UI_TEXT.ACTION_EDIT_VALUE}
+                                    >
+                                      <Edit size={12} />
+                                    </button>
+                                  </div>
+                               </div>
+                             )}
+                             {s.value !== undefined && (
+                               <div className="flex flex-col items-end group/item">
+                                  <span className="text-[10px] text-slate-400 font-bold uppercase transition-colors group-hover/item:text-blue-500">{UI_TEXT.LABEL_VALUE}</span>
+                                  <div className="flex items-center gap-1.5 translate-x-1.5">
+                                    <span className="text-lg font-black text-slate-800 tracking-tighter">{s.value.toFixed(2)}</span>
+                                    <button 
+                                      onClick={() => setEditingObs({ id: s.obs_id, value: s.value, label: UI_TEXT.LABEL_VALUE, unit: unit })}
+                                      className="opacity-0 group-hover/item:opacity-100 p-1 rounded-md hover:bg-slate-100 text-blue-600 transition-all"
+                                      data-testid={`edit-obs-${s.obs_id}`}
+                                      title={UI_TEXT.ACTION_EDIT_VALUE}
+                                    >
+                                      <Edit size={12} />
+                                    </button>
+                                  </div>
+                               </div>
+                             )}
+                          </div>
+                          
+                          <button 
+                            onClick={() => handleDeleteRecord(s.exam_record_id)}
+                            className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+                            data-testid={`delete-exam-${s.exam_record_id}`}
+                            title={UI_TEXT.ACTION_DELETE_RECORD}
+                          >
+                             <Trash2 size={20} />
+                          </button>
+                        </div>
+                     </div>
+                  ))}
+               </div>
+            </div>
+          </div>
+          
+          <div className="space-y-6">
+             <div className="glass-card rounded-[32px] p-6 bg-white border border-slate-100 space-y-4">
+                <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                  <Activity size={18} className="text-blue-500" /> 指标概览
+                </h3>
+                <div className="space-y-3">
+                   <div className="p-4 bg-slate-50 rounded-2xl">
+                      <p className="text-[10px] text-slate-400 font-bold uppercase">{UI_TEXT.LABEL_LIMIT_RANGE}</p>
+                      <p className="text-sm font-bold text-slate-700 mt-1">{trendData?.reference_range || UI_TEXT.NO_RECORDS}</p>
+                   </div>
+                   <div className="p-4 bg-slate-50 rounded-2xl">
+                      <p className="text-[10px] text-slate-400 font-bold uppercase">最新状态</p>
+                      <div className="flex items-center gap-2 mt-1">
+                         <div className={`w-2 h-2 rounded-full ${trendData?.alert_status === 'warning' ? 'bg-red-500' : 'bg-green-500'}`} />
+                         <span className="text-sm font-bold text-slate-700">{trendData?.alert_status === 'warning' ? '需要关注' : '正常'}</span>
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
+      </div>
 
       {editingObs && (
         <EditObservationOverlay
@@ -277,17 +313,9 @@ function TrendsContent() {
           unit={editingObs.unit}
           apiClient={apiClient}
           onClose={() => setEditingObs(null)}
-          onSuccess={() => loadMemberAndTrends()}
+          onSuccess={() => loadTrendData()}
         />
       )}
     </main>
-  );
-}
-
-export default function TrendsPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <TrendsContent />
-    </Suspense>
   );
 }

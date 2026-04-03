@@ -11,7 +11,7 @@ class ExamRecord(Base):
     __tablename__ = "exam_records"
 
     id: Mapped[UUID] = mapped_column(UUIDType(as_uuid=True), primary_key=True, default=uuid4)
-    document_id: Mapped[UUID] = mapped_column(ForeignKey("document_records.id"), unique=True)
+    document_id: Mapped[Optional[UUID]] = mapped_column(ForeignKey("document_records.id"), unique=True, nullable=True)
     member_id: Mapped[UUID] = mapped_column(ForeignKey("member_profiles.id"), index=True)
     exam_date: Mapped[date] = mapped_column(Date())
     institution_name: Mapped[Optional[str]] = mapped_column(String(255))
@@ -20,7 +20,7 @@ class ExamRecord(Base):
 
     member: Mapped["MemberProfile"] = relationship("MemberProfile", back_populates="exam_records")
     document: Mapped["DocumentRecord"] = relationship("DocumentRecord", back_populates="exam_record")
-    observations: Mapped[List["Observation"]] = relationship("Observation", back_populates="exam_record")
+    observations: Mapped[List["Observation"]] = relationship("Observation", back_populates="exam_record", cascade="all, delete-orphan")
 
 
 class Observation(Base):

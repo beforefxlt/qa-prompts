@@ -4,18 +4,21 @@ from app.services.rule_engine import check_ocr_result, validate_observation
 
 
 def test_validate_observation_unit_conflict():
+    """[TC-P2-001] 验证当单位不匹配时（如血糖为 mg/dL）触发规则冲突。"""
     is_valid, error = validate_observation("glucose", 5.6, "mg/dL")
     assert is_valid is False
     assert "单位不匹配" in error
 
 
 def test_validate_observation_range_conflict():
+    """[TC-P4-017] 验证当数值越界时（如眼轴 > 40mm）触发规则冲突。"""
     is_valid, error = validate_observation("axial_length", 55.0, "mm")
     assert is_valid is False
     assert "数值越界" in error
 
 
 def test_check_ocr_result_missing_exam_date_and_side():
+    """[TC-P2-004, TC-P2-005] 验证检查日期缺失或侧向缺失时触发规则冲突。"""
     result = check_ocr_result(
         {
             "observations": [
@@ -30,6 +33,7 @@ def test_check_ocr_result_missing_exam_date_and_side():
 
 
 def test_check_ocr_result_happy_path():
+    """[TC-P1-011] 验证正常路径下的 OCR 结果检查逻辑。"""
     result = check_ocr_result(
         {
             "exam_date": "2026-03-31",

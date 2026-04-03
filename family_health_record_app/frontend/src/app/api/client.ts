@@ -26,9 +26,7 @@ async function handleResponse(res: Response) {
 }
 
 /**
- * 包装 fetch 请求，捕获底层网络错误（如后端未启动）
- * 注入 [AI-FLOW] 追踪逻辑以提升自动化测试的可观测性
- * 注入 [FORCE-PATH] 自愈逻辑以解决 Next.js 缓存顽疾导致的路径丢失
+ * 包装 fetch 请求，捕获底层网络错误
  */
 async function safeFetch(url: string, options?: RequestInit) {
   let finalUrl = url;
@@ -36,7 +34,6 @@ async function safeFetch(url: string, options?: RequestInit) {
 
   // [FORCE-PATH] 关键自愈逻辑：检测 8000 端口请求是否漏掉了 /api/v1 前缀
   if (finalUrl.includes(':8000') && !finalUrl.includes('/api/v1')) {
-     console.warn(`>> [AI-PATH-FIX] Detected potential missing prefix in ${finalUrl}. Attempting self-healing...`);
      finalUrl = finalUrl.replace(':8000', ':8000/api/v1');
   }
 
@@ -49,7 +46,7 @@ async function safeFetch(url: string, options?: RequestInit) {
   } catch (err: any) {
     console.error(`!! [AI-FLOW] Error for ${finalUrl}:`, err);
     if (err.message.includes('fetch') || err.message.includes('Failed to fetch')) {
-      throw new Error('网络连接失败，请确认后端 API 是否在 8000 端口运行');
+      throw new Error('网络连接失败，请确认后端 API 是否已运行');
     }
     throw err;
   }
@@ -123,6 +120,26 @@ export const apiClient = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ revised_items: revisedItems || [] }),
+    }),
+
+  // Records & Manual Entry (CRUD)
+  createManualExam: (memberId: string, data: any) =>
+    safeFetch(`${API_BASE_URL}/records/members/${memberId}/manual-exams`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }),
+
+  updateObservation: (obsId: string, valueNumeric: number) =>
+    safeFetch(`${API_BASE_URL}/records/observations/${obsId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value_numeric: valueNumeric }),
+    }),
+
+  deleteExamRecord: (recordId: string) =>
+    safeFetch(`${API_BASE_URL}/records/exam-records/${recordId}`, {
+      method: 'DELETE',
     }),
 
   // Trends

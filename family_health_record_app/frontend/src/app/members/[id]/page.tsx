@@ -7,6 +7,7 @@ import {
   TrendingUp, Calendar, AlertCircle, PlusCircle
 } from 'lucide-react';
 import { apiClient } from '@/app/api/client';
+import { UI_TEXT } from '@/constants/ui-text';
 import { TrendChart } from '@/components/charts/TrendChart';
 import { UploadOverlay } from '@/components/upload/UploadOverlay';
 
@@ -100,7 +101,7 @@ export default function MemberDashboard() {
             <User size={24} />
           </div>
           <div>
-            <h1 className="text-xl font-bold font-sans tracking-tight text-slate-800">{member?.name}</h1>
+            <h1 className="text-xl font-bold font-sans tracking-tight text-slate-800" data-testid="member-name">{member?.name}</h1>
             <p className="text-xs text-slate-500">{member?.date_of_birth} · {member?.gender}</p>
           </div>
         </div>
@@ -282,24 +283,30 @@ export default function MemberDashboard() {
             <button
               onClick={() => { setShowManual(true); setShowMenu(false); }}
               className="bg-white text-blue-600 p-4 rounded-2xl shadow-xl border border-blue-50 flex items-center gap-2 font-bold active:scale-95 transition-all text-sm"
+              aria-label={UI_TEXT.ACTION_MANUAL_ENTRY}
+              data-testid="fab-manual"
             >
-              <Edit3 size={18} /> 手动录入
+              <Edit3 size={18} /> {UI_TEXT.ACTION_MANUAL_ENTRY}
             </button>
             <button
               onClick={() => { setShowUpload(true); setShowMenu(false); }}
               className="bg-white text-blue-600 p-4 rounded-2xl shadow-xl border border-blue-50 flex items-center gap-2 font-bold active:scale-95 transition-all text-sm"
+              aria-label={UI_TEXT.ACTION_PHOTO_IDENTIFY}
+              data-testid="fab-photo"
             >
-              <Camera size={18} /> 拍照识别
+              <Camera size={18} /> {UI_TEXT.ACTION_PHOTO_IDENTIFY}
             </button>
           </div>
         )}
         
         <button
           onClick={() => setShowMenu(!showMenu)}
+          aria-label={UI_TEXT.ACTION_ADD_EXAM}
+          data-testid="fab-trigger"
           className={`bg-blue-600 hover:bg-blue-700 text-white px-8 py-5 rounded-[24px] shadow-2xl shadow-blue-600/40 font-bold flex items-center gap-3 active:scale-95 transition-all text-lg group ${showMenu ? 'rotate-45 bg-slate-800 shadow-slate-400/30' : ''}`}
         >
           <Plus size={24} className="transition-transform" />
-          {!showMenu && "录入新检查单"}
+          {!showMenu && UI_TEXT.ACTION_ADD_EXAM}
         </button>
       </div>
 

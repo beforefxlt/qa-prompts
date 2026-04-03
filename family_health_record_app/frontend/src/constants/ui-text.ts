@@ -37,4 +37,31 @@ export const UI_TEXT = {
   
   // 状态
   NO_RECORDS: '尚无记录',
+  LOADING: '加载中...',
+
+  // 手动录入与 CRUD
+  ACTION_MANUAL_ENTRY: '手动录入',
+  ACTION_PHOTO_IDENTIFY: '拍照识别',
+  ACTION_ADD_EXAM: '录入新检查单',
+  ACTION_DELETE_RECORD: '删除记录',
+  CONFIRM_DELETE_RECORD: '确定要删除这条检查记录及其所有指标吗？',
+  LABEL_EXAM_DATE: '检查日期',
+  LABEL_INSTITUTION: '检查机构',
+  LABEL_OBSERVATIONS: '检查项',
+  BTN_ADD_METRIC: '添加指标项',
+  MSG_SAVE_SUCCESS: '保存成功',
+  MSG_DELETE_SUCCESS: '删除成功',
+  MSG_UPDATE_SUCCESS: '更新成功',
+  MSG_SANITY_ERROR: '超出常规合理范围',
+
+  // 趋势与历史
+  LABEL_HISTORICAL_LIST: '历史记录清单',
+  LABEL_LEFT_EYE: '左眼指标',
+  LABEL_RIGHT_EYE: '右眼指标',
+  LABEL_VALUE: '指标数值',
+  LABEL_CURRENT: '当前',
+  LABEL_PREVIOUS: '上次',
+  LABEL_LIMIT_RANGE: '参考区间',
+  LABEL_ALERT_TITLE: '异常提醒',
+  ACTION_EDIT_VALUE: '修改数值',
 } as const;

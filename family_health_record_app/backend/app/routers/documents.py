@@ -108,13 +108,28 @@ async def upload_document(
         if member is None:
             raise HTTPException(status_code=404, detail="成员不存在")
 
-    # 生成唯一文件名防止并发覆盖
+    # 1. 基础校验：空文件、格式、大小 (TC-P2-007, TC-P2-008)
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".pdf"}
+
     original_filename = file.filename or "unknown.jpg"
-    ext = os.path.splitext(original_filename)[1] or ".jpg"
-    unique_filename = f"{uuid.uuid4().hex}{ext}"
+    ext = os.path.splitext(original_filename)[1].lower()
     
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=f"不支持的文件格式: {ext}。仅支持 JPG, PNG, PDF")
+
     # 读取文件内容
-    file_content = file.file.read()
+    file_content = await file.read()
+    file_size = len(file_content)
+
+    if file_size == 0:
+        raise HTTPException(status_code=400, detail="上传的文件不能为空")
+    
+    if file_size > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail=f"文件过大 ({file_size} bytes)。最大限制为 10MB")
+
+    # 生成唯一文件名防止并发覆盖
+    unique_filename = f"{uuid.uuid4().hex}{ext}"
     
     # 检查重复上传：计算文件哈希，如果同一成员已上传过相同文件则跳过
     file_hash = hashlib.sha256(file_content).hexdigest()

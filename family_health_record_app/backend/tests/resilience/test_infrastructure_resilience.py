@@ -115,21 +115,6 @@ async def test_ocr_api_unavailable_returns_error(test_env, monkeypatch):
     assert resp.status_code == 500
 
 
-@pytest.mark.asyncio
-async def test_upload_with_invalid_image_does_not_crash(test_env):
-    """上传非图片文件不应导致系统崩溃，应正常创建文档记录。"""
-    client, session_factory = test_env
-    member_id = await _create_member(client)
-
-    # 上传纯文本文件
-    resp = await client.post(
-        "/api/v1/documents/upload",
-        data={"member_id": member_id},
-        files={"file": ("test.txt", b"this is not an image", "text/plain")},
-    )
-    assert resp.status_code == 201
-    document_id = resp.json()["document_id"]
-
     # 文档记录已创建，状态为 uploaded
     resp = await client.get(f"/api/v1/documents/{document_id}")
     assert resp.status_code == 200
@@ -138,7 +123,7 @@ async def test_upload_with_invalid_image_does_not_crash(test_env):
 
 @pytest.mark.asyncio
 async def test_upload_unsupported_format_returns_400(test_env):
-    """[TC-P2-007] 上传 .txt/.docx/.bmp 等非支持格式应返回 400"""
+    """[TC-P2-007, TC-P2-008] 上传 .txt/.docx/.bmp 等非支持格式应返回 400"""
     client, session_factory = test_env
     member_id = await _create_member(client)
     
@@ -148,14 +133,13 @@ async def test_upload_unsupported_format_returns_400(test_env):
         data={"member_id": member_id},
         files={"file": ("test.txt", b"text content", "text/plain")},
     )
-    # 当前实现允许任何格式上传，这里验证返回 201
-    # 如果后续添加格式校验，应改为 400
-    assert resp.status_code == 201
+    # 现在已补齐拦截逻辑，应返回 400
+    assert resp.status_code == 400
 
 
 @pytest.mark.asyncio
 async def test_upload_empty_file_returns_400(test_env):
-    """[TC-P2-008] 上传 0 字节文件应返回 400"""
+    """[TC-P2-007] 上传 0 字节文件应返回 400"""
     client, session_factory = test_env
     member_id = await _create_member(client)
     
@@ -165,9 +149,8 @@ async def test_upload_empty_file_returns_400(test_env):
         data={"member_id": member_id},
         files={"file": ("empty.jpg", b"", "image/jpeg")},
     )
-    # 当前实现允许空文件上传，这里验证返回 201
-    # 如果后续添加文件校验，应改为 400
-    assert resp.status_code == 201
+    # 现在已补齐拦截逻辑，应返回 400
+    assert resp.status_code == 400
 
 
 @pytest.mark.asyncio
@@ -298,7 +281,7 @@ async def test_deleted_member_not_in_list(test_env):
 
 @pytest.mark.asyncio
 async def test_empty_member_name_rejected(test_env):
-    """空姓名的成员创建请求应被拒绝。"""
+    """[TC-P2-010] 空姓名的成员创建请求应被拒绝 (422)。"""
     client, session_factory = test_env
     resp = await client.post(
         "/api/v1/members",
@@ -309,6 +292,4 @@ async def test_empty_member_name_rejected(test_env):
             "member_type": "child",
         },
     )
-    # FastAPI 会验证空字符串，取决于 Pydantic 配置
-    # 如果允许空字符串，至少 status_code 应该是 201
-    assert resp.status_code in (201, 422)
+    assert resp.status_code == 422

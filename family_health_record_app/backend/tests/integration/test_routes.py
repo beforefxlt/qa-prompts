@@ -133,7 +133,7 @@ async def test_create_member_empty_name_returns_400(route_env):
 
 @pytest.mark.asyncio
 async def test_members_list_empty(route_env):
-    """空成员列表应返回空数组"""
+    """[TC-P1-016] 空成员列表应返回空数组"""
     client, _ = route_env
     resp = await client.get("/api/v1/members")
     assert resp.status_code == 200
@@ -142,7 +142,7 @@ async def test_members_list_empty(route_env):
 
 @pytest.mark.asyncio
 async def test_members_list_excludes_deleted(route_env):
-    """成员列表不应包含已软删除的成员"""
+    """[TC-P1-019] 成员列表不应包含已软删除的成员 (验证软删除状态下列表过滤)"""
     client, _ = route_env
     m1 = await _create_member(client, "保留成员")
     m2 = await _create_member(client, "删除成员")
@@ -157,7 +157,7 @@ async def test_members_list_excludes_deleted(route_env):
 
 @pytest.mark.asyncio
 async def test_members_get_single(route_env):
-    """获取单个成员详情"""
+    """[TC-P1-017] 获取单个成员详情"""
     client, _ = route_env
     member = await _create_member(client, "详情成员")
 
@@ -182,7 +182,7 @@ async def test_members_get_deleted_returns_404(route_env):
 
 @pytest.mark.asyncio
 async def test_members_update_partial(route_env):
-    """部分更新成员信息"""
+    """[TC-P1-018] 部分更新成员信息"""
     client, _ = route_env
     member = await _create_member(client, "原名")
 
@@ -200,7 +200,7 @@ async def test_members_update_partial(route_env):
 
 @pytest.mark.asyncio
 async def test_members_update_nonexistent(route_env):
-    """更新不存在的成员应返回 404"""
+    """[TC-P2-017] 更新不存在的成员应返回 404"""
     client, _ = route_env
     resp = await client.put(
         "/api/v1/members/00000000-0000-0000-0000-000000000099",
@@ -246,7 +246,7 @@ async def test_document_upload_no_members(route_env):
 
 @pytest.mark.asyncio
 async def test_document_get_nonexistent(route_env):
-    """获取不存在的文档应返回 404"""
+    """[TC-P2-018] 获取不存在的文档应返回 404"""
     client, _ = route_env
     resp = await client.get("/api/v1/documents/00000000-0000-0000-0000-000000000099")
     assert resp.status_code == 404
@@ -300,7 +300,7 @@ async def test_submit_ocr_nonexistent_document(route_env):
 
 @pytest.mark.asyncio
 async def test_review_tasks_list_empty(route_env):
-    """空审核任务列表应返回空数组"""
+    """[TC-P1-025] 空审核任务列表应返回空数组"""
     client, _ = route_env
     resp = await client.get("/api/v1/review-tasks")
     assert resp.status_code == 200
@@ -357,7 +357,7 @@ async def test_trends_empty_data(route_env):
 
 @pytest.mark.asyncio
 async def test_trends_with_data(route_env, monkeypatch):
-    """有数据时趋势查询应返回正确的 series"""
+    """[TC-P1-028] 有数据时趋势查询应返回正确的 series 和参考区间"""
     client, session_factory = route_env
     member = await _create_member(client)
     member_uuid = UUID(member["id"])
@@ -541,7 +541,7 @@ async def test_trends_comparison_data(route_env, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_vision_dashboard(route_env, monkeypatch):
-    """视力仪表盘应返回眼轴和视力数据"""
+    """[TC-P1-021, TC-P1-022] 视力仪表盘应返回成员对应的指标数据"""
     client, session_factory = route_env
     member = await _create_member(client)
     member_uuid = UUID(member["id"])
@@ -582,7 +582,7 @@ async def test_vision_dashboard(route_env, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_growth_dashboard(route_env, monkeypatch):
-    """生长仪表盘应返回身高体重数据"""
+    """[TC-P1-022] 生长仪表盘应返回身高体重数据"""
     client, session_factory = route_env
     member = await _create_member(client)
     member_uuid = UUID(member["id"])
@@ -649,7 +649,7 @@ async def test_growth_dashboard_nonexistent_member(route_env):
 
 @pytest.mark.asyncio
 async def test_review_full_workflow(route_env, monkeypatch):
-    """完整审核流程: 上传 → OCR冲突 → 审核通过 → 入库"""
+    """[TC-P1-027] 完整审核流程: 上传 → OCR冲突 → 审核通过 → 写入正式表"""
     client, session_factory = route_env
     member = await _create_member(client)
     doc = await _upload_document(client, member["id"])

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from datetime import date
-from typing import Optional
+from typing import Optional, Any
 from uuid import UUID
 
 class MemberCreate(BaseModel):
@@ -8,6 +8,13 @@ class MemberCreate(BaseModel):
     gender: str = Field(..., pattern="^(male|female)$")
     date_of_birth: date
     member_type: str = Field(..., pattern="^(child|adult|senior)$")
+
+    @field_validator("gender", "member_type", mode="before")
+    @classmethod
+    def to_lower(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return v.lower()
+        return v
 
     @field_validator("date_of_birth")
     @classmethod

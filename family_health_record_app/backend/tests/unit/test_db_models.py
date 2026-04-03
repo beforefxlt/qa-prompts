@@ -24,6 +24,7 @@ async def db_session():
 
 @pytest.mark.asyncio
 async def test_create_member(db_session: AsyncSession):
+    """[TC-P1-003, TC-P1-004, TC-P1-005] 验证成员档案模型的创建逻辑。"""
     member = MemberProfile(
         name="Little Bob",
         gender="male",
@@ -41,6 +42,7 @@ async def test_create_member(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_create_document_record(db_session: AsyncSession):
+    """[TC-P1-007, TC-P1-008, TC-P1-009] 验证文档记录（上传状态）的模型创建。"""
     member = MemberProfile(
         name="Test Member",
         gender="female",
@@ -66,6 +68,7 @@ async def test_create_document_record(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_create_ocr_result(db_session: AsyncSession):
+    """[TC-P1-026] 验证 OCR 提取结果模型的创建与字段存储。"""
     member = MemberProfile(
         name="OCR Test",
         gender="male",
@@ -99,6 +102,7 @@ async def test_create_ocr_result(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_create_review_task_with_null_reviewer(db_session: AsyncSession):
+    """[TC-P1-025] 验证人工审核任务模型的创建（初始 reviewer 为空）。"""
     member = MemberProfile(
         name="Review Test",
         gender="female",

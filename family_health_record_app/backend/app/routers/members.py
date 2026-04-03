@@ -102,6 +102,7 @@ async def create_member(data: MemberCreate, db: AsyncSession = Depends(get_db)):
     )
     db.add(member)
     await db.flush()
+    await db.commit()
     await db.refresh(member)
     return MemberDetailResponse(
         id=member.id,

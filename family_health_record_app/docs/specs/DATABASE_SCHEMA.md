@@ -1,8 +1,8 @@
 # 家庭检查单管理应用数据库设计 (Database Schema)
 
-> **版本**: v1.2.0
+> **版本**: v1.3.0
 > **最后更新**: 2026-04-03
-> **变更说明**: 添加 vision-dashboard 和 growth-dashboard API 的增长率计算逻辑
+> **变更说明**: 为手动录入功能调整 exam_records.document_id 约束
 
 ## 1. 设计目标
 
@@ -10,7 +10,7 @@
 - **原始资料层** (Raw Data Layer)：管理成员与检查单原件/脱敏件。
 - **OCR 中间层** (OCR Intermediate Layer)：暂存大模型抽取结果与审核过程，严格隔离业务趋势计算。
 - **正式指标层** (Formal Observation Layer)：经规则引擎与人工确认的高置信度最终单点数据。
-- **派生分析层** (Derived Analysis Layer)：负责年龄特定（如儿童增长及百分位）和特定算法的复杂状态聚合并记录。
+- **派生分析层** (Derived Analysis Layer)：负责年龄特定（如儿童增长及百分位）和特定算法的复杂状态聚聚合并记录。
 
 ---
 
@@ -83,16 +83,16 @@
 
 ### 4.1 `exam_records` (检查事件/报告头)
 
-约束：作为各项数据的一组事件总成（一对多 `observations`）。只在 `review_tasks` 变为 `approved` 且最终 `persisted` 状态化后由系统提取生成。
+约束：作为各项数据的一组事件总成（一对多 `observations`）。可由 OCR 审核流程生成，也可由用户手动录入生成。
 
 | 字段名 | 类型 | 约束 / 说明 |
 | :--- | :--- | :--- |
 | `id` | UUID | 主键 |
-| `document_id` | UUID | 外键。关联最终核准的源 `document_records` |
+| `document_id` | UUID | **NULL**。关联最终核准的源 `document_records`（手动录入时为 NULL） |
 | `member_id` | UUID | 外键。该报告关联的检查成员 |
-| `exam_date` | DATE | 检查实际发生日期 (OCR 或人工补充修正后的真实验收系) |
+| `exam_date` | DATE | 检查实际发生日期 |
 | `institution_name` | VARCHAR | 检查机构名 (可为 NULL) |
-| `baseline_age_months` | INTEGER | 冗余字段（由入库时的 `exam_date` 与 `date_of_birth` 动态得出），频繁用于图表参考带的性能查询 |
+| `baseline_age_months` | INTEGER | 冗余字段（由入库时的 `exam_date` 与 `date_of_birth` 动态得出） |
 | `created_at` | TIMESTAMPTZ | 最终入库时间 |
 
 ### 4.2 `observations` (具体医学观察表)
@@ -102,15 +102,15 @@
 | 字段名 | 类型 | 约束 / 说明 |
 | :--- | :--- | :--- |
 | `id` | UUID | 主键 |
-| `exam_record_id` | UUID | 外键，关联 `exam_records.id`。建立索引用于快速整单拉取 |
-| `metric_code` | VARCHAR | 字典枚举项：`height`, `weight`, `glucose`, `tc`, `tg`, `hdl`, `ldl`, `axial_length`, `vision_acuity` |
-| `value_numeric` | FLOAT | 标准化后的数值型结果（便于趋势折线及阈值边界判断排序比对） |
-| `value_text` | VARCHAR | 原始表达文字或无法量化的符号串（如"5.0-"或某些复合表达的视力） |
-| `unit` | VARCHAR | 计量单位：配合 PRD/OCR 约束要求统一后的唯一物理表达 |
+| `exam_record_id` | UUID | 外键，关联 `exam_records.id` |
+| `metric_code` | VARCHAR | 字典枚举项，如：`height`, `weight`, `axial_length` 等 |
+| `value_numeric` | FLOAT | 标准化后的数值型结果 |
+| `value_text` | VARCHAR | 原始表达文字或无法量化的符号串 |
+| `unit` | VARCHAR | 计量单位 |
 | `side` | VARCHAR | 枚举：`left`, `right`，为空代表该指标对本分类不可用（如身高） |
-| `is_abnormal` | BOOLEAN | 落点越界标记，入库算法判断其是否在合法参照界外的标记（布尔） |
-| `reference_range`| VARCHAR | 所匹配参照范围描述字符（用于图库面板直接渲染越界提醒边界） |
-| `confidence_score`| FLOAT | 此字段原始提取评分（发生过人工修补将自动锁定为 1.0 的满分状态） |
+| `is_abnormal` | BOOLEAN | 落点越界标记 |
+| `reference_range`| VARCHAR | 所匹配参照范围描述字符 |
+| `confidence_score`| FLOAT | 此字段原始提取评分（人工修改后锁定为 1.0） |
 
 ---
 
@@ -124,17 +124,17 @@
 | :--- | :--- | :--- |
 | `id` | UUID | 主键 |
 | `member_id` | UUID | 外键，关联 `member_profiles.id` |
-| `metric_category`| VARCHAR | 分类标示，如：`velocity_curve`(生长速度), `metabolic_risk_flag`(合并代谢异常), `reserve_estimation`(眼健康预测) |
+| `metric_category`| VARCHAR | 分类标示，如：`velocity_curve`(生长速度) |
 | `value_numeric` | FLOAT | 抽提或测算后的具体分析数字反馈 (可为空) |
-| `value_json` | JSONB | 高复杂度返回（特定状态机，异常警告组，包含复杂参照系说明） |
-| `algorithm_version`| VARCHAR | 标记使用什么引擎算法版本出的数据结果 (如：`WHO_growth_V2`, `Metabolic_Adult_v1.0`) |
+| `value_json` | JSONB | 高复杂度返回 |
+| `algorithm_version`| VARCHAR | 标记使用什么引擎算法版本 |
 | `calculation_date`| TIMESTAMPTZ | 运算批次时间及生效时区 |
 
 ---
 
 ## 6. 核心开发约束 (Global Development Constraints)
 
-1. **唯一事实源 (Source of Truth)**：所有应用侧（如前端呈现历史、趋势图展现、导出统计分析报表等）只能调用基于正式指标层 `exam_records/observations` 构建的 API，**绝对禁止**前端调用去直接展示 `ocr_extraction_results` 或 `document_records` 表单结构当事实来源。
-2. **唯一可信溯源**：一条 `document_records` 成功通过审核后，在 `exam_records` 对应的回插约束有且唯一限定条件 (必须从 `review_tasks.audit_trail` 等链路找到最后由人或者默认通过机器的确权的证据)。
-3. **安全删除**：针对 `member_profiles` 的物理层擦除在 MVP 中暂不启动。采用由 `is_deleted` 作显式过滤进行保护屏蔽。不能破坏已上云存证的 `desensitized_url` 等凭证关系。
-4. **内网免登录**：本应用部署于内网环境，无需账户认证。`accounts` 表在 MVP 阶段不启用，所有接口直接操作成员数据。
+1. **唯一事实源 (Source of Truth)**：所有应用侧只能调用基于正式指标层 `exam_records/observations` 构建的 API。
+2. **唯一可信溯源**：一条由 OCR 生成的记录，必须从 `review_tasks` 等链路找到最后的确权证据。手动录入记录则由用户直接确权。
+3. **安全删除**：针对 `member_profiles` 的物理层擦除在 MVP 中暂不启动。采用由 `is_deleted` 作显式过滤进行保护屏蔽。
+4. **内网免登录**：本应用部署于内网环境，无需账户认证。
