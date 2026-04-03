@@ -67,7 +67,14 @@ class OCROrchestrator:
             
             prompt_content = prompt_manager.get_prompt(document_type)
 
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            # 自动检测代理配置（支持 Docker 容器通过宿主机代理访问外网）
+            proxy_url = os.getenv("HTTPS_PROXY") or os.getenv("https_proxy") or os.getenv("HTTP_PROXY") or os.getenv("http_proxy")
+            client_kwargs = {"timeout": 120.0}
+            if proxy_url:
+                client_kwargs["proxy"] = proxy_url
+                logger.info(f"使用代理: {proxy_url}")
+
+            async with httpx.AsyncClient(**client_kwargs) as client:
                 response = await client.post(
                     "https://api.siliconflow.cn/v1/chat/completions",
                     headers={

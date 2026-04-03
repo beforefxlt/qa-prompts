@@ -376,3 +376,22 @@
 2. 前端表单必须在提交前执行与后端相同的校验
 3. 新增校验规则时，必须同步更新契约文档和前端校验逻辑
 4. 测试用例必须覆盖默认值、边界值、异常值场景
+
+---
+
+## 📅 v2.2.0 OCR 模型升级期记录 (2026-04-03)
+
+### [BUG-039] OCR 提交 500 错误：模型切换后 httpx 代理参数不兼容
+- **现象**: 上传图片后 OCR 返回 500，`AsyncClient.__init__() got an unexpected keyword argument 'proxies'`
+- **根由**: 
+  1. 模型从 `Qwen2.5-VL-32B-Instruct` 切换到 `Qwen3-VL-30B-A3B-Instruct`
+  2. 之前排查网络问题时添加了代理配置代码，使用了 `proxies` 参数
+  3. httpx 的 AsyncClient 参数是 `proxy`（单数），不是 `proxies`（复数）
+  4. 代码修改后未重启容器直接测试，导致旧代码仍在运行
+- **修复**: 
+  1. `ocr_orchestrator.py:76` 将 `proxies=proxies` 改为 `proxy=proxy_url`
+  2. 使用 `client_kwargs` 字典动态构建参数，无代理时不传 proxy 参数
+  3. 完全 stop + up 重建后端容器确保环境变量生效
+- **验证状态**: ✅ 已验证，OCR 返回 200，成功提取眼轴 24.35mm/23.32mm 等数据
+- **UT 覆盖**: ⏳ 待补充
+- **教训**: **修改代码后必须重启服务再测试，不能依赖 --reload 热加载所有变更**
