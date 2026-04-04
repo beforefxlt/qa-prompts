@@ -1,14 +1,14 @@
 ---
 description: 家庭检查单管理应用 AI 交付流水线 (Health Record App Delivery Workflow)
-version: v2.0.0
-last_updated: 2026-04-01
+version: v2.1.0
+last_updated: 2026-04-04
 ---
 
 # 家庭检查单管理应用 AI 交付流水线
 
 > **触发条件**：当用户准备从 0 到 1 开发"家庭检查单管理应用"或同类健康数据管理产品时，启动本流程。
 > **核心原则**：先规格冻结，再交互确认，再测试驱动，再按明确边界拆 Subagent 并行开发。禁止跳过 UI 交互原型与测试门禁直接写实现。
-> **v2.0.0 变更说明**：基于 v1.5.0 项目实践的复盘教训，新增 Step 2b (交互原型)，为所有步骤增加硬门禁清单，增加页面完整性检查，增加增量开发入口。
+> **v2.1.0 变更说明**：新增 Step 7.3（契约同步与文档对齐检查）和 Step 8.2（修复验证），将 check_no_test_code.py、check_docs_alignment.py、pytest、npm run build 纳入强制门禁。
 
 ---
 
@@ -220,6 +220,23 @@ last_updated: 2026-04-01
 
 4. **差异表必须为空（或全部标记为已知豁免）才能进入 Step 8。**
 
+### 7.3 契约同步与文档对齐检查（v2.1.0 新增）
+
+> **本检查是防止"契约断裂"和"文档不同步"的关键门禁。**
+
+1. **契约同步检查**：使用 `@contract-first` skill 验证
+   - 检查 `app/schemas/` 变更是否已同步到 `API_CONTRACT.md`
+   - 检查前端 `METRIC_OPTIONS` 是否与后端 `validate_sanity_range` 对齐
+   - 检查新增 API 是否已添加到契约文档
+
+2. **文档对齐检查**：运行 `check_docs_alignment.py`
+   - 检查代码变更是否同步更新相关文档
+   - 检查新增功能是否同步到 BUG_LOG.md（如有 Bug 修复）
+
+3. **生产代码检查**：运行 `check_no_test_code.py`
+   - 检查 `app/` 目录中是否包含测试逻辑（mock/stub/fixture）
+   - 检查是否有 `# TODO: remove before production` 等标记
+
 ### Step 7 门禁
 
 | 检查项 | 通过条件 |
@@ -228,23 +245,48 @@ last_updated: 2026-04-01
 | 前端类型检查通过 | `tsc --noEmit` 输出 0 errors |
 | 页面完整性差异表为空 | 无"规格有代码无"的阻断项 |
 | Golden Set 回归通过 | 关键字段准确率达标 |
+| 契约同步检查通过 | `@contract-first` 验证无阻断项 |
+| 文档对齐检查通过 | `check_docs_alignment.py` 无阻断项 |
+| 生产代码检查通过 | `check_no_test_code.py` 输出 PASS |
 | 用户确认 | 用户回复"进入 Step 8" |
 
 ---
 
 ## Step 8: 核验与收口
 
+### 8.1 需求核验
+
 1. 使用 `verify-requirements` 逐条核验规格是否落地。
-2. 使用 `reviewer-agent` 做最终一致性与文档同步复核。
-3. 若文档、测试、架构说明未同步，不允许进入提交阶段。
+
+### 8.2 修复验证（v2.1.0 新增）
+
+> **本检查是防止"声称修复但实际未验证"的关键门禁。**
+
+1. **后端验证**：运行 `pytest`
+   - 必须全部通过，不允许有失败的测试用例
+
+2. **前端验证**：运行 `npm run build`
+   - TypeScript 编译必须通过
+   - Next.js 生产构建必须成功
+
+3. **快速验证**：运行 `verify_fix.py`（如存在）
+   - 综合验证后端 API、前端构建、数据库状态
+
+### 8.3 最终复核
+
+1. 使用 `reviewer-agent` 做最终一致性与文档同步复核。
+2. 若文档、测试、架构说明未同步，不允许进入提交阶段。
 
 ### Step 8 门禁
 
 | 检查项 | 通过条件 |
 |:---|:---|
 | 需求核验通过 | `verify-requirements` 输出中无阻断项 |
+| 后端测试通过 | `pytest` 输出 0 failed |
+| 前端构建通过 | `npm run build` 输出 0 errors |
 | 文档同步 | 所有规格文档的"最后更新"日期 >= 最近一次代码提交日期 |
 | reviewer-agent 无阻断项 | 复核结论中"必须修正"类别为空 |
+| 用户确认 | 用户确认可以进入提交阶段 |
 
 ---
 
@@ -276,7 +318,11 @@ last_updated: 2026-04-01
    - Step 5: 只拆解本轮迭代涉及的任务
    - Step 6: 正常开发
    - Step 7: 必须包含页面完整性检查（对照本轮定义的范围）
+   - **Step 7.3 契约同步与文档对齐检查（v2.1.0 新增）**
+     - 增量开发也必须经过同样的门禁检查
    - Step 8: 正常收口
+   - **Step 8.2 修复验证（v2.1.0 新增）**
+     - 增量开发也必须运行 pytest + npm run build
 
 ### 增量开发门禁
 
@@ -285,4 +331,9 @@ last_updated: 2026-04-01
 | 差距清单已产出 | 差距清单包含每个 UI_SPEC.md 页面的"已实现/未实现"状态 |
 | 本轮范围已确认 | 用户明确了本轮要实现的页面列表 |
 | 新页面有导航流 | 更新后的导航流程图覆盖了本轮新增页面 |
+| 契约同步检查通过 | `@contract-first` 验证无阻断项 |
+| 文档对齐检查通过 | `check_docs_alignment.py` 无阻断项 |
+| 生产代码检查通过 | `check_no_test_code.py` 输出 PASS |
+| 后端测试通过 | `pytest` 输出 0 failed |
+| 前端构建通过 | `npm run build` 输出 0 errors |
 | 用户确认 | 用户回复"开始迭代开发" |

@@ -12,7 +12,10 @@ from ..schemas.observation import ManualExamCreate, ObservationUpdate
 router = APIRouter(prefix="/records", tags=["Records Management"])
  
 def check_metric_sanity(metric: str, v: float):
-    """业务逻辑校验：针对不同指标执行合理性区间检查（用于 PATCH 场景）"""
+    """业务逻辑校验：针对不同指标执行合理性区间检查（用于 PATCH 场景）
+    
+    区间定义对齐 API_CONTRACT.md v2.4.0 数值约束表
+    """
     if metric == "axial_length":
         if not (15.0 <= v <= 35.0):
             raise HTTPException(status_code=422, detail=f"眼轴数值 {v} 超出常规合理范围 (15-35mm)")
@@ -22,6 +25,18 @@ def check_metric_sanity(metric: str, v: float):
     elif metric == "weight":
         if not (2.0 <= v <= 500.0):
             raise HTTPException(status_code=422, detail=f"体重数值 {v} 超出常规合理范围 (2-500kg)")
+    elif metric == "glucose":
+        if not (0.1 <= v <= 50.0):
+            raise HTTPException(status_code=422, detail=f"血糖 {v} 超出常规合理范围 (0.1-50.0 mmol/L)")
+    elif metric == "ldl":
+        if not (0.1 <= v <= 10.0):
+            raise HTTPException(status_code=422, detail=f"低密度脂蛋白 {v} 超出常规合理范围 (0.1-10.0 mmol/L)")
+    elif metric == "hemoglobin":
+        if not (30.0 <= v <= 250.0):
+            raise HTTPException(status_code=422, detail=f"血红蛋白 {v} 超出常规合理范围 (30-250 g/L)")
+    elif metric == "hba1c":
+        if not (3.0 <= v <= 15.0):
+            raise HTTPException(status_code=422, detail=f"糖化血红蛋白 {v} 超出常规合理范围 (3.0-15.0%)")
     return v
 
 @router.post("/members/{member_id}/manual-exams", status_code=201)

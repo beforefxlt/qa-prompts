@@ -42,3 +42,34 @@ tmp/
 *.pcap
 .repomix-output.txt
 .worktrees/
+
+# Claude 配置
+.claude/settings.json
+
+# 前端构建缓存
+**/next/
+**/*.tsbuildinfo
+
+# 测试结果
+**/test-results/
+
+# Docker 镜像
+**/*.tar
+
+# 数据目录
+**/minio_data/
+**/uploads/
+
+# SQL dump
+**/health_record.sql
+
+# Windows 临时文件
+nul
+
+# Claude Code 技能
+CLAUDE CODE SKILL/
+
+# 前端构建产物
+**/next/
+**/.next/
+family-health-frontend@0.1.0

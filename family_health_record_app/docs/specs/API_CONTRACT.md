@@ -1,8 +1,8 @@
 # 家庭检查单管理应用 API 契约
 
-> **版本**: v2.3.0
-> **最后更新**: 2026-04-03
-> **变更说明**: growth-dashboard 增加 height/weight.comparison、vision-dashboard 增加 vision_acuity.comparison/alert_status/reference_range、手动录入支持双眼并排输入
+> **版本**: v2.4.0
+> **最后更新**: 2026-04-04
+> **变更说明**: 补充完整数值区间约束表，对齐前端 METRIC_OPTIONS
 
 ## 1. 资源对象
 
@@ -197,21 +197,28 @@
 - **校验关键点**: `value_numeric` 必须在常规合理区间内，否则返回 `422 Unprocessable Entity`。
   各指标数值区间约束如下：
 
-  | metric_code | 指标名称 | 单位 | 合理区间 | 校验位置 |
-  |:---|:---|:---|:---|:---|
-  | `height` | 身高 | cm | 30.0 ~ 250.0 | `observation.py:validate_sanity_range` |
-  | `weight` | 体重 | kg | 2.0 ~ 500.0 | 同上 |
-  | `axial_length` | 眼轴长度 | mm | 15.0 ~ 35.0 | 同上 |
-  | `vision_acuity` | 视力 | decimal | 无区间校验 | — |
-  | `glucose` | 血糖 | mmol/L | 0.1 ~ 50.0 | `rule_engine.py` |
-  | `tc` | 总胆固醇 | mmol/L | 0.1 ~ 30.0 | `rule_engine.py` |
-  | `tg` | 甘油三酯 | mmol/L | 0.1 ~ 30.0 | `rule_engine.py` |
-  | `hdl` | 高密度脂蛋白 | mmol/L | 0.1 ~ 10.0 | `rule_engine.py` |
-  | `ldl` | 低密度脂蛋白 | mmol/L | 0.1 ~ 10.0 | `rule_engine.py` |
-  | `hemoglobin` | 血红蛋白 | g/L | 30.0 ~ 250.0 | `rule_engine.py` |
-  | `hba1c` | 糖化血红蛋白 | % | 3.0 ~ 15.0 | `rule_engine.py` |
+  | metric_code | 指标名称 | 单位 | 合理区间 | 后端校验位置 | 前端 min/max |
+  |:---|:---|:---|:---|:---|:---|
+  | `height` | 身高 | cm | 30.0 ~ 250.0 | `schemas/observation.py:validate_sanity_range` | 30 / 250 |
+  | `weight` | 体重 | kg | 2.0 ~ 500.0 | `schemas/observation.py:validate_sanity_range` | 2 / 500 |
+  | `axial_length` | 眼轴长度 | mm | 15.0 ~ 35.0 | `schemas/observation.py:validate_sanity_range` | 15 / 35 |
+  | `vision_acuity` | 视力 | decimal | 无区间校验 | — | — |
+  | `glucose` | 血糖 | mmol/L | 0.1 ~ 50.0 | `schemas/observation.py:validate_sanity_range` | 0.1 / 50.0 |
+  | `ldl` | 低密度脂蛋白 | mmol/L | 0.1 ~ 10.0 | `schemas/observation.py:validate_sanity_range` | 0.1 / 10.0 |
+  | `hemoglobin` | 血红蛋白 | g/L | 30.0 ~ 250.0 | `schemas/observation.py:validate_sanity_range` | 30 / 250 |
+  | `hba1c` | 糖化血红蛋白 | % | 3.0 ~ 15.0 | `schemas/observation.py:validate_sanity_range` | 3.0 / 15.0 |
+  | `tc` | 总胆固醇 | mmol/L | 0.1 ~ 30.0 | — | — |
+  | `tg` | 甘油三酯 | mmol/L | 0.1 ~ 30.0 | — | — |
+  | `hdl` | 高密度脂蛋白 | mmol/L | 0.1 ~ 10.0 | — | — |
 
-  > **⚠️ 前后端契约约束**：前端手动录入表单（`ManualEntryOverlay`）必须在提交前执行与后端相同的区间校验，不可依赖后端 422 作为用户反馈。
+  > **⚠️ 注意事项**：
+  > - 后端 `ObservationUpdate` (PATCH /observations/{id}) 使用独立校验：`0.0 < value_numeric <= 1000.0`
+  > - 部分指标（tc/tg/hdl）后端当前无校验，需补充
+  > - 前端必须在提交前执行与后端相同的区间校验（见 `ManualEntryOverlay.tsx` 中的 METRIC_OPTIONS）
+
+  > **🔄 同步要求**：当后端 Pydantic 校验规则变更时，必须同步更新：
+  > 1. `API_CONTRACT.md` 本表
+  > 2. `frontend/src/components/records/ManualEntryOverlay.tsx` 中的 METRIC_OPTIONS
 
 #### PATCH /observations/{id}
 修改单条指标数值。

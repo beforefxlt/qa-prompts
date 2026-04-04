@@ -3,6 +3,7 @@ from uuid import UUID
 from datetime import date
 from typing import Optional, List
 
+
 class ObservationBase(BaseModel):
     metric_code: str
     value_numeric: float
@@ -22,7 +23,18 @@ class ObservationBase(BaseModel):
         elif metric == "weight":
             if not (2.0 <= v <= 500.0):
                 raise ValueError(f"体重数值 {v} 超出常规合理范围 (2-500kg)")
-        # 可选：对 vision_va 等继续添加简单校验
+        elif metric == "glucose":
+            if not (0.1 <= v <= 50.0):
+                raise ValueError(f"血糖数值 {v} 超出常规合理范围 (0.1-50.0 mmol/L)")
+        elif metric == "ldl":
+            if not (0.1 <= v <= 10.0):
+                raise ValueError(f"低密度脂蛋白 {v} 超出常规合理范围 (0.1-10.0 mmol/L)")
+        elif metric == "hemoglobin":
+            if not (30.0 <= v <= 250.0):
+                raise ValueError(f"血红蛋白 {v} 超出常规合理范围 (30-250 g/L)")
+        elif metric == "hba1c":
+            if not (3.0 <= v <= 15.0):
+                raise ValueError(f"糖化血红蛋白 {v} 超出常规合理范围 (3.0-15.0%)")
         return v
 
 class ManualExamCreate(BaseModel):

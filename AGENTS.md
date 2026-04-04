@@ -65,7 +65,10 @@
   - ✅ 使用环境变量控制配置（但 mock 逻辑放在测试代码中）
   - ✅ 使用独立的 mock 服务（如 WireMock、MockServer）
   - ✅ 测试代码放在 `tests/` 目录，与生产代码物理隔离
-- **自动化检查**：提交前运行 `python family_health_record_app/scripts/check_no_test_code.py`
+- **自动化检查**：
+  - 后端：`python family_health_record_app/scripts/check_no_test_code.py`
+  - 前端：`npm run check`（调用相同脚本）
+  - pre-commit：`.pre-commit-config.yaml` 已配置自动检查
 - **反面案例**（BUG-024）：
   - ❌ 在 `ocr_orchestrator.py` 中检查文件名包含 "e2e" 返回 mock 数据
   - ✅ 应该在测试文件中 mock `ocr_orchestrator` 服务
@@ -107,6 +110,25 @@
   - `--mode dev`：仅启动开发环境（db/minio/backend），前端需手动 npm run dev
 
 > ⚠️ **执行者指令**：当人类用户下达如 "帮我直接 commit 上去" 这类快捷指令时。作为专业 Agent，如果扫描到上述三类文档未更新，**必须拒绝直接 Commit**。你应该先向用户列出需要更新的文档清单，并在得到许可（或自动帮用户补齐文档）后，方可执行最终的 Push 动作。
+
+### 11. 契约先行 (Contract-First)
+- **[强制]** 修改 Pydantic schema 时必须同步更新 `API_CONTRACT.md`
+- **[强制]** 使用 `@contract-first` skill 进行契约同步检查
+- **相关 Bug**：BUG-034/036/037/038（契约断裂导致 422 错误）
+
+### 12. 修复验证 (Verify-Fix Protocol)
+- **[强制]** 修复 Bug 后必须运行验证脚本，不准声称"已修复"就结束
+- **[强制]** 使用 `@verify-fix` skill 执行验证清单
+- **相关 Bug**：BUG-022/035/039（未验证就声称修复完成）
+
+### 13. 文档对齐检查 (Docs Alignment)
+- **[强制]** 提交前必须运行 `python scripts/check_docs_alignment.py`
+- **检查内容**：
+  - 代码变更（routers/schemas/models/components）是否同步更新对应文档
+  - 新增 API → API_CONTRACT.md
+  - 新增 UI → UI_SPEC.md
+  - 新增 Bug 修复 → BUG_LOG.md
+- **自动化**：`.pre-commit-config.yaml` 已配置自动检查
 
 ---
 

@@ -8,7 +8,8 @@
         "build": "next build",
         "start": "next start",
         "lint": "next lint",
-        "e2e": "playwright test"
+        "e2e": "playwright test",
+        "check": "python ../scripts/check_no_test_code.py ../backend/app"
     },
     "dependencies": {
         "clsx": "^2.1.1",
