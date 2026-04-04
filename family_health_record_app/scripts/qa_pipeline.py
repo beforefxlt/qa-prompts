@@ -1,12 +1,25 @@
 """
-统一 QA Pipeline - 支持本地和 Docker 两种模式
-合并了原 qa_pipeline.py 和 docker_qa_pipeline.py
+统一 QA Pipeline - 支持本地和 Docker 两种模式，支持用例分类筛选
 
 使用方式:
-  python scripts/qa_pipeline.py --mode docker    # Docker 启动后端 + 本地 npm run dev 启动前端 + 跑测试
+  python scripts/qa_pipeline.py --mode docker    # Docker 启动后端 + 本地前端 + 全量测试
   python scripts/qa_pipeline.py --mode local     # 全本地启动（SQLite 测试库）
   python scripts/qa_pipeline.py --mode e2e       # 仅启动服务跑 E2E，不跑 UT
   python scripts/qa_pipeline.py --mode dev       # 仅启动开发环境（db/minio/backend），前端需手动 npm run dev
+
+用例筛选:
+  python scripts/qa_pipeline.py --mode e2e --tags critical          # 仅跑 E2E 核心链路
+  python scripts/qa_pipeline.py --mode e2e --tags smoke             # 仅跑冒烟测试
+  python scripts/qa_pipeline.py --mode e2e --tags regression        # 仅跑回归测试
+  python scripts/qa_pipeline.py --mode local --run-ut               # 仅跑 UT
+  python scripts/qa_pipeline.py --mode local --exclude "ux"         # 排除 UX 测试
+  python scripts/qa_pipeline.py --mode e2e --spec "upload*"         # 仅跑上传相关
+
+测试分类标签:
+  critical   - 核心链路（上传→OCR→审核→仪表盘）
+  smoke      - 冒烟测试
+  regression - 回归测试
+  ut         - 单元测试（后端 + 移动端）
 """
 import subprocess
 import os
@@ -14,6 +27,7 @@ import sys
 import time
 import argparse
 import requests
+import fnmatch
 
 
 def run_command(command, cwd=None, env=None):
@@ -62,18 +76,107 @@ def get_project_root():
 
 
 def get_infra_dir():
-    return os.path.join(get_project_root(), "family_health_record_app", "infra")
+    return os.path.join(get_project_root(), "infra")
 
 
 def get_frontend_dir():
-    return os.path.join(get_project_root(), "family_health_record_app", "frontend")
+    return os.path.join(get_project_root(), "frontend")
 
 
 def get_backend_dir():
-    return os.path.join(get_project_root(), "family_health_record_app", "backend")
+    return os.path.join(get_project_root(), "backend")
 
 
-def docker_mode():
+def get_mobile_dir():
+    return os.path.join(get_project_root(), "mobile_app")
+
+
+def build_e2e_command(tags=None, spec=None, exclude=None):
+    """构建 Playwright 测试命令"""
+    cmd = "npx playwright test --reporter=list"
+    
+    if tags:
+        tag_list = tags.split(",")
+        grep_patterns = []
+        for tag in tag_list:
+            tag = tag.strip()
+            if tag == "ut":
+                continue
+            grep_patterns.append(tag)
+        if grep_patterns:
+            grep_str = "|".join(grep_patterns)
+            cmd = f'npx playwright test --reporter=list --grep "{grep_str}"'
+    
+    if spec:
+        cmd = f"npx playwright test --reporter=list {spec}"
+    
+    if exclude:
+        exclude_list = exclude.split(",")
+        exclude_str = " ".join([f"--ignore=e2e/{e}.spec.ts" for e in exclude_list])
+        cmd = f"npx playwright test --reporter=list {exclude_str}"
+    
+    return cmd
+
+
+def build_ut_command(tags=None, spec=None, exclude=None, backend_only=False, mobile_only=False):
+    """构建 UT 测试命令"""
+    backend_dir = get_backend_dir()
+    mobile_dir = get_mobile_dir()
+    commands = []
+    
+    if backend_only or not mobile_only:
+        backend_cmd = "pytest --maxfail=5 --disable-warnings"
+        if tags and "ut" in tags:
+            backend_cmd = "pytest --maxfail=5 --disable-warnings -m ut"
+        if spec:
+            backend_cmd = f"pytest --maxfail=5 --disable-warnings -k '{spec}'"
+        if exclude:
+            exclude_list = exclude.split(",")
+            exclude_str = " ".join([f"--ignore=tests/{e}" for e in exclude_list])
+            backend_cmd = f"pytest --maxfail=5 --disable-warnings {exclude_str}"
+        commands.append((backend_cmd, backend_dir))
+    
+    if mobile_only or not backend_only:
+        mobile_cmd = "npm test"
+        if tags and "ut" in tags:
+            mobile_cmd = "npm test"
+        if spec:
+            mobile_cmd = f"npm test -- --testPathPattern='{spec}'"
+        commands.append((mobile_cmd, mobile_dir))
+    
+    return commands
+
+
+def run_ut(tags=None, spec=None, exclude=None, backend_only=False, mobile_only=False):
+    """运行 UT 测试"""
+    print("\n" + "="*60)
+    print(">>> 运行单元测试 <<<")
+    print("="*60)
+    
+    commands = build_ut_command(tags, spec, exclude, backend_only, mobile_only)
+    all_passed = True
+    
+    for cmd, cwd in commands:
+        if not run_command(cmd, cwd=cwd):
+            all_passed = False
+    
+    return all_passed
+
+
+def run_e2e(tags=None, spec=None, exclude=None, frontend_dir=None):
+    """运行 E2E 测试"""
+    print("\n" + "="*60)
+    print(">>> 运行 E2E 测试 <<<")
+    print("="*60)
+    
+    if frontend_dir is None:
+        frontend_dir = get_frontend_dir()
+    
+    cmd = build_e2e_command(tags, spec, exclude)
+    return run_command(cmd, cwd=frontend_dir)
+
+
+def docker_mode(tags=None, spec=None, exclude=None, run_ut=True):
     """
     Docker 模式：
     1. Docker 启动 db/minio/backend
@@ -126,17 +229,17 @@ def docker_mode():
         frontend_proc.terminate()
         return False
     
-    # 6. 运行后端 UT
-    print("\n[6/7] 运行后端单元测试...")
-    run_command(
-        "docker exec health-record-backend python -m pytest tests/ -v --tb=short",
-        cwd=infra_dir
-    )
+    # 6. 运行 UT（如果指定）
+    if run_ut:
+        print("\n[6/7] 运行单元测试...")
+        run_ut(tags=tags, spec=spec, exclude=exclude)
+    else:
+        print("\n[6/7] 跳过单元测试 (--no-ut)")
     
     # 7. 运行 E2E 测试
     print("\n[7/7] 运行 E2E 测试...")
     os.environ["PLAYWRIGHT_BASE_URL"] = "http://localhost:3001"
-    run_command("npx playwright test --reporter=list", cwd=frontend_dir)
+    run_e2e(tags=tags, spec=spec, exclude=exclude, frontend_dir=frontend_dir)
     
     # 清理
     print("\n正在关闭前端开发服务器...")
@@ -155,7 +258,7 @@ def docker_mode():
     return True
 
 
-def local_mode():
+def local_mode(tags=None, spec=None, exclude=None, run_ut=True):
     """
     本地模式：
     全本地启动（SQLite 测试库），无需 Docker
@@ -175,9 +278,12 @@ def local_mode():
         print(f"清理旧数据库文件: {e2e_db}")
         os.remove(e2e_db)
     
-    # 2. 运行后端 UT
-    print("\n运行后端单元测试...")
-    run_command("pytest --maxfail=5 --disable-warnings", cwd=backend_dir)
+    # 2. 运行 UT（如果指定）
+    if run_ut:
+        print("\n运行单元测试...")
+        run_ut(tags=tags, spec=spec, exclude=exclude)
+    else:
+        print("\n跳过单元测试 (--no-ut)")
     
     # 3. 启动后端服务器
     print("\n[E2E] 启动后端测试服务器...")
@@ -225,7 +331,7 @@ def local_mode():
             # 6. 运行 E2E 测试
             print("\n运行 E2E 测试...")
             os.environ["PLAYWRIGHT_BASE_URL"] = "http://localhost:3001"
-            run_command("npx playwright test --reporter=list", cwd=frontend_dir)
+            run_e2e(tags=tags, spec=spec, exclude=exclude, frontend_dir=frontend_dir)
         
         print("\n正在关闭前端开发服务器...")
         frontend_proc.terminate()
@@ -245,7 +351,7 @@ def local_mode():
     return ready
 
 
-def e2e_mode():
+def e2e_mode(tags=None, spec=None, exclude=None):
     """
     E2E 模式：
     仅启动服务跑 E2E，不跑 UT
@@ -292,7 +398,7 @@ def e2e_mode():
     
     # 运行 E2E 测试
     os.environ["PLAYWRIGHT_BASE_URL"] = "http://localhost:3001"
-    run_command("npx playwright test --reporter=list", cwd=frontend_dir)
+    run_e2e(tags=tags, spec=spec, exclude=exclude, frontend_dir=frontend_dir)
     
     # 清理
     print("\n正在关闭前端开发服务器...")
@@ -355,10 +461,21 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  python scripts/qa_pipeline.py --mode docker    # Docker 后端 + 本地前端 + 全量测试
-  python scripts/qa_pipeline.py --mode local     # 全本地 SQLite + 全量测试
-  python scripts/qa_pipeline.py --mode e2e       # 仅启动服务跑 E2E
-  python scripts/qa_pipeline.py --mode dev       # 仅启动开发环境
+  python scripts/qa_pipeline.py --mode docker                    # Docker 后端 + 本地前端 + 全量测试
+  python scripts/qa_pipeline.py --mode local                     # 全本地 SQLite + 全量测试
+  python scripts/qa_pipeline.py --mode e2e                       # 仅启动服务跑 E2E
+  python scripts/qa_pipeline.py --mode dev                       # 仅启动开发环境
+  python scripts/qa_pipeline.py --mode e2e --tags critical       # 仅跑 E2E 核心链路
+  python scripts/qa_pipeline.py --mode e2e --tags smoke          # 仅跑冒烟测试
+  python scripts/qa_pipeline.py --mode local --run-ut            # 仅跑 UT
+  python scripts/qa_pipeline.py --mode e2e --spec "upload*"      # 仅跑上传相关
+  python scripts/qa_pipeline.py --mode e2e --exclude "ux"        # 排除 UX 测试
+
+测试分类标签:
+  critical   - 核心链路（上传→OCR→审核→仪表盘）
+  smoke      - 冒烟测试
+  regression - 回归测试
+  ut         - 单元测试（后端 + 移动端）
         """
     )
     parser.add_argument(
@@ -367,16 +484,55 @@ def main():
         default="docker",
         help="运行模式: docker (Docker 后端 + 本地前端 + 测试), local (全本地), e2e (仅 E2E), dev (仅开发环境)"
     )
+    parser.add_argument(
+        "--tags",
+        type=str,
+        default=None,
+        help="测试标签筛选，逗号分隔: critical,smoke,regression,ut"
+    )
+    parser.add_argument(
+        "--spec",
+        type=str,
+        default=None,
+        help="测试文件/用例名匹配，支持通配符: upload*,member*"
+    )
+    parser.add_argument(
+        "--exclude",
+        type=str,
+        default=None,
+        help="排除的测试文件/用例，逗号分隔: ux,review"
+    )
+    parser.add_argument(
+        "--run-ut",
+        action="store_true",
+        default=True,
+        help="运行单元测试 (默认: True)"
+    )
+    parser.add_argument(
+        "--no-ut",
+        action="store_true",
+        default=False,
+        help="跳过单元测试"
+    )
     args = parser.parse_args()
+    
+    run_ut_flag = args.run_ut and not args.no_ut
     
     print("\n" + "="*60)
     print(f">>> [QA Pipeline Start] 模式: {args.mode} <<<")
+    if args.tags:
+        print(f">>> 标签筛选: {args.tags} <<<")
+    if args.spec:
+        print(f">>> 用例匹配: {args.spec} <<<")
+    if args.exclude:
+        print(f">>> 排除测试: {args.exclude} <<<")
+    print(f">>> 运行 UT: {run_ut_flag} <<<")
     print("="*60)
     
     mode_map = {
-        "docker": docker_mode,
-        "local": local_mode,
-        "e2e": e2e_mode,
+        "docker": lambda: docker_mode(args.tags, args.spec, args.exclude, run_ut_flag),
+        "local": lambda: local_mode(args.tags, args.spec, args.exclude, run_ut_flag),
+        "e2e": lambda: e2e_mode(args.tags, args.spec, args.exclude),
         "dev": dev_mode,
     }
     

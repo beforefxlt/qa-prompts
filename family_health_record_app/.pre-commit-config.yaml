@@ -1,10 +1,19 @@
 repos:
   - repo: local
     hooks:
+      - id: mobile-unit-tests
+        name: Mobile Unit Tests
+        description: 运行移动端全量单元测试，确保无回归
+        entry: bash -c 'cd mobile_app && npm test -- --silent'
+        language: system
+        pass_filenames: false
+        types: [typescript, javascript]
+        stages: [pre-commit]
+        always_run: true
       - id: no-test-code-in-production
         name: Check no test code in production
         description: 检查生产代码中是否包含测试专用逻辑
-        entry: python ../scripts/check_no_test_code.py
+        entry: python scripts/check_no_test_code.py
         language: system
         pass_filenames: false
         types: [python, typescript, javascript]
@@ -13,8 +22,9 @@ repos:
       - id: docs-alignment-check
         name: Check docs alignment
         description: 检查代码变更是否同步更新相关文档
-        entry: python ../scripts/check_docs_alignment.py
+        entry: python scripts/check_docs_alignment.py
         language: system
         pass_filenames: false
+        types: [python, typescript, javascript]
         stages: [pre-commit]
         always_run: true

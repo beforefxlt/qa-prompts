@@ -157,6 +157,26 @@ cd family_health_record_app/frontend
 npx playwright test
 ```
 
+### 使用 QA Pipeline 运行测试
+```bash
+# 全量测试
+python scripts/qa_pipeline.py --mode docker
+
+# 仅跑 E2E 核心链路
+python scripts/qa_pipeline.py --mode e2e --tags critical
+
+# 仅跑冒烟测试
+python scripts/qa_pipeline.py --mode e2e --tags smoke
+
+# 仅跑 UT
+python scripts/qa_pipeline.py --mode local --no-ut
+
+# 排除 UX 测试
+python scripts/qa_pipeline.py --mode e2e --exclude "ux"
+```
+
+详细说明参考 [`docs/QA_PIPELINE_GUIDE.md`](./docs/QA_PIPELINE_GUIDE.md)
+
 ### 健康检查
 ```bash
 # 检查后端

@@ -1,4 +1,5 @@
 // Jest setup file
+
 jest.mock('react-native', () => ({
   Platform: {
     OS: 'android',

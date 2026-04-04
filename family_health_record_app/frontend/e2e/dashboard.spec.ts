@@ -1,6 +1,6 @@
 import { test, expect, createTestMember } from './fixtures';
 
-test('首页 - 显示成员列表', async ({ page }) => {
+test('首页 - 显示成员列表 @smoke @regression', async ({ page }) => {
   // 创建成员
   await createTestMember({ name: 'E2E成员', gender: 'female', member_type: 'child' });
 
@@ -16,7 +16,7 @@ test('首页 - 显示成员列表', async ({ page }) => {
   await expect(page.getByRole('button', { name: /添加.*成员/ })).toBeVisible();
 });
 
-test('成员卡片 - 点击可进入详情', async ({ page }) => {
+test('成员卡片 - 点击可进入详情 @smoke @regression', async ({ page }) => {
   // 创建成员
   const memberData = await createTestMember({ name: '点击测试成员', gender: 'male', member_type: 'child' });
 

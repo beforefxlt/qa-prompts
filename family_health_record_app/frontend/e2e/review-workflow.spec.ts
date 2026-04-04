@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('审核页 - 页面标题和空状态', async ({ page }) => {
+test('审核页 - 页面标题和空状态 @smoke @regression', async ({ page }) => {
   await page.goto('/review');
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(500);
@@ -9,7 +9,7 @@ test('审核页 - 页面标题和空状态', async ({ page }) => {
   await expect(page.getByText('OCR 识别结果审核')).toBeVisible();
 });
 
-test('审核页 - 返回按钮可用', async ({ page }) => {
+test('审核页 - 返回按钮可用 @smoke @regression', async ({ page }) => {
   await page.goto('/review');
   await page.waitForLoadState('networkidle');
   

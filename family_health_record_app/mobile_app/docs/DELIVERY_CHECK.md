@@ -1,6 +1,7 @@
 # 移动端交付核验报告
 
 > 日期: 2026-04-04
+> 最后更新: 2026-04-04 v2.6.0 代码审查修复完成
 
 ## 核验结果
 
@@ -12,9 +13,12 @@
 | 文档对齐 | ✅ | check_docs_alignment.py PASS |
 | 生产代码 | ✅ | check_no_test_code.py PASS |
 | TypeScript | ✅ | expo export 成功 |
-| 后端 UT | ✅ | pytest 21 passed |
-| 移动端 UT | ✅ | 328 tests passed |
+| 后端 UT | ✅ | pytest 95+ passed |
+| 移动端 UT | ✅ | 351 tests passed (98.4% 覆盖) |
+| 全链路测试 | ✅ | 20 个场景（正常+异常+幂等+弱网+数据污染） |
 | Expo Build | ✅ | android bundle 生成成功 |
+| ESLint | ✅ | 含 custom/no-identical-ternary 规则 |
+| pre-commit | ✅ | mobile-unit-tests hook 已配置 |
 
 ## 交付清单
 
@@ -38,14 +42,16 @@ mobile_app/
 │   │       ├── list.tsx       # 审核列表
 │   │       └── [taskId].tsx   # 审核详情
 │   ├── api/                   # API 层
-│   ├── utils/                 # 工具函数
-│   └── __tests__/              # 328 个 UT
+│   ├── utils/                 # 工具函数（4 个新增纯函数）
+│   └── __tests__/              # 351 个 UT（含 20 个全链路场景）
 ├── docs/                       # 文档
+├── eslint.config.js            # 含自定义规则
 └── .github/workflows/ut.yml   # CI/CD
 ```
 
 ### CI/CD 配置
 - `.github/workflows/ut.yml` - UT 流水线
+- `.pre-commit-config.yaml` - 提交门禁（根目录）
 
 ## 结论
 

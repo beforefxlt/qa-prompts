@@ -56,4 +56,4 @@
 | 文档对齐 | ✅ | check_docs_alignment.py PASS |
 | 生产代码检查 | ✅ | check_no_test_code.py PASS |
 | TypeScript | ✅ | tsc --noEmit 0 errors |
-| UT | ✅ | 323 tests passed |
+| UT | ✅ | 351 tests passed (98.4% 覆盖) |

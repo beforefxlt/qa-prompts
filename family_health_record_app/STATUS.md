@@ -7,39 +7,56 @@
 
 ## 当前状态
 
-**整体进度**: ✅ 移动端 App 开发完成，10 页面 + 328 UT
+**整体进度**: ✅ 移动端 App 开发完成，代码审查修复完成，全链路测试完成
 
 | 模块 | 状态 | 说明 |
 |------|------|------|
 | 后端 API | ✅ 正常 | FastAPI 运行在端口 8000 |
-| 后端测试 | ✅ 正常 | 21 unit tests passed |
+| 后端测试 | ✅ 正常 | 95+ tests passed |
 | 前端页面 | ✅ 正常 | Next.js 运行在端口 3001 |
 | 移动端 App | ✅ 完成 | React Native + Expo, 10 页面 |
-| 移动端测试 | ✅ 完成 | 328 tests passed |
-| CI/CD | ✅ 完成 | GitHub Actions UT 流水线 |
+| 移动端测试 | ✅ 完成 | 351 tests passed (98.4% 语句覆盖) |
+| 全链路测试 | ✅ 完成 | 20 个场景（正常+异常+幂等+弱网+数据污染） |
+| E2E 测试 | ✅ 完成 | 8 个测试文件，含环境自检 |
+| CI/CD | ✅ 完成 | pre-commit hook + GitHub Actions |
+| QA Pipeline | ✅ 完成 | 支持 --tags/--spec/--exclude 筛选 |
+| ESLint | ✅ 完成 | 含自定义 no-identical-ternary 规则 |
 | 数据库 | ✅ 正常 | 已添加 file_hash 列 |
 
 ---
 
 ## 今日完成的工作
 
-### 1. 移动端 App 开发
-- **新增** React Native + Expo 项目 (`mobile_app/`)
-- **实现** 10 个页面：首页、成员 Dashboard、成员表单、编辑、趋势、审核列表、审核详情、记录详情、上传
-- **添加** 328 个单元测试（constants, models, client, business logic, API services, contract tests）
-- **添加** CI/CD 流水线 (`.github/workflows/ut.yml`)
+### 1. 移动端代码审查 — 9 个 Bug 修复
+- **BUG-044**: 审核页图片 URL 永远为空 → 提取 `resolveImageUrl()` 纯函数
+- **BUG-045**: deleteExamRecord URL 缺少 memberId → 修复路径
+- **BUG-046**: Dashboard 显示最旧值 → 提取 `getLatestValue()` 纯函数，4 处替换
+- **BUG-047**: 空状态判断逻辑错误 → 提取 `shouldShowEmptyState()` 纯函数
+- **BUG-048**: 趋势图 labels 缺失右眼日期 → 提取 `splitSeriesBySide()` 纯函数
+- **BUG-049**: MINIO_BASE_URL 硬编码 localhost → 改为 10.0.2.2
+- **BUG-050**: calculateComparison 无序数据 → 使用 sorted.filter()
+- **BUG-051**: screenWidth 不响应旋转 → 改用 useWindowDimensions()
+- **BUG-052**: URL 参数不同步 → 添加 router.replace()
 
-### 2. Bug 修复 (BUG-043)
-- **移动端** 修复 `TrendSeries` 缺少 `growth_rate` 字段
-- **移动端** 修复 `deleteExamRecord` API 路径错误
-- **后端** 修复 `DocumentUploadResponse` 缺少字段
+### 2. 测试体系建设
+- **新增 53 个测试用例**：27 个回归 + 20 个全链路 + 6 个已有文件更新
+- **新增全链路测试文件** `full-pipeline.test.ts`（20 个场景）
+- **新增后端集成测试** `test_full_pipeline.py`（2 个场景，使用真实 01.jpg）
+- **新增 E2E 测试** `upload-to-dashboard.spec.ts`（含环境自检）
+- **测试覆盖率**: 98.4% 语句 / 96.3% 分支 / 95.7% 函数
 
-### 3. 文档更新
-- **新增** `MOBILE_UI_SPEC.md` - 移动端 UI 规格
-- **新增** `MOBILE_API_CONTRACT.md` - 移动端 API 对接说明
-- **新增** `MOBILE_TECH_DECISION.md` - 技术选型决策
-- **更新** `API_CONTRACT.md` - 添加重复上传响应示例
-- **更新** `BUG_LOG.md` - 添加 BUG-043 记录
+### 3. 自动化门禁建设
+- **ESLint 自定义规则** `custom/no-identical-ternary` 拦截 `x ? a : a` 模式
+- **pre-commit hook** 新增 `mobile-unit-tests`（全量 281 UT，~4.5s）
+- **AGENTS.md 负向提示词** 新增 7 条（NP-01 ~ NP-07）
+- **E2E 环境自检** `fetch('/health')` 不通则自动 skip
+
+### 4. 文档对齐
+- **更新** BUG_LOG.md — 新增 BUG-044 ~ BUG-053 记录
+- **更新** AGENTS.md — 新增 7 条负向提示词
+- **更新** .pre-commit-config.yaml — 新增移动端 UT hook
+- **更新** eslint.config.js — 新增自定义规则
+- **新增** retrospective 文档 `docs/retrospective/2026-04-04-android-client-testing.md`
 
 ---
 
@@ -61,7 +78,11 @@
 
 ### P1 中优先级
 1. 完善前端展示（如果有 growth 数据，显示趋势卡片）
-2. 添加前端 UT 测试
+2. 组件测试（React Native Testing Library）- 因环境冲突暂跳过
+
+### P2 低优先级
+1. 并发上传去重（内网场景暂不处理，已标记 skip）
+2. E2E 测试环境稳定性优化
 
 ---
 

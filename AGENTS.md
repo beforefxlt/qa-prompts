@@ -142,3 +142,39 @@
 - 当用户提出复杂的连串需求时，Agent **不得自行凭空长对话（防止幻觉）**，而应强制引导用户使用或自动触发对应的 **Workflow 流水线**。
 - 在执行复杂推理时，必须严格遵循**上下文净化原则（Context Sanitization）**，将阶段性推理结果物理存入 `/tmp/`，阻断历史聊天记录的干扰。
 - **[强制] 技能版本化原则 (Skill Versioning)**：在创建或修改任何 `SKILL.md` 时，必须在其顶部的 YAML Metadata 区块中同步维护语义化版本号（`version: vX.Y.Z`）及最后更新日期（`last_updated: YYYY-MM-DD`），确保测试资产演进的可追溯性。
+
+---
+
+## 🚫 负向提示词 (Negative Prompts — 2026-04-04 Retrospective)
+
+> 以下规则来自真实 Bug 教训。已自动化的规则只保留引用，无法自动化的行为规则保留详细说明。
+
+### NP-01: 禁止三元表达式两分支相同 (ESLint 已自动拦截)
+- ESLint `custom/no-identical-ternary` 规则会自动拦截 `x ? a : a` 模式
+- 来源：BUG-044
+
+### NP-02: 禁止直接索引访问时间序列数据
+- 时间序列 `series[0]` = 最旧值，不是最新值。必须使用 `utils/index.ts` 中的 `getLatestValue(series)`
+- 来源：BUG-046
+
+### NP-03: 编写集成测试前必须确认 API 契约
+- **禁止**凭记忆或推测编写 API 响应断言
+- **正确做法**：先读取对应的 schema 文件（`app/schemas/*.py` 或 `src/api/models/*.ts`），或运行 `curl` 查看真实响应
+- 来源：test_full_pipeline.py 写了 3 轮才跑通
+
+### NP-04: 修复 Bug 后必须跑全量测试 (pre-commit 已自动拦截)
+- `.pre-commit-config.yaml` 已配置 `npm test` / `pytest` 全量运行
+- Agent 不得依赖 hook 代替自查，修改后必须先手动确认通过
+- 来源：BUG-043/BUG-022
+
+### NP-05: 禁止硬编码环境相关常量
+- `constants/` 中禁止出现 `localhost`、固定端口。开发环境使用 `10.0.2.2`（Android 模拟器地址）
+- 来源：BUG-049
+
+### NP-06: 时间序列数据必须排序后取最新
+- 禁止对未排序的 `series` 直接取 `series[length - 1]`。必须先按日期排序再取值
+- 来源：BUG-050
+
+### NP-07: E2E 测试必须包含环境自检
+- 测试开头 `fetch('/health')`，不通则 `test.skip()`，不可直接报错
+- 来源：upload-to-dashboard.spec.ts 因 ECONNREFUSED 全部失败

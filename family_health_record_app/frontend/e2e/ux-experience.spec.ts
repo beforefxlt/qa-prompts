@@ -1,16 +1,16 @@
 import { test, expect, createTestMember, cleanDatabase, UI_TEXT } from './fixtures';
 
 /**
- * P5 用户体验测试
+ * P5 用户体验测试 @regression
  * 验证空状态引导、错误提示、图表可读性等用户体验指标
  */
 
-test.describe.serial('P5 空状态测试', () => {
+test.describe.serial('P5 空状态测试 @regression', () => {
   test.beforeAll(async () => {
     await cleanDatabase();
   });
 
-  test('TC-P5-001: 空状态引导文案清晰可读', async ({ page }) => {
+  test('TC-P5-001: 空状态引导文案清晰可读 @regression', async ({ page }) => {
     await page.goto('/');
     await page.waitForTimeout(2000);
     
@@ -22,7 +22,7 @@ test.describe.serial('P5 空状态测试', () => {
     await expect(actionButton).toBeEnabled();
   });
 
-  test('TC-P5-002: 成员创建表单字段标签清晰', async ({ page }) => {
+  test('TC-P5-002: 成员创建表单字段标签清晰 @regression', async ({ page }) => {
     await page.goto('/members/new');
     await page.waitForTimeout(1500);
     
@@ -42,7 +42,7 @@ test.describe.serial('P5 空状态测试', () => {
   });
 });
 
-test('TC-P5-011: 错误提示友好可读', async ({ page }) => {
+test('TC-P5-011: 错误提示友好可读 @regression', async ({ page }) => {
   await page.route('**/api/v1/members', route => route.fulfill({
     status: 500,
     contentType: 'application/json',
@@ -56,14 +56,14 @@ test('TC-P5-011: 错误提示友好可读', async ({ page }) => {
   await expect(page.getByRole('button', { name: UI_TEXT.ERROR_RETRY })).toBeVisible();
 });
 
-test('TC-P5-020: 审核页布局清晰', async ({ page }) => {
+test('TC-P5-020: 审核页布局清晰 @regression', async ({ page }) => {
   await page.goto('/review');
   await page.waitForTimeout(1000);
   
   await expect(page.getByText(UI_TEXT.REVIEW_TITLE)).toBeVisible();
 });
 
-test('TC-P5-024: 成员卡片信息完整', async ({ page }) => {
+test('TC-P5-024: 成员卡片信息完整 @regression', async ({ page }) => {
   await createTestMember({ name: '卡片测试成员' });
   
   await page.goto('/');

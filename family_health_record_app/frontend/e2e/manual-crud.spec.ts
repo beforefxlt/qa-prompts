@@ -1,11 +1,11 @@
 import { test, expect, createTestMember, cleanDatabase, UI_TEXT } from './fixtures';
 
 /**
- * 手动录入与 CRUD 功能测试 (技术债清理回归版)
+ * 手动录入与 CRUD 功能测试 (技术债清理回归版) @critical @regression
  * 100% 依赖 data-testid 和 UI_TEXT 常量，确保跨环境测试稳定性
  */
 
-test.describe.serial('手动录入与 CRUD 功能测试', () => {
+test.describe.serial('手动录入与 CRUD 功能测试 @critical @regression', () => {
   let member: any;
 
   test.beforeAll(async () => {
@@ -13,7 +13,7 @@ test.describe.serial('手动录入与 CRUD 功能测试', () => {
     member = await createTestMember({ name: 'E2E测试员' });
   });
 
-  test('TC-CRUD-001: 全流程手动录入验证', async ({ page }) => {
+  test('TC-CRUD-001: 全流程手动录入验证 @critical @regression', async ({ page }) => {
     await page.goto(`/members/${member.id}`);
     
     // 1. 等待详情页渲染
@@ -36,7 +36,7 @@ test.describe.serial('手动录入与 CRUD 功能测试', () => {
     await expect(page.getByText('125.5')).toBeVisible({ timeout: 10000 });
   });
 
-  test('TC-CRUD-002: 指标修正 (Update) 验证', async ({ page }) => {
+  test('TC-CRUD-002: 指标修正 (Update) 验证 @critical @regression', async ({ page }) => {
     // 进入趋势页
     await page.goto(`/members/${member.id}/trends?metric=height`);
     
@@ -62,7 +62,7 @@ test.describe.serial('手动录入与 CRUD 功能测试', () => {
     await expect(page.getByText('127.0')).toBeVisible();
   });
 
-  test('TC-CRUD-003: 记录物理删除 (Delete) 验证', async ({ page }) => {
+  test('TC-CRUD-003: 记录物理删除 (Delete) 验证 @critical @regression', async ({ page }) => {
     await page.goto(`/members/${member.id}/trends?metric=height`);
     await expect(page.getByText('127.0')).toBeVisible();
     
@@ -77,7 +77,7 @@ test.describe.serial('手动录入与 CRUD 功能测试', () => {
     await expect(page.getByText('127.0')).not.toBeVisible();
   });
 
-  test('TC-CRUD-004: 业务合理性拦截验证 (Negative)', async ({ page }) => {
+  test('TC-CRUD-004: 业务合理性拦截验证 (Negative) @critical @regression', async ({ page }) => {
     await page.goto(`/members/${member.id}`);
     await page.getByTestId('fab-trigger').click();
     await page.getByTestId('fab-manual').click();
