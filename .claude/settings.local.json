@@ -3,7 +3,20 @@
     "allow": [
       "Bash(python -m pytest tests/ -v --ignore=tests/test_golden_set.py)",
       "Bash(python -m pytest tests/test_api_smoke.py tests/test_api_contract.py tests/test_db_models.py tests/test_rule_engine.py tests/test_image_processor.py tests/test_state_machine_boundaries.py -v)",
-      "Python *"
+      "Python *",
+      "Bash(uvicorn app.main:app --port 8000)",
+      "Bash(npm run:*)",
+      "Bash(npx playwright:*)",
+      "Bash(fuser -k 8000/tcp)",
+      "Bash(taskkill /F /IM python.exe /T)",
+      "Bash(python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload)",
+      "Bash(netstat -ano)",
+      "Bash(xargs -r taskkill //F //PID)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(python family_health_record_app/scripts/build_docker.py --frontend)",
+      "Bash(docker compose:*)"
     ]
   }
 }

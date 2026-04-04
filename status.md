@@ -1,19 +1,42 @@
-# 🚀 Family Health Record App - 测试架构攻坚状态 (v1.3.1)
+# 任务交付状态报告 (Status Report)
 
-## 📌 当前核心成就
-- **后端全绿**：`Pytest` 89 项用例全部通过。
-- **驱动修复**：解决了异步 `FastAPI` 与同步 `sqlite` 驱动冲突（已换成 `sqlite+aiosqlite`）。
-- **Pipeline 工业化**：`qa_pipeline.py` 现在支持：
-    - 精准杀灭占用 8000 端口的残留进程（防自杀逻辑）。
-    - 物理删除 `e2e_test.db` 和 `uploads/`。
-    - 后端服务 **HTTP 存活探测**（轮询 `/api/v1/health` 直到就绪），解决了打测试包时的 `ECONNREFUSED`。
-- **E2E 免疫脏数据**：`member-management.spec.ts` 引入 `Date.now()` 随机姓名后缀和 `.first()` 选择器，彻底解决了反复运行产生的重复元素匹配报错（4 elements found）。
+## 当前工作区状态 (Active Workspaces)
 
-## ⚠️ 遗留风险与下一步 (换电脑后关注)
-1. **测试覆盖率缺口**：`traceability.yaml` 中标记了 136 条用例，目前自动化覆盖仅 14 条。后续需按 P1->P5 优先级补齐。
-2. **前端 Hydration 速度**：在某些性能较弱的机器上，Vite 的 `networkidle` 等待可能不够，建议保留脚本中的 `waitForTimeout(2000)`，直到 UI 动画完全静止。
-3. **环境变量**：确保新电脑环境已安装 `aiosqlite` (`pip install aiosqlite`)，否则后端无法启动。
+### 1. 主工作区 `qa-prompts` (分支: `feature-manual-entry`)
+- **已完成项**:
+    - **后端**: 修复了 `MemberProfile` 创建时缺失 `db.commit()` 的严重 Bug（导致数据无法持久化）。
+    - **后端**: 引入了 `check_metric_sanity` 业务合理性校验（身高/体重/眼轴合理区间拦截）。
+    - **前端**: 完成了 `ManualEntryOverlay` 和 `EditObservationOverlay` 的重构，支持指标 CRUD。
+    - **前端**: 实现了 `UI_TEXT` 全量文案集中管理（技术债清理完毕）。
+    - **测试**: 编写并执行了 `manual-crud.spec.ts` (Playwright E2E)，验证了增删改查及 422 报错拦截。
+- **状态**: 功能闭环，已自测通过。
 
-## 🛠️ 操作指引
-- **运行全量审计与测试**： `python family_health_record_app/scripts/qa_pipeline.py`
-- **契约同步**： `python family_health_record_app/scripts/sync_traceability.py`
+### 2. UI 重构工作区 `qa-prompts-ui-reorder` (物理隔离 Worktree, 分支: `feature-ui-reorder-wt`)
+- **已完成项**:
+    - **布局重构**: 在 `Dashboard/page.tsx` 中实现了 Header 右上角指标展示（HT/WT）。
+    - **布局重构**: 将“眼轴看板”调整为全宽展示，强化视觉中心。
+    - **布局重构**: 将“生长速度预警”平移至页面最底部，并重构为通栏横向卡片样式。
+- **待处理 (Pending)**:
+    - `ui-text.ts` 中尚未补全 `LABEL_HEIGHT_SHORT` (HT) 和 `LABEL_WEIGHT_SHORT` (WT) 的显式引用（之前修改被取消）。
+    - 尚未对新布局进行全量 E2E 回归测试。
+
+## 交接指南 (Next Actions for New Agent)
+
+1. **切入 UI 隔离区**:
+   ```bash
+   cd c:\Users\Administrator\qa-prompts-ui-reorder
+   ```
+2. **补全常量**:
+   在 `frontend/src/constants/ui-text.ts` 中增加：
+   ```typescript
+   LABEL_HEIGHT_SHORT: 'HT',
+   LABEL_WEIGHT_SHORT: 'WT',
+   ```
+3. **验证布局**:
+   启动前端预览，确保右上角指标在数据为空时显示为 `N/A` 或优雅降级。
+4. **回归测试**:
+   由于 DOM 结构发生了较大重排，需要更新并运行 `manual-crud.spec.ts` 以确保选择器依然有效。
+
+---
+*交付 Agent: Antigravity*
+*提交日期: 2026-04-03*
