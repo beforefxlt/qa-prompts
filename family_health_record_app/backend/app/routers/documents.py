@@ -190,7 +190,12 @@ async def upload_document(
     )
     db.add(document)
     await db.flush()
-    return DocumentUploadResponse(document_id=str(document.id), status=document.status)
+    return DocumentUploadResponse(
+        document_id=str(document.id),
+        status=document.status,
+        file_url=file_url,
+        desensitized_url=desensitized_url,
+    )
 
 
 @router.get("/{document_id}", response_model=DocumentResponse)

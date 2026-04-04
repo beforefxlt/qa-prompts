@@ -1,47 +1,45 @@
 # 项目状态文档 (STATUS.md)
 
 > **单一真相源**：每个 Agent 开始工作前必须读取，结束时必须更新。
-> **最后更新**: 2026-04-03 by Antigravity
+> **最后更新**: 2026-04-04 by Antigravity
 
 ---
 
 ## 当前状态
 
-**整体进度**: ✅ 增长率计算逻辑修复完成，前后端数据一致
+**整体进度**: ✅ 移动端 App 开发完成，10 页面 + 328 UT
 
 | 模块 | 状态 | 说明 |
 |------|------|------|
 | 后端 API | ✅ 正常 | FastAPI 运行在端口 8000 |
-| 后端测试 | ⚠️ 需更新 | 需添加 growth_rate 和 comparison 的 UT |
+| 后端测试 | ✅ 正常 | 21 unit tests passed |
 | 前端页面 | ✅ 正常 | Next.js 运行在端口 3001 |
-| Docker 部署 | ✅ 完成 | 预构建镜像，无 volume 挂载 |
+| 移动端 App | ✅ 完成 | React Native + Expo, 10 页面 |
+| 移动端测试 | ✅ 完成 | 328 tests passed |
+| CI/CD | ✅ 完成 | GitHub Actions UT 流水线 |
 | 数据库 | ✅ 正常 | 已添加 file_hash 列 |
 
 ---
 
-## 今日修复的问题
+## 今日完成的工作
 
-### 1. 数据库 schema 缺失
-- **问题**: `document_records` 表缺少 `file_hash` 列
-- **修复**: 添加了 `file_hash VARCHAR(64)` 列
-- **影响**: 重复上传检测功能
+### 1. 移动端 App 开发
+- **新增** React Native + Expo 项目 (`mobile_app/`)
+- **实现** 10 个页面：首页、成员 Dashboard、成员表单、编辑、趋势、审核列表、审核详情、记录详情、上传
+- **添加** 328 个单元测试（constants, models, client, business logic, API services, contract tests）
+- **添加** CI/CD 流水线 (`.github/workflows/ut.yml`)
 
-### 2. 智能提取失败（网络问题）
-- **问题**: 前端报错"网络连接失败，请确认后端 API 是否在 8000 端口运行"
-- **根因**: CORS 配置正确但之前前端 Docker 镜像未更新
-- **修复**: 重新构建前端镜像（build_docker.py）
+### 2. Bug 修复 (BUG-043)
+- **移动端** 修复 `TrendSeries` 缺少 `growth_rate` 字段
+- **移动端** 修复 `deleteExamRecord` API 路径错误
+- **后端** 修复 `DocumentUploadResponse` 缺少字段
 
-### 3. 预计年增长硬编码（BUG）
-- **问题**: 前端显示 +0.22 mm/year 是硬编码默认值，数据不足时仍显示
-- **修复**: 
-  - 后端 `vision-dashboard` API 添加 `growth_rate` 计算逻辑
-  - 后端 `growth-dashboard` API 添加 `growth_rate` 计算逻辑
-  - 前端移除硬编码，显示实际值或 "N/A"
-
-### 4. 文档更新
-- **ARCHITECTURE.md**: 更新计算与分析边界说明
-- **DATABASE_SCHEMA.md**: 升级到 v1.2.0
-- **README.md**: 添加部署脚本路径说明
+### 3. 文档更新
+- **新增** `MOBILE_UI_SPEC.md` - 移动端 UI 规格
+- **新增** `MOBILE_API_CONTRACT.md` - 移动端 API 对接说明
+- **新增** `MOBILE_TECH_DECISION.md` - 技术选型决策
+- **更新** `API_CONTRACT.md` - 添加重复上传响应示例
+- **更新** `BUG_LOG.md` - 添加 BUG-043 记录
 
 ---
 

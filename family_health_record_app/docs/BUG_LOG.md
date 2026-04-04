@@ -451,3 +451,139 @@
   6. **前端重写** `ManualEntryOverlay.tsx` — 眼轴/视力改为左右眼并排输入框，非眼部指标保持单输入
 - **验证状态**: ✅ 后端 128 passed (新增 3 个 UT)，前端 TypeScript 编译通过
 - **UT 覆盖**: ✅ `test_vision_dashboard_returns_vision_acuity_comparison` + `test_vision_dashboard_comparison_same_date_no_comparison` + `test_vision_dashboard_acuity_string_value_comparison`
+
+---
+
+## 📅 v2.5.0 移动端与契约对齐期记录 (2026-04-04)
+
+### [BUG-043] 移动端 API 契约与后端不一致
+- **现象**:
+  1. 移动端 `TrendSeries` 接口缺少 `growth_rate` 字段
+  2. `deleteExamRecord` API 路径错误 (`/members/{memberId}/exam-records/{recordId}` vs `/exam-records/{recordId}`)
+  3. `DocumentUploadResponse` 缺少 `message`、`file_url`、`desensitized_url` 字段
+- **根由**:
+  1. 移动端开发者复制 API_CONTRACT.md 时遗漏字段
+  2. 移动端服务层自行设计了错误的路径
+  3. 后端 Schema 定义不完整
+- **修复**:
+  1. **移动端** `src/api/models/index.ts` — 为 `TrendSeries` 增加 `growth_rate` 字段
+  2. **移动端** `src/api/services/index.ts` — 修改 `deleteExamRecord` 路径为 `/exam-records/${recordId}`
+  3. **后端** `app/schemas/document.py` — 为 `DocumentUploadResponse` 增加 `message`、`file_url`、`desensitized_url` 字段
+  4. **文档** 更新 `API_CONTRACT.md` 和 `MOBILE_API_CONTRACT.md` 响应体示例
+- **验证状态**: ✅ 后端 21 passed，移动端 328 passed，Expo build 成功
+- **UT 覆盖**: ✅ 修复后测试全部通过
+
+---
+
+## 📅 v2.6.0 移动端代码审查修复期记录 (2026-04-04)
+
+### [BUG-044] 审核页图片 URL 永远为空字符串
+- **现象**: 审核页 `review/[taskId].tsx` 中图片永远无法加载，`Image` 组件 `source.uri` 始终为空
+- **根由**: 
+  1. `review/[taskId].tsx:110` 使用 `transformMinioUrl(task.ocr_result.observations[0].confidence ? '' : '')`
+  2. 三元表达式两个分支都返回 `''`，无论 `confidence` 是什么值
+  3. 应该使用 `document_id` 或 `file_url` 构造图片 URL
+- **修复**: 
+  1. `utils/index.ts` 新增 `resolveImageUrl(fileUrl, documentId, minioBaseUrl)` 纯函数
+  2. 组件中替换为 `resolveImageUrl(task.ocr_result.observations[0].file_url, task.document_id, API_CONFIG.MINIO_BASE_URL)`
+- **验证状态**: ✅ 移动端 345 passed
+- **UT 覆盖**: ✅ 5 个回归用例（`business-logic.test.ts` — `resolveImageUrl` 各种场景）
+
+### [BUG-045] deleteExamRecord API 路径缺少 memberId（BUG-043 修复不完整）
+- **现象**: `examService.deleteExamRecord('mem-1', 'rec-1')` 调用 URL 为 `/exam-records/rec-1`，缺少成员路径前缀
+- **根由**: 
+  1. BUG-043 修复时将路径改为 `/exam-records/${recordId}`，但正确路径应为 `/members/${memberId}/exam-records/${recordId}`
+  2. 函数接收了 `memberId` 参数但未在 URL 中使用
+- **修复**: 
+  1. `api/services/index.ts:127` 路径改为 `/members/${memberId}/exam-records/${recordId}`
+- **验证状态**: ✅ 移动端 345 passed
+- **UT 覆盖**: ✅ 1 个回归用例（`api-service.test.ts` — 验证 URL 包含 memberId）
+
+### [BUG-046] Dashboard 指标卡片显示最旧值而非最新值
+- **现象**: 成员 Dashboard 页面中眼轴/视力/身高/体重卡片显示的数值是时间序列中最旧的值
+- **根由**: 
+  1. 组件内定义了 `getLatestValue` 函数但从未使用
+  2. 4 处指标值全部使用 `series?.[0]?.value`（数组第一个 = 最旧值）
+  3. 正确做法应取排序后最后一个元素
+- **修复**: 
+  1. `utils/index.ts` 新增 `getLatestValue(series)` 纯函数（排序后取最后一个）
+  2. 删除组件内重复定义，4 处 `series?.[0]` 全部替换为 `getLatestValue(series)`
+- **验证状态**: ✅ 移动端 345 passed
+- **UT 覆盖**: ✅ 4 个回归用例（`business-logic.test.ts` — 无序数据验证、与 series[0] 对比）
+
+### [BUG-047] Dashboard 空状态判断逻辑错误
+- **现象**: 
+  1. 儿童有 growthData 但无 visionData 时错误显示"暂无指标数据"
+  2. 成人有 visionData 时也错误显示空状态
+- **根由**: 
+  1. 条件 `(!isChild || !visionData) && !member.pending_review_count` 逻辑有缺陷
+  2. `!isChild` 为 true 时（成人），即使有数据也会进入空状态分支
+  3. 儿童有 growthData 但无 visionData 时 `!visionData` 为 true 也会进入空状态
+- **修复**: 
+  1. `utils/index.ts` 新增 `shouldShowEmptyState(isChild, hasVisionData, hasGrowthData, pendingReviewCount)` 纯函数
+  2. 组件中替换为 `shouldShowEmptyState(isChild, !!(visionData?.axial_length?.series?.length || ...), !!(growthData?.height?.series?.length || ...), member.pending_review_count)`
+- **验证状态**: ✅ 移动端 345 passed
+- **UT 覆盖**: ✅ 7 个回归用例（`business-logic.test.ts` — 所有 isChild/hasData/pending 组合）
+
+### [BUG-048] 趋势图 labels 只从 leftData 取，缺失右眼日期
+- **现象**: 当左右眼检查日期不完全一致时，趋势图 X 轴标签缺失右眼独有的日期
+- **根由**: 
+  1. `trends.tsx:45` `const labels = leftData.map(s => s.date.slice(5))` 只从 leftData 取日期
+  2. 右眼有但左眼没有的日期不会出现在 labels 中
+- **修复**: 
+  1. `utils/index.ts` 新增 `splitSeriesBySide(series)` 纯函数，返回 `{ leftData, rightData, labels }`，labels 为所有日期的并集并排序
+  2. 组件中 `formatChartData` 改用 `splitSeriesBySide` 返回值
+- **验证状态**: ✅ 移动端 345 passed
+- **UT 覆盖**: ✅ 5 个回归用例（`business-logic.test.ts` — 无 side 归属、日期不一致、纯左/纯右眼）
+
+### [BUG-049] MINIO_BASE_URL 硬编码 localhost
+- **现象**: `constants/api.ts` 中 `MINIO_BASE_URL: 'http://localhost:9000/health-records/'`，真机/模拟器无法访问
+- **根由**: 开发环境使用 localhost，但 Android 模拟器需要通过 `10.0.2.2` 访问宿主机
+- **修复**: 
+  1. `constants/api.ts:5` 改为 `'http://10.0.2.2:9000/health-records/'`
+  2. 同步更新 `client.test.ts` 和 `client-edge.test.ts` 中硬编码的 localhost 断言，改为引用 `API_CONFIG.MINIO_BASE_URL`
+- **验证状态**: ✅ 移动端 345 passed
+- **UT 覆盖**: ✅ 2 个回归用例（`constants.test.ts` — 不包含 localhost、使用 10.0.2.2）
+
+### [BUG-050] calculateComparison 混合侧数据未排序后取最新
+- **现象**: 当左右眼数据混合且输入顺序无序时，双眼对比返回错误的 current/previous 值
+- **根由**: 
+  1. `utils/index.ts:110-111` 使用 `series.filter()` 而非 `sorted.filter()`
+  2. `leftSeries[leftSeries.length - 1]` 取的是原始数组中最后一个 left 元素，不一定是日期最新的
+- **修复**: 
+  1. `utils/index.ts:110-111` 改为 `sorted.filter(s => s.side === 'left')` 和 `sorted.filter(s => s.side === 'right')`
+- **验证状态**: ✅ 移动端 345 passed
+- **UT 覆盖**: ✅ 3 个回归用例（`business-logic.test.ts` — 无序单维度、无序双眼、混合侧不同日期）
+
+### [BUG-051] 趋势图 screenWidth 不响应屏幕旋转
+- **现象**: 用户旋转设备后，趋势图宽度不会自适应
+- **根由**: `trends.tsx:37` 使用 `Dimensions.get('window').width` 在每次渲染时重新计算，不监听窗口变化
+- **修复**: 
+  1. 移除 `Dimensions` import，改用 `useWindowDimensions()` hook
+  2. `const { width: windowWidth } = useWindowDimensions()` 自动响应窗口尺寸变化
+- **验证状态**: ✅ 手动验证（依赖 React Native hook，不适合 UT）
+- **UT 覆盖**: ❌ 不适用（React Native hook 依赖）
+
+### [BUG-052] 趋势图 metric/range 切换不同步到 URL
+- **现象**: 用户在趋势图页面切换指标或时间范围后，URL 参数不更新，刷新页面会回到初始值
+- **根由**: 
+  1. `currentMetric`/`currentRange` 初始值来自 URL 参数
+  2. 用户通过 UI 切换时只更新本地 state，未调用 `router.replace()` 同步回 URL
+- **修复**: 
+  1. metric 切换 `onPress` 中增加 `router.replace(\`/member/${id}/trends?metric=${m}&range=${currentRange}\`)`
+  2. range 切换 `onPress` 中增加 `router.replace(\`/member/${id}/trends?metric=${currentMetric}&range=${r}\`)`
+- **验证状态**: ✅ 手动验证（依赖 Expo Router hook，不适合 UT）
+- **UT 覆盖**: ❌ 不适用（Expo Router hook 依赖）
+
+---
+
+## 📊 v2.6.0 修复统计
+
+| 指标 | 数值 |
+|------|------|
+| 修复 Bug 数 | 9 个 |
+| 新增 UT 用例 | 27 个 |
+| 新增工具函数 | 4 个（`resolveImageUrl`, `getLatestValue`, `shouldShowEmptyState`, `splitSeriesBySide`）|
+| 修改文件 | 11 个 |
+| 测试通过率 | 345/345 (100%) |
+| 无 UT 覆盖 | 2 个（BUG-051/052，依赖 RN/Expo hook） |

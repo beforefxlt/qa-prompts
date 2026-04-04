@@ -7,6 +7,9 @@ from datetime import datetime
 class DocumentUploadResponse(BaseModel):
     document_id: str
     status: str
+    message: Optional[str] = None
+    file_url: Optional[str] = None
+    desensitized_url: Optional[str] = None
 
 
 class DocumentResponse(BaseModel):

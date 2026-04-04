@@ -1,0 +1,20 @@
+repos:
+  - repo: local
+    hooks:
+      - id: check-no-test-code
+        name: Check no test code in production
+        description: 检查生产代码中是否包含测试专用逻辑
+        entry: python family_health_record_app/scripts/check_no_test_code.py
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        always_run: true
+        
+      - id: check-docs-alignment
+        name: Check docs alignment
+        description: 检查代码变更是否同步更新相关文档
+        entry: python family_health_record_app/scripts/check_docs_alignment.py
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        always_run: true
