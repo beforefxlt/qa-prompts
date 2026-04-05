@@ -52,6 +52,7 @@ tmp/
 
 # 测试结果
 **/test-results/
+**/test-results/.*
 
 # Docker 镜像
 **/*.tar
