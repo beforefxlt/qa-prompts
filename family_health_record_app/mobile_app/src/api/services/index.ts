@@ -9,6 +9,7 @@ import type {
   TrendSeries,
   VisionDashboard,
   GrowthDashboard,
+  BloodDashboard,
   ExamRecord,
   RevisedItem
 } from '../models';
@@ -105,6 +106,9 @@ export const trendService = {
 
   getGrowthDashboard: (memberId: string, range: string = '3m') =>
     apiRequest<GrowthDashboard>(`/members/${memberId}/growth-dashboard?range=${range}`),
+
+  getBloodDashboard: (memberId: string, range: string = '3m') =>
+    apiRequest<BloodDashboard>(`/members/${memberId}/blood-dashboard?range=${range}`),
 };
 
 export const examService = {

@@ -150,5 +150,7 @@ export const apiClient = {
 
   getGrowthDashboard: (memberId: string) => safeFetch(`${API_BASE_URL}/members/${memberId}/growth-dashboard`),
 
+  getBloodDashboard: (memberId: string) => safeFetch(`${API_BASE_URL}/members/${memberId}/blood-dashboard`),
+
   getExamRecord: (recordId: string) => safeFetch(`${API_BASE_URL}/documents/records/${recordId}`),
 };

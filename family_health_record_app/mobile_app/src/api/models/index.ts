@@ -125,6 +125,18 @@ export interface GrowthDashboard {
   weight: MetricData;
 }
 
+export interface BloodDashboard {
+  member_id: string;
+  member_type: string;
+  glucose: MetricData;
+  tc: MetricData;
+  tg: MetricData;
+  hdl: MetricData;
+  ldl: MetricData;
+  hemoglobin: MetricData;
+  hba1c: MetricData;
+}
+
 export interface Observation {
   id: string;
   exam_record_id: string;

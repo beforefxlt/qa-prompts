@@ -22,6 +22,7 @@ export default function MemberDashboard() {
   const [member, setMember] = useState<any>(null);
   const [visionData, setVisionData] = useState<any>(null);
   const [growthData, setGrowthData] = useState<any>(null);
+  const [bloodData, setBloodData] = useState<any>(null);
   const [pendingTasks, setPendingTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
@@ -39,15 +40,17 @@ export default function MemberDashboard() {
   const loadAllData = async () => {
     setLoading(true);
     try {
-      const [m, v, g, t] = await Promise.all([
+      const [m, v, g, b, t] = await Promise.all([
         apiClient.getMember(id as string),
         apiClient.getVisionDashboard(id as string),
         apiClient.getGrowthDashboard(id as string),
+        apiClient.getBloodDashboard(id as string),
         apiClient.getReviewTasks()
       ]);
       setMember(m);
       setVisionData(v);
       setGrowthData(g);
+      setBloodData(b);
       // 仅显示该成员的待审核项
       setPendingTasks((t || []).filter((task: any) => task.member_id === id));
     } catch (err) {
@@ -264,6 +267,127 @@ export default function MemberDashboard() {
             {growthData?.height?.series?.length === 0 && growthData?.weight?.series?.length === 0 && (
               <div className="col-span-full glass-card rounded-[32px] p-12 text-center">
                 <p className="text-slate-400 italic">暂无指标数据，请上传检查单</p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 成人/老人专属：指标趋势看板 */}
+      {(member?.member_type === 'adult' || member?.member_type === 'senior') && (
+        <section className="space-y-6">
+          <div className="flex items-center justify-between px-2">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <TrendingUp size={20} className="text-green-500" /> 健康指标趋势
+            </h2>
+            <button 
+              onClick={() => router.push(`/members/${id}/trends?metric=height`)}
+              className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:bg-blue-50 px-3 py-1.5 rounded-full transition-all"
+            >
+              详细趋势 <ArrowUpRight size={14} />
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {growthData?.height?.series?.length > 0 && (
+              <div className="glass-card rounded-[32px] p-6 hover:shadow-xl transition-all space-y-4">
+                <TrendChart data={transformSeries(growthData.height.series)} metric="height" height={180} />
+                {growthData?.height?.comparison && (
+                  <div className="pt-4 border-t border-slate-200">
+                    <p className="text-xs font-bold text-slate-500 mb-3">最近两次检查对比</p>
+                    <div className="flex justify-between items-center">
+                      <div><p className="text-xs text-slate-400">当前</p><p className="text-lg font-bold text-slate-800">{growthData.height.comparison.current?.toFixed(1)}cm</p></div>
+                      <div><p className="text-xs text-slate-400">上次</p><p className="text-lg font-bold text-slate-600">{growthData.height.comparison.previous?.toFixed(1)}cm</p></div>
+                      <div><p className="text-xs text-slate-400">差值</p><p className={`text-lg font-bold ${growthData.height.comparison.delta >= 0 ? 'text-green-500' : 'text-red-500'}`}>{growthData.height.comparison.delta >= 0 ? '+' : ''}{growthData.height.comparison.delta?.toFixed(2)}cm</p></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {growthData?.weight?.series?.length > 0 && (
+              <div className="glass-card rounded-[32px] p-6 hover:shadow-xl transition-all space-y-4">
+                <TrendChart data={transformSeries(growthData.weight.series)} metric="weight" height={180} />
+                {growthData?.weight?.comparison && (
+                  <div className="pt-4 border-t border-slate-200">
+                    <p className="text-xs font-bold text-slate-500 mb-3">最近两次检查对比</p>
+                    <div className="flex justify-between items-center">
+                      <div><p className="text-xs text-slate-400">当前</p><p className="text-lg font-bold text-slate-800">{growthData.weight.comparison.current?.toFixed(1)}kg</p></div>
+                      <div><p className="text-xs text-slate-400">上次</p><p className="text-lg font-bold text-slate-600">{growthData.weight.comparison.previous?.toFixed(1)}kg</p></div>
+                      <div><p className="text-xs text-slate-400">差值</p><p className={`text-lg font-bold ${growthData.weight.comparison.delta >= 0 ? 'text-green-500' : 'text-red-500'}`}>{growthData.weight.comparison.delta >= 0 ? '+' : ''}{growthData.weight.comparison.delta?.toFixed(2)}kg</p></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {visionData?.axial_length?.series?.length > 0 && (
+              <div className="glass-card rounded-[32px] p-6 hover:shadow-xl transition-all">
+                <TrendChart data={transformSeries(visionData.axial_length.series)} metric="axial_length" height={180} />
+              </div>
+            )}
+            {visionData?.vision_acuity?.series?.length > 0 && (
+              <div className="glass-card rounded-[32px] p-6 hover:shadow-xl transition-all">
+                <TrendChart data={transformSeries(visionData.vision_acuity.series)} metric="vision_acuity" height={180} />
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 血检指标看板 - 成人/老人专属 */}
+      {(member?.member_type === 'adult' || member?.member_type === 'senior') && bloodData && (
+        <section className="space-y-6">
+          <div className="flex items-center justify-between px-2">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <TrendingUp size={20} className="text-red-500" /> 血检指标
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {bloodData?.glucose?.series?.length > 0 && (
+              <div className="glass-card rounded-[24px] p-4 hover:shadow-xl transition-all">
+                <p className="text-xs text-slate-500 mb-1">血糖</p>
+                <p className="text-xl font-bold text-slate-800">{bloodData.glucose.series[bloodData.glucose.series.length - 1]?.value?.toFixed(1)}</p>
+                <p className="text-xs text-slate-400">mmol/L</p>
+              </div>
+            )}
+            {bloodData?.tc?.series?.length > 0 && (
+              <div className="glass-card rounded-[24px] p-4 hover:shadow-xl transition-all">
+                <p className="text-xs text-slate-500 mb-1">总胆固醇</p>
+                <p className="text-xl font-bold text-slate-800">{bloodData.tc.series[bloodData.tc.series.length - 1]?.value?.toFixed(1)}</p>
+                <p className="text-xs text-slate-400">mmol/L</p>
+              </div>
+            )}
+            {bloodData?.tg?.series?.length > 0 && (
+              <div className="glass-card rounded-[24px] p-4 hover:shadow-xl transition-all">
+                <p className="text-xs text-slate-500 mb-1">甘油三酯</p>
+                <p className="text-xl font-bold text-slate-800">{bloodData.tg.series[bloodData.tg.series.length - 1]?.value?.toFixed(1)}</p>
+                <p className="text-xs text-slate-400">mmol/L</p>
+              </div>
+            )}
+            {bloodData?.hdl?.series?.length > 0 && (
+              <div className="glass-card rounded-[24px] p-4 hover:shadow-xl transition-all">
+                <p className="text-xs text-slate-500 mb-1">高密度脂蛋白</p>
+                <p className="text-xl font-bold text-slate-800">{bloodData.hdl.series[bloodData.hdl.series.length - 1]?.value?.toFixed(1)}</p>
+                <p className="text-xs text-slate-400">mmol/L</p>
+              </div>
+            )}
+            {bloodData?.ldl?.series?.length > 0 && (
+              <div className="glass-card rounded-[24px] p-4 hover:shadow-xl transition-all">
+                <p className="text-xs text-slate-500 mb-1">低密度脂蛋白</p>
+                <p className="text-xl font-bold text-slate-800">{bloodData.ldl.series[bloodData.ldl.series.length - 1]?.value?.toFixed(1)}</p>
+                <p className="text-xs text-slate-400">mmol/L</p>
+              </div>
+            )}
+            {bloodData?.hemoglobin?.series?.length > 0 && (
+              <div className="glass-card rounded-[24px] p-4 hover:shadow-xl transition-all">
+                <p className="text-xs text-slate-500 mb-1">血红蛋白</p>
+                <p className="text-xl font-bold text-slate-800">{bloodData.hemoglobin.series[bloodData.hemoglobin.series.length - 1]?.value?.toFixed(1)}</p>
+                <p className="text-xs text-slate-400">g/L</p>
+              </div>
+            )}
+            {bloodData?.hba1c?.series?.length > 0 && (
+              <div className="glass-card rounded-[24px] p-4 hover:shadow-xl transition-all">
+                <p className="text-xs text-slate-500 mb-1">糖化血红蛋白</p>
+                <p className="text-xl font-bold text-slate-800">{bloodData.hba1c.series[bloodData.hba1c.series.length - 1]?.value?.toFixed(1)}</p>
+                <p className="text-xs text-slate-400">%</p>
               </div>
             )}
           </div>

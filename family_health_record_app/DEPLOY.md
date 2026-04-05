@@ -177,6 +177,11 @@ python scripts/qa_pipeline.py --mode e2e --exclude "ux"
 
 详细说明参考 [`docs/QA_PIPELINE_GUIDE.md`](./docs/QA_PIPELINE_GUIDE.md)
 
+### 移动端 APK 构建
+- 详细文档：[移动端构建问题汇总](../mobile_app/docs/BUILD_ISSUES.md)
+- **Release APK**（推荐用于真机/模拟器部署）：`mobile_app/android/app/build/outputs/apk/release/app-release.apk`
+- **Debug APK**（需 Metro 服务器）：`mobile_app/android/app/build/outputs/apk/debug/app-debug.apk`
+
 ### 健康检查
 ```bash
 # 检查后端

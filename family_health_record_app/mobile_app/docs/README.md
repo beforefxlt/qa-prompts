@@ -176,6 +176,7 @@ adb install -r android/app/build/outputs/apk/release/app-release.apk
 - [移动端 API 对接说明](../../docs/specs/MOBILE_API_CONTRACT.md)
 - [技术选型决策](../../docs/specs/MOBILE_TECH_DECISION.md)
 - [后端 API 契约](../../docs/specs/API_CONTRACT.md)
+- [构建问题汇总](./BUILD_ISSUES.md) - **编译/部署问题必查**
 
 ## 8. 开发规范
 

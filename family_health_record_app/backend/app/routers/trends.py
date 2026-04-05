@@ -350,3 +350,45 @@ async def get_growth_dashboard(member_id: UUID, db: AsyncSession = Depends(get_d
             "comparison": _build_single_comparison(weight_rows),
         },
     }
+
+
+BLOOD_METRICS = ["glucose", "tc", "tg", "hdl", "ldl", "hemoglobin", "hba1c"]
+
+
+@router.get("/{member_id}/blood-dashboard")
+async def get_blood_dashboard(member_id: UUID, db: AsyncSession = Depends(get_db)):
+    """成人/老人血液指标看板"""
+    member = await db.scalar(
+        select(MemberProfile).where(
+            MemberProfile.id == member_id,
+            MemberProfile.is_deleted.is_(False)
+        )
+    )
+    if member is None:
+        raise HTTPException(status_code=404, detail="成员不存在")
+
+    result = {
+        "member_id": str(member_id),
+        "member_type": member.member_type,
+    }
+
+    for metric in BLOOD_METRICS:
+        stmt = (
+            select(ExamRecord.exam_date, Observation.value_numeric, Observation.reference_range, Observation.is_abnormal)
+            .join(Observation, Observation.exam_record_id == ExamRecord.id)
+            .where(ExamRecord.member_id == member_id, Observation.metric_code == metric)
+            .order_by(ExamRecord.exam_date.asc())
+        )
+        rows = (await db.execute(stmt)).all()
+
+        result[metric] = {
+            "series": [
+                {"date": row.exam_date.isoformat(), "value": row.value_numeric}
+                for row in rows
+            ],
+            "reference_range": next((row.reference_range for row in rows if row.reference_range), None),
+            "alert_status": "warning" if any(row.is_abnormal for row in rows) else "normal",
+            "comparison": _build_single_comparison(rows),
+        }
+
+    return result
