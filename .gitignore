@@ -73,3 +73,24 @@ CLAUDE CODE SKILL/
 **/next/
 **/.next/
 family-health-frontend@0.1.0
+
+# React Native / Expo
+**/android/.gradle/
+**/android/build/
+**/android/app/build/
+**/ios/
+**/node_modules/
+**/.expo/
+
+# 移动端构建产物
+**/mobile_app/coverage/
+**/mobile_app/*.apk
+**/mobile_app/extracted.apk
+
+# Playwright
+**/test-results/
+playwright-report/
+
+# 技能打包文件
+skills/bundle.js
+.agents/assets/
