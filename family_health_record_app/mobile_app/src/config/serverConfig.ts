@@ -41,7 +41,8 @@ export async function getMinioUrl(): Promise<string> {
 }
 
 export async function testConnection(host?: string): Promise<{ ok: boolean; message: string }> {
-  const targetHost = host || (await getServerHost());
+  const rawHost = host || (await getServerHost());
+  const targetHost = rawHost.replace(/^https?:\/\//, '').replace(/\/+$/, '');
   const url = `${getApiBaseUrl(targetHost)}/api/v1/health`;
   try {
     const controller = new AbortController();
@@ -57,6 +58,6 @@ export async function testConnection(host?: string): Promise<{ ok: boolean; mess
     if (error instanceof Error && error.name === 'AbortError') {
       return { ok: false, message: '连接超时' };
     }
-    return { ok: false, message: '无法连接' };
+    return { ok: false, message: `无法连接 (${targetHost}:8000)` };
   }
 }

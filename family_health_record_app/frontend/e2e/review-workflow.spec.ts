@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test('审核页 - 页面标题和空状态 @smoke @regression', async ({ page }) => {
   await page.goto('/review');

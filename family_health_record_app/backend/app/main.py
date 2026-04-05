@@ -8,6 +8,7 @@ from .routers.documents import router as documents_router
 from .routers.review import router as review_router
 from .routers.trends import router as trends_router
 from .routers.records import router as records_router
+from .routers.admin import router as admin_router
 
 app = FastAPI(title="家庭健康检查单管理 API", version="v1.3.0")
 
@@ -27,6 +28,7 @@ app.include_router(documents_router, prefix="/api/v1")
 app.include_router(review_router, prefix="/api/v1")
 app.include_router(trends_router, prefix="/api/v1")
 app.include_router(records_router, prefix="/api/v1")
+app.include_router(admin_router, prefix="/api/v1")
 
 
 @app.on_event("startup")

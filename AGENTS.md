@@ -178,3 +178,17 @@
 ### NP-07: E2E 测试必须包含环境自检
 - 测试开头 `fetch('/health')`，不通则 `test.skip()`，不可直接报错
 - 来源：upload-to-dashboard.spec.ts 因 ECONNREFUSED 全部失败
+
+### NP-08: E2E/手动测试后必须清理数据库
+- **禁止**在共享数据库（PostgreSQL/MinIO）中遗留测试数据
+- **正确做法**：
+  - E2E 测试必须使用 `frontend/e2e/fixtures.ts` 中的 `cleanDb` auto fixture（自动在每个 test 前后清理）
+  - 所有 spec 文件必须 `import { test } from './fixtures'`，禁止直接 `import { test } from '@playwright/test'`
+  - `cleanDatabase()` 清理范围：members + documents + exams + observations + review_tasks + derived_metrics
+  - 手动测试后：`curl -X POST http://localhost:8000/api/v1/admin/reset`
+- **反面案例**（本次回归发现）：
+  - ❌ 数据库中有 53 条脏数据（E2E 测试成员、手动乱填成员、pytest 集成测试残留）
+  - ❌ review-workflow.spec.ts 直接用 @playwright/test，绕过 fixtures 清理机制
+  - ❌ cleanDatabase() 只清 members，不清关联表导致外键残留
+  - ✅ 正确做法：E2E 用 auto fixture 自动清理 / 手动测试后调 admin/reset / 后端提供一键清空端点
+- **来源**：2026-04-05 回归测试发现 App 打开就有 53 条脏数据
