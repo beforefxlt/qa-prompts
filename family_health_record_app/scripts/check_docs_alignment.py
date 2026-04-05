@@ -18,7 +18,9 @@ FRONTEND_DIR = PROJECT_ROOT / "family_health_record_app" / "frontend" / "src"
 # 文档类型定义
 DOC_CATEGORIES = {
     "API_CONTRACT": ["API接口契约", "API_CONTRACT.md"],
+    "MOBILE_API_CONTRACT": ["移动端API契约", "MOBILE_API_CONTRACT.md"],
     "UI_SPEC": ["UI规格", "UI_SPEC.md"],
+    "MOBILE_UI_SPEC": ["移动端UI规格", "MOBILE_UI_SPEC.md"],
     "ARCHITECTURE": ["架构文档", "ARCHITECTURE.md"],
     "DATABASE_SCHEMA": ["数据库Schema", "DATABASE_SCHEMA.md"],
     "BUG_LOG": ["Bug日志", "BUG_LOG.md"],
@@ -30,32 +32,32 @@ DOC_CATEGORIES = {
 CODE_TO_DOCS = {
     "routers": ["API_CONTRACT"],
     "schemas": ["API_CONTRACT", "DATABASE_SCHEMA"],
-    "models": ["DATABASE_SCHEMA", "API_CONTRACT"],
-    "services": ["ARCHITECTURE"],
-    "components": ["UI_SPEC"],
-    "pages": ["UI_SPEC"],
-    "hooks": ["UI_SPEC"],
-    "api": ["API_CONTRACT"],
+    "models": ["API_CONTRACT", "MOBILE_API_CONTRACT"],  # 前端模型/类型定义
+    "services": ["API_CONTRACT", "MOBILE_API_CONTRACT"],  # API服务层
+    "components": ["UI_SPEC", "MOBILE_UI_SPEC"],
+    "pages": ["UI_SPEC", "MOBILE_UI_SPEC"],
+    "hooks": ["UI_SPEC", "MOBILE_UI_SPEC"],
+    "api": ["API_CONTRACT", "MOBILE_API_CONTRACT"],
+    "mobile_app": ["MOBILE_UI_SPEC", "MOBILE_API_CONTRACT", "BUG_LOG"],
 }
 
 
 def get_changed_files() -> List[str]:
-    """获取 git 变更的文件列表"""
+    """获取 git 变更的文件列表（包括已提交和已暂存）"""
     import subprocess
     try:
+        # 使用 diff HEAD 获取已提交的变更（pre-commit 在 commit 后运行）
         result = subprocess.run(
-            ["git", "status", "--porcelain"],
+            ["git", "diff", "--name-only", "HEAD~1", "HEAD"],
             cwd=PROJECT_ROOT,
             capture_output=True,
             text=True
         )
         files = []
         for line in result.stdout.strip().split("\n"):
+            line = line.strip()
             if line:
-                # 去掉前两位状态位
-                file_path = line[3:].strip()
-                if file_path:
-                    files.append(file_path)
+                files.append(line)
         return files
     except Exception as e:
         print(f"警告: 无法获取 git 变更: {e}")
@@ -73,6 +75,7 @@ def analyze_code_changes(files: List[str]) -> Dict[str, bool]:
         "pages": False,
         "hooks": False,
         "api": False,
+        "mobile_app": False,
     }
     
     for f in files:
@@ -91,17 +94,34 @@ def analyze_code_changes(files: List[str]) -> Dict[str, bool]:
             changes["pages"] = True
         if "hooks" in f_lower:
             changes["hooks"] = True
-        if "/api/" in f_lower or "apiClient" in f_lower:
+        if "/api/" in f_lower or "apiclient" in f_lower:
             changes["api"] = True
+        if "mobile_app" in f_lower:
+            changes["mobile_app"] = True
             
     return changes
 
 
 def check_doc_updated(doc_name: str, files: List[str]) -> bool:
     """检查文档是否在变更列表中"""
+    # 映射简写到实际文件名
+    doc_map = {
+        "API_CONTRACT": ["API_CONTRACT.md", "api_contract"],
+        "MOBILE_API_CONTRACT": ["MOBILE_API_CONTRACT.md", "mobile_api_contract"],
+        "UI_SPEC": ["UI_SPEC.md", "ui_spec"],
+        "MOBILE_UI_SPEC": ["MOBILE_UI_SPEC.md", "mobile_ui_spec"],
+        "ARCHITECTURE": ["ARCHITECTURE.md", "architecture"],
+        "DATABASE_SCHEMA": ["DATABASE_SCHEMA.md", "database_schema"],
+        "BUG_LOG": ["BUG_LOG.md", "bug_log"],
+        "TEST_STRATEGY": ["TEST_STRATEGY.md", "test_strategy"],
+    }
+    
+    patterns = doc_map.get(doc_name, [doc_name])
     for f in files:
-        if doc_name.lower() in f.lower():
-            return True
+        f_lower = f.lower()
+        for pattern in patterns:
+            if pattern.lower() in f_lower:
+                return True
     return False
 
 
