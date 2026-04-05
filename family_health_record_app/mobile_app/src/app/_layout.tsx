@@ -11,6 +11,7 @@ export default function RootLayout() {
       <Stack.Screen name="member/[id]/edit" options={{ title: '编辑成员' }} />
       <Stack.Screen name="member/[id]/trends" options={{ title: '趋势分析' }} />
       <Stack.Screen name="member/[id]/record/[recordId]" options={{ title: '检查详情' }} />
+      <Stack.Screen name="member/[id]/manual-entry" options={{ title: '手工录入指标' }} />
     </Stack>
   );
 }

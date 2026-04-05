@@ -561,7 +561,7 @@ describe('API 服务层 - ExamService', () => {
       });
 
       const { examService } = await import('../api/services');
-      const result = await examService.getRecord('mem-1', 'rec-1');
+      const result = await examService.getRecord('rec-1');
 
       expect(result.exam_date).toBe('2026-03-29');
       expect(result.observations).toHaveLength(1);
@@ -576,7 +576,7 @@ describe('API 服务层 - ExamService', () => {
 
       const { examService } = await import('../api/services');
       
-      await expect(examService.getRecord('mem-1', '999')).rejects.toThrow('Record not found');
+      await expect(examService.getRecord('999')).rejects.toThrow('Record not found');
     });
   });
 
@@ -591,23 +591,66 @@ describe('API 服务层 - ExamService', () => {
       const result = await examService.deleteExamRecord('rec-1');
 
       expect(mockFetch).toHaveBeenCalledWith(
-        `${BASE_URL}/api/v1/exam-records/rec-1`,
+        `${BASE_URL}/api/v1/records/exam-records/rec-1`,
         expect.objectContaining({ method: 'DELETE' })
       );
     });
+  });
 
-    it('BUG-REGRESSION #2: deleteExamRecord URL 不包含 memberId', async () => {
+  describe('examService.createManualExam', () => {
+    it('成功创建手动检查记录', async () => {
+      const mockResponse = { id: 'rec-1', status: 'persisted' };
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        status: 204,
+        json: () => Promise.resolve(mockResponse),
       });
 
       const { examService } = await import('../api/services');
-      await examService.deleteExamRecord('rec-1');
+      const result = await examService.createManualExam('mem-1', {
+        exam_date: '2026-04-05',
+        institution_name: '市第一医院',
+        observations: [
+          { metric_code: 'height', value_numeric: 125.5, unit: 'cm', side: null },
+          { metric_code: 'axial_length', value_numeric: 23.5, unit: 'mm', side: 'left' },
+          { metric_code: 'axial_length', value_numeric: 23.3, unit: 'mm', side: 'right' },
+        ],
+      });
 
-      const calledUrl = (mockFetch.mock.calls[0] as [string, RequestInit])[0];
-      expect(calledUrl).not.toContain('/members/');
-      expect(calledUrl).toMatch(/\/exam-records\/rec-1$/);
+      expect(result.id).toBe('rec-1');
+      expect(result.status).toBe('persisted');
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${BASE_URL}/api/v1/records/members/mem-1/manual-exams`,
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            exam_date: '2026-04-05',
+            institution_name: '市第一医院',
+            observations: [
+              { metric_code: 'height', value_numeric: 125.5, unit: 'cm', side: null },
+              { metric_code: 'axial_length', value_numeric: 23.5, unit: 'mm', side: 'left' },
+              { metric_code: 'axial_length', value_numeric: 23.3, unit: 'mm', side: 'right' },
+            ],
+          }),
+        })
+      );
+    });
+
+    it('422 数值超出区间校验', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 422,
+        json: () => Promise.resolve({ detail: '身高数值 500 超出常规合理范围 (30-250cm)' }),
+      });
+
+      const { examService } = await import('../api/services');
+      
+      await expect(examService.createManualExam('mem-1', {
+        exam_date: '2026-04-05',
+        observations: [
+          { metric_code: 'height', value_numeric: 500, unit: 'cm', side: null },
+        ],
+      })).rejects.toThrow('身高数值 500 超出常规合理范围 (30-250cm)');
     });
   });
 });

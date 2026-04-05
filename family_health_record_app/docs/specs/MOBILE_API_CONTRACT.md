@@ -49,9 +49,10 @@
 | 14 | GET | `/api/v1/members/{id}/trends` | ✅ | ✅ | 一致 |
 | 15 | GET | `/api/v1/members/{id}/vision-dashboard` | ✅ | ✅ | 一致 |
 | 16 | GET | `/api/v1/members/{id}/growth-dashboard` | ✅ | ✅ | 一致 |
-| 17 | POST | `/api/v1/members/{id}/manual-exams` | ✅ | ✅ | 一致 |
-| 18 | PATCH | `/api/v1/observations/{id}` | ✅ | ✅ | 一致 |
-| 19 | DELETE | `/api/v1/exam-records/{id}` | ✅ | ✅ | 一致 |
+| 17 | POST | `/api/v1/records/members/{id}/manual-exams` | ✅ | ✅ | 一致 |
+| 18 | PATCH | `/api/v1/records/observations/{id}` | ✅ | ✅ | 一致 |
+| 19 | DELETE | `/api/v1/records/exam-records/{id}` | ✅ | ✅ | 一致 |
+| 20 | GET | `/api/v1/documents/records/{record_id}` | ✅ | ✅ | 一致 |
 
 ## 3. 差异详细说明
 

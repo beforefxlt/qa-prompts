@@ -387,7 +387,7 @@ describe('前后端契约 - 趋势查询接口', () => {
 });
 
 describe('前后端契约 - 数据管理接口', () => {
-  describe('POST /api/v1/members/{id}/manual-exams - 手动录入', () => {
+  describe('POST /api/v1/records/members/{id}/manual-exams - 手动录入', () => {
     it('请求体格式符合契约', () => {
       const requestBody = {
         exam_date: '2026-04-01',

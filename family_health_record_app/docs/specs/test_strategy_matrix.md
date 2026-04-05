@@ -84,8 +84,8 @@
 | TC-P2-033 | 审核通过时 revised_items 值为负数 | P2 | API | 验证负数值被规则引擎拦截或标记异常 |
 | TC-P2-034 | 创建成员时性别为中文"男"/"女" | P2 | API/E2E | POST /api/v1/members 带 gender="男"，验证返回 422（后端要求 male/female）|
 | TC-P2-035 | 编辑成员时性别下拉框正确显示当前值 | P2 | E2E/前端 | 验证从 API 加载 member 后，性别 select 正确显示"男"或"女"而非空白 |
-| TC-P2-036 | 手动录入默认值 value_numeric=0 被拦截 | P2 | API/E2E | POST /manual-exams 带 value_numeric=0，验证返回 422 |
-| TC-P2-037 | 手动录入 value_numeric 为负数被拦截 | P2 | API/E2E | POST /manual-exams 带 value_numeric=-10，验证返回 422 |
+| TC-P2-036 | 手动录入默认值 value_numeric=0 被拦截 | P2 | API/E2E | POST /records/members/{id}/manual-exams 带 value_numeric=0，验证返回 422 |
+| TC-P2-037 | 手动录入 value_numeric 为负数被拦截 | P2 | API/E2E | POST /records/members/{id}/manual-exams 带 value_numeric=-10，验证返回 422 |
 | TC-P2-038 | 审核通过 revised_items 使用正确格式 | P2 | API/E2E | 验证发送 {metric_code, side, value_numeric} 格式而非 {field, value} |
 | TC-P2-039 | 审核通过 revised_items 中 value_numeric 为 number 类型 | P2 | API/E2E | 验证发送 value_numeric: 23.5 (number) 而非 "23.5" (string) |
 | TC-P2-040 | 编辑指标时 value=0 被前端拦截 | P2 | E2E/前端 | 验证 EditObservationOverlay 输入 0 时显示"必须大于 0"错误提示 |

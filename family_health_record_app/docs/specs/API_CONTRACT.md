@@ -178,7 +178,7 @@
 
 系统支持对已入库的正式指标进行增删改查。
 
-#### POST /members/{id}/manual-exams
+#### POST /records/members/{id}/manual-exams
 手动录入一次完整的检查记录。
 
 - **Request**:
@@ -229,13 +229,13 @@
   > 1. `API_CONTRACT.md` 本表
   > 2. `frontend/src/components/records/ManualEntryOverlay.tsx` 中的 METRIC_OPTIONS
 
-#### PATCH /observations/{id}
+#### PATCH /records/observations/{id}
 修改单条指标数值。
 
 - **Request**: `{"value_numeric": 126.0}`
 - **Response**: `200 OK`
 
-#### DELETE /exam-records/{id}
+#### DELETE /records/exam-records/{id}
 删除整笔检查记录。
 
 - **Response**: `204 No Content`
@@ -344,3 +344,43 @@
 - 成员对象必须返回 `member_type`
 - 儿童相关接口返回 `baseline_age_months`，用于图表参考带与增长速度计算
 - **本应用为内网免登录部署，所有接口无需携带认证 Token**
+
+## 6. 管理端点 (Admin)
+
+> 以下端点仅用于测试环境数据清理，生产环境通过 `ADMIN_SECRET` 环境变量禁用。
+
+### 6.1 一键清空所有业务数据
+
+```
+POST /api/v1/admin/reset
+```
+
+**请求头**: 无（未设置 ADMIN_SECRET 时）
+
+**响应** (200 OK):
+```json
+{
+  "status": "ok",
+  "message": "All business data cleared"
+}
+```
+
+**清理范围**: derived_metrics → observations → exam_records → ocr_extraction_results → review_tasks → document_records → member_profiles（按依赖顺序从叶子表到根表）
+
+### 6.2 单表清理端点
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| DELETE | `/api/v1/admin/members/clear` | 清空成员表 |
+| DELETE | `/api/v1/admin/documents/clear` | 清空文档表 |
+| DELETE | `/api/v1/admin/review-tasks/clear` | 清空审核任务表 |
+| DELETE | `/api/v1/admin/exam-records/clear` | 清空检查记录表 |
+| DELETE | `/api/v1/admin/observations/clear` | 清空观测值表 |
+| DELETE | `/api/v1/admin/derived-metrics/clear` | 清空派生指标表 |
+
+**响应** (200 OK):
+```json
+{
+  "status": "ok"
+}
+```

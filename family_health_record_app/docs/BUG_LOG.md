@@ -603,3 +603,116 @@
 | 无 UT 覆盖 | 3 个（BUG-051/052/053，依赖 RN hook 或已知限制） |
 | 自动化门禁 | ESLint 自定义规则 + pre-commit hook + E2E 环境自检 |
 | 负向提示词 | 7 条（NP-01 ~ NP-07，写入 AGENTS.md） |
+---
+
+## 📅 v2.7.0 移动端动态配置与脏数据治理期记录 (2026-04-05)
+
+### [BUG-054] 移动端 APK 硬编码 API 地址，无法切换服务器
+- **现象**: APK 安装后 `http://10.0.2.2:8000` 硬编码在 `constants/api.ts`，真机无法访问
+- **根由**: 
+  1. `API_CONFIG` 中 `API_BASE_URL` 和 `MINIO_BASE_URL` 在编译时写死
+  2. 没有运行时配置机制
+- **修复**: 
+  1. 新增 `src/config/serverConfig.ts` — AsyncStorage 持久化服务器 Host，自动拼接端口
+  2. 新增 `src/app/settings.tsx` — 服务器配置页面（输入/测试连接/保存）
+  3. 重构 `src/api/client.ts` 和 `src/api/services/index.ts` — 移除硬编码 URL，改为动态解析
+  4. `testConnection` 自动去除 `http://` 前缀兼容用户误输入
+- **验证状态**: ✅ 后端 154 passed，移动端 365 passed
+- **UT 覆盖**: ✅ 更新 `client.test.ts` / `client-edge.test.ts` 适配新签名
+
+### [BUG-055] Metro 打包无法解析 src/app 目录外的模块
+- **现象**: `./gradlew assembleRelease` 失败，`Unable to resolve module ../../config/serverConfig from src/app/settings.tsx`
+- **根由**: 
+  1. `settings.tsx` 使用 `../../config/serverConfig` 导入
+  2. 从 `src/app/` 出发，`src/config/` 的正确相对路径是 `../config/`
+  3. Metro bundler 在 APK 构建时严格验证模块路径，与开发模式容错行为不同
+- **修复**: `settings.tsx` 导入路径改为 `../config/serverConfig`
+- **验证状态**: ✅ APK 构建成功 (57.4 MB)
+- **UT 覆盖**: ❌ 不适用（构建配置问题）
+
+### [BUG-056] Android 9+ 禁止 HTTP 明文流量，模拟器连接被拦截
+- **现象**: 设置页面"测试连接"返回"无法连接（10.0.2.2:8000）"，但 `nc 10.0.2.2 8000` 通
+- **根由**: 
+  1. Android 9+ 默认禁止 HTTP 明文流量（Cleartext Traffic）
+  2. `AndroidManifest.xml` 未设置 `android:usesCleartextTraffic="true"`
+  3. `fetch()` 被系统静默拦截，无日志输出
+- **修复**: `AndroidManifest.xml` 添加 `android:usesCleartextTraffic="true"`
+- **验证状态**: ✅ 测试连接返回"已连接 (v1.3.0)"
+- **UT 覆盖**: ❌ 不适用（Android 配置问题）
+
+### [BUG-057] 数据库 53 条脏数据，App 打开就有数据
+- **现象**: App 打开首页显示大量测试成员（E2E 测试成员、手动乱填成员等）
+- **根由**: 
+  1. E2E 测试 `cleanDb` auto fixture 定义了但没人调用
+  2. `review-workflow.spec.ts` 直接用 `@playwright/test` 绕过 fixtures
+  3. `cleanDatabase()` 只清 members，不清关联表导致外键残留
+  4. 手动测试后没有清理纪律
+- **修复**: 
+  1. 新增 `backend/app/routers/admin.py` — `POST /api/v1/admin/reset` 一键清空 7 张业务表
+  2. 修复 `frontend/e2e/fixtures.ts` — `cleanDatabase` 扩展清理范围 + 三层回退策略
+  3. 修复 `frontend/e2e/review-workflow.spec.ts` — 改用 `import { test } from './fixtures'`
+  4. 新增 `scripts/check_dirty_data.py` — 部署前脏数据检查，发现脏数据阻断部署
+  5. 集成到 `scripts/qa_pipeline.py` — 后端就绪后自动运行脏数据检查
+  6. 新增 AGENTS.md NP-08 — E2E/手动测试后必须清理数据库红线
+- **验证状态**: ✅ 数据库已清空，admin/reset 端点正常工作
+- **UT 覆盖**: ❌ 不适用（基础设施治理）
+
+### [BUG-058] 添加成员后返回首页，列表未刷新仍显示空状态
+- **现象**: 添加成员提示成功后返回首页，页面仍显示"添加第一位成员"空状态，新成员未出现
+- **根由**: 
+  1. `index.tsx` 使用 `useEffect` 加载成员列表，该钩子只在组件首次挂载时执行
+  2. 从 `new.tsx` 通过 `router.back()` 返回时，`HomeScreen` 未重新挂载（只是重新获得焦点）
+  3. `useEffect` 不会重新触发，导致列表数据未刷新
+- **修复**: 
+  1. `index.tsx` 将 `useEffect` 替换为 `useFocusEffect`（来自 `expo-router`）
+  2. 屏幕每次获得焦点时自动调用 `loadMembers()` 刷新列表
+- **验证状态**: ✅ Release APK 构建成功，安装验证通过
+- **UT 覆盖**: ❌ 不适用（React Navigation 生命周期问题，依赖 expo-router hook）
+
+### [BUG-059] 移动端 examService API 路径与后端不匹配
+- **现象**: 手动调用 `examService.createManualExam()`、`getRecord()`、`deleteExamRecord()` 均返回 404
+- **根由**: 
+  1. 后端 `records.py` 路由 prefix 为 `/records`，完整路径为 `/api/v1/records/...`
+  2. 移动端 `examService` 路径缺少 `/records` 前缀
+  3. `getRecord` 参数设计错误（接收 memberId + recordId 但后端只需 recordId）
+- **修复**: 
+  1. `api/services/index.ts` — `createManualExam` 路径改为 `/records/members/${memberId}/manual-exams`
+  2. `api/services/index.ts` — `getRecord` 路径改为 `/documents/records/${recordId}`，参数只接收 recordId
+  3. `api/services/index.ts` — `deleteExamRecord` 路径改为 `/records/exam-records/${recordId}`
+  4. `record/[recordId].tsx` — 调用改用 `examService.getRecord(recordId)` 
+- **验证状态**: ✅ 移动端 366 passed
+- **UT 覆盖**: ✅ 更新 `api-service.test.ts` + `full-pipeline.test.ts` + `contract.test.ts`
+
+---
+
+## 📊 v2.7.0 修复统计
+
+| 指标 | 数值 |
+|------|------|
+| 修复 Bug 数 | 5 个（BUG-054 ~ BUG-059） |
+| 新增 UT 用例 | 10+ 个（examService 全路径测试 + 回归用例） |
+| 新增工具函数 | 5 个（`getServerHost`, `setServerHost`, `testConnection`, `getApiBaseUrl`, `getMinioBaseUrl`） |
+| 新增 API 端点 | 8 个（admin/reset + 6 个 clear 端点） |
+| 新增脚本 | 1 个（`check_dirty_data.py` 部署前检查） |
+| 修改文件 | 20+ 个 |
+| 测试通过率 | 后端 154 passed / 移动端 366 passed |
+| APK 大小 | 57.4 MB (release) |
+| 负向提示词 | 1 条（NP-08，写入 AGENTS.md） |
+
+---
+
+## 📅 v2.8.0 移动端手工录入功能期记录 (2026-04-05)
+
+### 新功能：手工录入指标
+
+- **新增 UI 页面**: `src/app/member/[id]/manual-entry.tsx` — 完整的手工录入表单
+- **Dashboard 入口**: 底部增加"手工录入指标"按钮，与"录入新检查单"并列
+- **前端校验**: 提交前校验数值区间，与后端 `METRIC_RANGES` 对齐
+- **左右眼支持**: 眼轴/视力使用并排左右眼输入，其他指标单输入
+- **文档更新**:
+  - `MOBILE_UI_SPEC.md` — 新增 3.8 手工录入页规格
+  - `MOBILE_API_CONTRACT.md` — 更新端点路径
+  - `API_CONTRACT.md` — 更新 `/records/` 前缀路径
+
+- **验证状态**: ✅ Release APK 构建成功，安装验证通过
+- **UT 覆盖**: ✅ 366 passed

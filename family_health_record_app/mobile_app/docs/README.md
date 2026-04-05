@@ -99,6 +99,8 @@ npm run web
 
 ### 5.4 APK 构建
 
+#### Debug APK（开发调试，需 Metro 服务器）
+
 ```bash
 # 生成 Android 原生项目
 npx expo prebuild --platform android
@@ -110,23 +112,63 @@ cd android && ./gradlew assembleDebug
 # android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## 6. API 配置
+> ⚠️ **Debug APK 依赖 Metro dev server**（默认 `ws://10.0.2.2:8081`），必须同时运行 `npm start` 才能加载 JS 代码。模拟器上无法独立运行。
 
-移动端开发时需配置后端服务地址：
+#### Release APK（推荐，独立运行）
 
-```typescript
-// src/constants/api.ts
-export const API_CONFIG = {
-  // Android 模拟器访问主机用 10.0.2.2
-  BASE_URL: __DEV ? 'http://10.0.2.2:8000' : 'http://localhost:8000',
-  // ...
-};
+```bash
+# 生成 Android 原生项目（如未生成）
+npx expo prebuild --platform android
+
+# 构建 Release APK
+cd android
+./gradlew assembleRelease
+
+# APK 输出位置
+# android/app/build/outputs/apk/release/app-release.apk
 ```
 
-**后端服务要求**：
+> ✅ **Release APK 已将 JS bundle 内嵌到 APK 中**，无需 Metro 服务器即可独立运行。
+
+### 5.5 安装到模拟器
+
+```bash
+# 查看已连接设备
+adb devices
+
+# 安装 APK
+adb install -r android/app/build/outputs/apk/release/app-release.apk
+
+# 清理旧数据后重新安装（推荐）
+adb shell pm clear com.familyhealth.healthrecord
+adb install -r android/app/build/outputs/apk/release/app-release.apk
+```
+
+## 6. API 配置
+
+### 6.1 运行时服务器配置（推荐）
+
+移动端支持在应用内 **动态配置服务器地址**，无需重新编译：
+
+- 进入 **首页 → 设置** 按钮，打开服务器设置页
+- 输入服务器主机地址（不含协议和端口）
+- 点击 **测试连接** 验证连通性
+- 点击 **保存并返回** 生效
+
+| 场景 | 推荐配置 |
+|------|----------|
+| Android 模拟器 | `10.0.2.2` |
+| 真机（同一局域网） | `192.168.x.x`（电脑 IP） |
+| 默认值 | `10.0.2.2`（模拟器地址） |
+
+配置存储在 `AsyncStorage` 中，修改后立即生效。后端端口固定为 `8000`，MinIO 端口固定为 `9000`。
+
+### 6.2 后端服务要求
+
 - 运行在 `http://localhost:8000`
 - 开放 CORS 跨域访问
 - 无需认证 Token（内网免登录）
+- `AndroidManifest.xml` 已配置 `usesCleartextTraffic="true"` 支持 HTTP 明文请求
 
 ## 7. 参考文档
 

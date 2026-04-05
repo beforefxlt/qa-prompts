@@ -127,8 +127,39 @@ export HTTPS_PROXY=http://127.0.0.1:10800
 
 ---
 
+## 问题 4: Debug APK 在模拟器上无法连接服务器
+
+### 现象
+- Debug APK 安装后白屏或加载失败
+- 日志显示 `Couldn't connect to "ws://10.0.2.2:8081"` 和 `Network request failed`
+
+### 原因
+Debug APK 不包含内嵌的 JS bundle，运行时依赖 Metro dev server（`ws://10.0.2.2:8081`）动态加载 JS 代码。如果 Metro 未启动，JS 无法加载，应用表现为白屏或功能异常。
+
+### 解决方案
+**使用 Release APK 部署到模拟器/真机**：
+
+```bash
+cd android
+./gradlew assembleRelease
+```
+
+Release APK 在构建时已将 JS bundle 打包进 APK（`createBundleReleaseJsAndAssets` 任务），无需 Metro 即可独立运行。
+
+### 服务器地址配置
+Release APK 使用 `src/config/serverConfig.ts` 管理服务器地址：
+- **默认值**: `10.0.2.2`（Android 模拟器访问主机）
+- **运行时修改**: 应用内 → 首页 → 设置 → 输入服务器地址 → 测试连接 → 保存
+- **存储方式**: AsyncStorage（`@server_host` key），修改后立即生效
+- **不依赖** `.env` 或编译时环境变量
+
+> ⚠️ 如果之前安装过旧版本，建议先 `adb shell pm clear com.familyhealth.healthrecord` 清理 AsyncStorage 缓存数据后再安装新版本。
+
+---
+
 ## 输出 APK
 
-- **路径**: `mobile_app/android/app/build/outputs/apk/debug/app-debug.apk`
-- **大小**: ~107 MB
-- **架构**: arm64-v8a
+| 类型 | 路径 | 大小 | 说明 |
+|------|------|------|------|
+| Debug | `android/app/build/outputs/apk/debug/app-debug.apk` | ~107 MB | 需 Metro 服务器，仅开发调试 |
+| Release | `android/app/build/outputs/apk/release/app-release.apk` | ~57 MB | 内嵌 JS bundle，可独立运行 |

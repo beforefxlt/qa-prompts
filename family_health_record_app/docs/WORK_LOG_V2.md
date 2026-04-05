@@ -40,3 +40,51 @@
 **执行代理**: Antigravity
 **交付版本**: v2.0.0
 **时间**: 2026-04-01
+
+---
+
+# v2.7.0 移动端动态配置与脏数据治理 (2026-04-05)
+
+## 1. 工作背景
+
+v2.6.0 交付后，移动端 APK 存在硬编码 API 地址问题，真机无法访问；同时数据库积累了 53 条脏数据，影响用户体验和测试准确性。
+
+## 2. 核心工作
+
+### 2.1 移动端动态服务器配置
+- 新增 `serverConfig.ts` — AsyncStorage 持久化服务器 Host
+- 新增 `settings.tsx` — 服务器配置页面（输入/测试连接/保存）
+- 重构 `client.ts` / `services/index.ts` — 移除硬编码 URL
+- 修复 Metro 导入路径错误（`../../config` → `../config`）
+- 修复 Android cleartext 拦截问题（`usesCleartextTraffic="true"`）
+
+### 2.2 脏数据治理
+- 新增 `admin.py` 路由器 — POST /api/v1/admin/reset 一键清空
+- 新增 `check_dirty_data.py` — 部署前脏数据检查脚本
+- 修复 E2E fixtures — cleanDatabase 扩展清理范围
+- 修复 review-workflow.spec.ts — 改用 fixtures
+- 集成到 qa_pipeline.py — 部署前自动检查
+- 新增 AGENTS.md NP-08 — 测试后必须清理数据库
+
+## 3. 技术挑战
+
+### 3.1 Metro bundler 严格模式
+APK 构建时 Metro 严格验证模块路径，与开发模式容错行为不同。`src/app/` 下导入 `src/config/` 应使用 `../config/` 而非 `../../config/`。
+
+### 3.2 Android cleartext 静默拦截
+Android 9+ 默认禁止 HTTP 明文流量，`fetch()` 被系统静默拦截，无日志输出。需在 `AndroidManifest.xml` 设置 `usesCleartextTraffic="true"`。
+
+### 3.3 E2E auto fixture 不生效
+Playwright 的 `auto: true` fixture 需要在测试中引用才会触发。`cleanDb` 定义了但没人调用，导致测试数据残留。
+
+## 4. 验证结论
+- 后端 pytest: 154 passed
+- 移动端 Jest: 365 passed
+- APK 构建: 57.4 MB (release)
+- 数据库: 已清空
+- 部署前检查: 脚本正常工作
+
+---
+**执行代理**: opencode
+**交付版本**: v2.7.0
+**时间**: 2026-04-05

@@ -142,4 +142,5 @@ export interface ExamRecord {
   exam_date: string;
   institution_name: string | null;
   observations: Observation[];
+  status?: string;
 }

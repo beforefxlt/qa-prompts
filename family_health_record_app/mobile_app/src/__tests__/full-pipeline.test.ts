@@ -305,7 +305,7 @@ describe('安卓客户端全链路集成测试', () => {
         ok: true, status: 200, json: async () => createExamRecord('rec-1', 'mem-2'),
       });
 
-      const examDetail = await examService.getRecord('mem-2', 'rec-1');
+      const examDetail = await examService.getRecord('rec-1');
       expect(examDetail.observations).toHaveLength(3);
       expect(examDetail.institution_name).toBe('市眼科医院');
 
@@ -625,7 +625,7 @@ describe('安卓客户端全链路集成测试', () => {
         ok: false, status: 404, json: async () => ({ detail: '记录不存在' }),
       });
 
-      await expect(examService.getRecord('mem-1', 'nonexistent')).rejects.toThrow();
+      await expect(examService.getRecord('nonexistent')).rejects.toThrow();
 
       expect(mockFetch).toHaveBeenCalledTimes(5);
     });

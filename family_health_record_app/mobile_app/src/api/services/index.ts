@@ -108,8 +108,8 @@ export const trendService = {
 };
 
 export const examService = {
-  getRecord: (memberId: string, recordId: string) =>
-    apiRequest<ExamRecord>(`/members/${memberId}/exam-records/${recordId}`),
+  getRecord: (recordId: string) =>
+    apiRequest<ExamRecord>(`/documents/records/${recordId}`),
 
   createManualExam: (memberId: string, data: {
     exam_date: string;
@@ -120,13 +120,13 @@ export const examService = {
       unit: string;
       side?: string | null;
     }>;
-  }) => apiRequest<ExamRecord>(`/members/${memberId}/manual-exams`, {
+  }) => apiRequest<ExamRecord>(`/records/members/${memberId}/manual-exams`, {
     method: 'POST',
     body: JSON.stringify(data),
   }),
 
   deleteExamRecord: (recordId: string) =>
-    apiRequest<void>(`/exam-records/${recordId}`, { method: 'DELETE' }),
+    apiRequest<void>(`/records/exam-records/${recordId}`, { method: 'DELETE' }),
 };
 
 export { transformMinioUrl };

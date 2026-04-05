@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useState, useCallback } from 'react';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { memberService, trendService } from '../../../api/services';
 import { getLatestValue, shouldShowEmptyState } from '../../../utils';
 import type { MemberProfile, VisionDashboard, GrowthDashboard } from '../../../api/models';
@@ -32,9 +32,11 @@ export default function MemberDashboardPage() {
     }
   }, [id]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -144,10 +146,17 @@ export default function MemberDashboardPage() {
       </ScrollView>
 
       <TouchableOpacity
+        style={styles.manualEntryButton}
+        onPress={() => router.push(`/member/${id}/manual-entry`)}
+      >
+        <Text style={styles.manualEntryButtonText}>✏️ 手工录入指标</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
         style={styles.addButton}
         onPress={() => router.push(`/upload?memberId=${id}`)}
       >
-        <Text style={styles.addButtonText}>+ 录入新检查单</Text>
+        <Text style={styles.addButtonText}>📷 录入新检查单</Text>
       </TouchableOpacity>
     </View>
   );
@@ -257,7 +266,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     position: 'absolute',
-    bottom: 16,
+    bottom: 72,
     left: 16,
     right: 16,
     backgroundColor: '#007AFF',
@@ -267,6 +276,23 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  manualEntryButton: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    right: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#007AFF',
+  },
+  manualEntryButtonText: {
+    color: '#007AFF',
     fontSize: 18,
     fontWeight: '600',
   },

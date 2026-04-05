@@ -17,7 +17,7 @@ export default function RecordDetailPage() {
 
   const loadRecord = async () => {
     try {
-      const data = await examService.getRecord(id!, recordId!);
+      const data = await examService.getRecord(recordId!);
       setRecord(data);
     } catch (error) {
       console.error('Failed to load record:', error);

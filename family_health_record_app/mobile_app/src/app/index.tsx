@@ -1,7 +1,7 @@
-import { Stack } from 'expo-router';
+import { Stack, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { memberService } from '../api/services';
 import type { MemberProfile } from '../api/models';
@@ -24,9 +24,11 @@ export default function HomeScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    loadMembers();
-  }, [loadMembers]);
+  useFocusEffect(
+    useCallback(() => {
+      loadMembers();
+    }, [loadMembers])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
