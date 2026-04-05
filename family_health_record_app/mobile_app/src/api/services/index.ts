@@ -1,4 +1,5 @@
 import { apiRequest, transformMinioUrl } from '../client';
+import { getServerHost, getApiBaseUrl } from '../../config/serverConfig';
 import type { 
   MemberProfile, 
   CreateMemberDTO, 
@@ -39,8 +40,9 @@ export const documentService = {
     formData.append('file', file as any);
     formData.append('member_id', memberId);
 
+    const host = await getServerHost();
     const response = await fetch(
-      `${process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:8000'}/api/v1/documents/upload`,
+      `${getApiBaseUrl(host)}/api/v1/documents/upload`,
       {
         method: 'POST',
         body: formData,

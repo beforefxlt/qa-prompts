@@ -144,13 +144,52 @@ ROI = (避免的 Bug 成本 + 自动化节省时间) / 投入时间
 
 ## 🎯 下次改进项
 
-| # | 改进项 | 优先级 | 具体动作 |
-|---|--------|--------|---------|
-| 1 | **写集成测试前先确认 API 契约** | High | 先 `curl` 看真实响应，或读 schema 文件，不凭记忆写断言 |
-| 2 | **修复 Bug 后跑全量测试** | High | 不能只跑单个测试文件，必须 `npm test` 全量通过 |
-| 3 | **ESLint 加三元表达式检查** | Medium | 配置 `no-unreachable` + 自定义规则检测 `x ? a : a` |
-| 4 | **E2E 测试加环境检查** | Medium | 测试开头先 `fetch('/health')`，不通则 `test.skip()` |
-| 5 | **测试数据工厂类型化** | Low | mock 数据工厂返回精确类型，减少 `as any` |
+| # | 改进项 | 优先级 | 具体动作 | 状态 |
+|---|--------|--------|---------|------|
+| 1 | **写集成测试前先确认 API 契约** | High | 先 `curl` 看真实响应，或读 schema 文件，不凭记忆写断言 | ✅ 已写入 AGENTS.md NP-03 |
+| 2 | **修复 Bug 后跑全量测试** | High | 不能只跑单个测试文件，必须 `npm test` 全量通过 | ✅ 已写入 pre-commit + AGENTS.md NP-04 |
+| 3 | **ESLint 加三元表达式检查** | Medium | 配置 `custom/no-identical-ternary` 规则检测 `x ? a : a` | ✅ 已配置并验证生效 |
+| 4 | **E2E 测试加环境检查** | Medium | 测试开头先 `fetch('/health')`，不通则 `test.skip()` | ✅ 已写入 upload-to-dashboard.spec.ts |
+| 5 | **测试数据工厂类型化** | Low | mock 数据工厂返回精确类型，减少 `as any` | ⏸️ 跳过（mock 本质是 JSON，as any 合理） |
+
+---
+
+## 🔧 工作流改进（Retrospective 产出）
+
+### 发现的问题
+
+今天的工作流存在以下缺失，所有这些都是**用户要求才触发**，而非自动执行：
+
+| 今天实际做的事 | 工作流有没有写 | 触发方式 |
+|--------------|--------------|---------|
+| Code Review | ❌ 没有 | 用户手动触发 |
+| E2E 测试 | Step 7.1 提了一句，但没写具体怎么做 | 用户要求才做 |
+| 契约测试 | Step 7.3 有 `@contract-first`，但只检查文档同步 | 用户要求才做 |
+| 全链路集成测试 | ❌ 完全没有 | 用户要求才做 |
+| Bug 回归 UT | ❌ 完全没有 | 用户要求才做 |
+| 失败路径测试（弱网/幂等/重试） | ❌ 完全没有 | 用户要求才做 |
+
+**核心问题**：工作流只定义了"从 0 到 1 开发"的流程，没有定义"代码审查 → 修复 → 测试"的迭代流程。
+
+### 已落地的改进
+
+| 改进项 | 修改的文件 | 变更内容 |
+|--------|-----------|---------|
+| 新增全链路集成测试步骤 | `.agents/workflows/test-lifecycle.md` | 新增 Step 5，规定后端/前端/移动端三种全链路测试方法 |
+| 新增失败路径测试步骤 | `.agents/workflows/test-lifecycle.md` | 新增 Step 6，强制覆盖弱网/幂等/500/数据污染 |
+| 新增代码审查步骤 | `.agents/workflows/test-lifecycle.md` | 新增 Step 7，开发完成后强制审查，先红后绿 |
+| 新增代码审查门禁 | `.agents/workflows/health-record-app-delivery.md` | 新增 Step 6.5，开发完成后、测试前强制触发 |
+| 增强集成回归 | `.agents/workflows/health-record-app-delivery.md` | Step 7.1 增加全链路测试、失败路径测试、真实测试图片要求 |
+
+### 防护体系总览
+
+| 层级 | 机制 | 拦截什么 | 生效时机 |
+|------|------|---------|---------|
+| **L1 代码级** | ESLint `custom/no-identical-ternary` | `x ? a : a` 模式 | 保存/提交时 |
+| **L2 提交级** | pre-commit hook `npm test` | 全量 351 个 UT | git commit 时 |
+| **L3 行为级** | AGENTS.md 7 条负向提示词 | API 契约确认、时间序列索引、硬编码常量等 | Agent 编码时 |
+| **L4 环境级** | E2E `fetch('/health')` 自检 | 后端不可用时自动 skip | E2E 运行时 |
+| **L5 流程级** | 工作流 Step 6.5 强制 Code Review | 逻辑错误、契约不一致、硬编码 | 开发完成后、测试前 |
 
 ---
 

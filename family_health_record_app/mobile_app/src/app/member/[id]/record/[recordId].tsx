@@ -2,7 +2,6 @@ import { View, Text, ScrollView, StyleSheet, Image } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { examService } from '../../../../api/services';
-import { transformMinioUrl } from '../../../../api/client';
 import type { ExamRecord } from '../../../../api/models';
 import { METRIC_LABELS } from '../../../../constants/api';
 

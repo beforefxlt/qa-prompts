@@ -1,4 +1,4 @@
-import { API_CONFIG } from '../constants/api';
+import { getServerHost, getApiBaseUrl, getMinioBaseUrl } from '../config/serverConfig';
 
 class ApiError extends Error {
   constructor(
@@ -14,7 +14,8 @@ async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `${API_CONFIG.BASE_URL}${API_CONFIG.API_PREFIX}${endpoint}`;
+  const host = await getServerHost();
+  const url = `${getApiBaseUrl(host)}/api/v1${endpoint}`;
   
   const response = await fetch(url, {
     ...options,
@@ -42,11 +43,16 @@ async function apiRequest<T>(
   return response.json();
 }
 
-export function transformMinioUrl(minioUrl: string): string {
+export function transformMinioUrl(minioUrl: string, host: string): string {
   if (!minioUrl) return '';
   if (minioUrl.startsWith('http')) return minioUrl;
   const key = minioUrl.replace('minio://', '');
-  return `${API_CONFIG.MINIO_BASE_URL}${key}`;
+  return `${getMinioBaseUrl(host)}${key}`;
+}
+
+export async function getDynamicMinioUrl(): Promise<string> {
+  const host = await getServerHost();
+  return getMinioBaseUrl(host);
 }
 
 export { apiRequest, ApiError };

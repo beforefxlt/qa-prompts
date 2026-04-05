@@ -90,7 +90,7 @@ export default function HomeScreen() {
         options={{ 
           title: '家庭成员',
           headerRight: () => (
-            <TouchableOpacity onPress={() => {}}>
+            <TouchableOpacity onPress={() => router.push('/settings')}>
               <Text style={styles.settingsButton}>设置</Text>
             </TouchableOpacity>
           ),

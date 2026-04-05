@@ -2,10 +2,10 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Alert,
 import { useState, useEffect } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { reviewService } from '../../api/services';
-import { transformMinioUrl } from '../../api/client';
 import { resolveImageUrl } from '../../utils';
+import { getServerHost, getMinioBaseUrl } from '../../config/serverConfig';
 import type { ReviewTask, RevisedItem } from '../../api/models';
-import { METRIC_LABELS, API_CONFIG } from '../../constants/api';
+import { METRIC_LABELS } from '../../constants/api';
 
 export default function ReviewDetailPage() {
   const router = useRouter();
@@ -14,9 +14,11 @@ export default function ReviewDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [revisedItems, setRevisedItems] = useState<RevisedItem[]>([]);
+  const [minioBaseUrl, setMinioBaseUrl] = useState('');
 
   useEffect(() => {
     loadTask();
+    getServerHost().then(host => setMinioBaseUrl(getMinioBaseUrl(host)));
   }, [taskId]);
 
   const loadTask = async () => {
@@ -111,7 +113,7 @@ export default function ReviewDetailPage() {
             source={{ uri: resolveImageUrl(
               task.ocr_result.observations[0].file_url,
               task.document_id,
-              API_CONFIG.MINIO_BASE_URL
+              minioBaseUrl
             ) }}
             style={styles.image}
             resizeMode="contain"

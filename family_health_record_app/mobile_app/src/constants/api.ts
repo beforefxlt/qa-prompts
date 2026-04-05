@@ -1,8 +1,13 @@
+const getEnv = (key: string, fallback: string) => {
+  // @ts-ignore - Expo may inject env vars at build time
+  return (typeof process !== 'undefined' && process.env && process.env[key]) || fallback;
+};
+
 export const API_CONFIG = {
-  BASE_URL: 'http://10.0.2.2:8000',
+  BASE_URL: getEnv('EXPO_PUBLIC_API_URL', 'http://10.0.2.2:8000'),
   API_PREFIX: '/api/v1',
   TIMEOUT: 30000,
-  MINIO_BASE_URL: 'http://10.0.2.2:9000/health-records/',
+  MINIO_BASE_URL: getEnv('EXPO_PUBLIC_MINIO_URL', 'http://10.0.2.2:9000/health-records/'),
 } as const;
 
 export const METRIC_RANGES = {

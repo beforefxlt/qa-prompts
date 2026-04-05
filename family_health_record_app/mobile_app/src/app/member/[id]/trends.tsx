@@ -4,7 +4,6 @@ import { useWindowDimensions } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LineChart } from 'react-native-chart-kit';
 import { trendService, reviewService } from '../../../api/services';
-import { transformMinioUrl } from '../../../api/client';
 import { splitSeriesBySide } from '../../../utils';
 import type { TrendSeries, ReviewTask, RevisedItem } from '../../../api/models';
 import { METRIC_LABELS } from '../../../constants/api';

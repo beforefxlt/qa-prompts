@@ -1,42 +1,43 @@
 import { transformMinioUrl, ApiError, apiRequest } from '../api/client';
-import { API_CONFIG } from '../constants/api';
 
 describe('API Client - 异常用例', () => {
+  const testHost = '10.0.2.2';
+
   describe('transformMinioUrl 边界情况', () => {
     it('空字符串返回空', () => {
-      expect(transformMinioUrl('')).toBe('');
+      expect(transformMinioUrl('', testHost)).toBe('');
     });
 
     it('null 输入返回空', () => {
-      expect(transformMinioUrl(null as any)).toBe('');
+      expect(transformMinioUrl(null as any, testHost)).toBe('');
     });
 
     it('undefined 输入返回空', () => {
-      expect(transformMinioUrl(undefined as any)).toBe('');
+      expect(transformMinioUrl(undefined as any, testHost)).toBe('');
     });
 
     it('非 http/https 直接返回 - 当前实现会追加 base URL', () => {
-      expect(transformMinioUrl('ftp://example.com')).toBe(`${API_CONFIG.MINIO_BASE_URL}ftp://example.com`);
+      expect(transformMinioUrl('ftp://example.com', testHost)).toBe(`http://${testHost}:9000/health-records/ftp://example.com`);
     });
 
     it('data URL 直接返回 - 当前实现会追加 base URL', () => {
-      const result = transformMinioUrl('data:image/png');
-      expect(result.startsWith(API_CONFIG.MINIO_BASE_URL)).toBe(true);
+      const result = transformMinioUrl('data:image/png', testHost);
+      expect(result.startsWith(`http://${testHost}:9000/health-records/`)).toBe(true);
     });
 
     it('无效 minio:// 格式', () => {
-      expect(transformMinioUrl('minio://')).toBe(API_CONFIG.MINIO_BASE_URL);
+      expect(transformMinioUrl('minio://', testHost)).toBe(`http://${testHost}:9000/health-records/`);
     });
 
     it('极长路径处理', () => {
       const longPath = 'a'.repeat(5000);
-      const result = transformMinioUrl(`minio://${longPath}`);
+      const result = transformMinioUrl(`minio://${longPath}`, testHost);
       expect(result.length).toBeGreaterThan(5000);
     });
 
     it('包含特殊字符的路径 - URL 编码测试', () => {
       const special = 'minio://path%20with%20spaces/file.jpg';
-      const result = transformMinioUrl(special);
+      const result = transformMinioUrl(special, testHost);
       expect(result).toContain('path%20with%20spaces');
     });
   });

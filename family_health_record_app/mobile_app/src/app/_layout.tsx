@@ -4,6 +4,7 @@ export default function RootLayout() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ title: '家庭成员' }} />
+      <Stack.Screen name="settings" options={{ title: '服务器设置' }} />
       <Stack.Screen name="review/index" options={{ title: '审核箱' }} />
       <Stack.Screen name="member/new" options={{ title: '新建成员' }} />
       <Stack.Screen name="member/[id]/index" options={{ title: '成员详情' }} />

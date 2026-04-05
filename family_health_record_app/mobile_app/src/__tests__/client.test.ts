@@ -1,32 +1,33 @@
 import { transformMinioUrl } from '../api/client';
-import { API_CONFIG } from '../constants/api';
+
+const testHost = '10.0.2.2';
 
 describe('API Client - transformMinioUrl', () => {
   it('should return empty string for empty input', () => {
-    expect(transformMinioUrl('')).toBe('');
-    expect(transformMinioUrl(null as any)).toBe('');
-    expect(transformMinioUrl(undefined as any)).toBe('');
+    expect(transformMinioUrl('', testHost)).toBe('');
+    expect(transformMinioUrl(null as any, testHost)).toBe('');
+    expect(transformMinioUrl(undefined as any, testHost)).toBe('');
   });
 
   it('should return original URL if already HTTP', () => {
     const httpUrl = 'http://localhost:9000/health-records/image.jpg';
-    expect(transformMinioUrl(httpUrl)).toBe(httpUrl);
+    expect(transformMinioUrl(httpUrl, testHost)).toBe(httpUrl);
   });
 
   it('should return original URL if already HTTPS', () => {
     const httpsUrl = 'https://example.com/image.jpg';
-    expect(transformMinioUrl(httpsUrl)).toBe(httpsUrl);
+    expect(transformMinioUrl(httpsUrl, testHost)).toBe(httpsUrl);
   });
 
   it('should transform minio URL to HTTP URL', () => {
     const minioUrl = 'minio://test.jpg';
-    const expected = `${API_CONFIG.MINIO_BASE_URL}test.jpg`;
-    expect(transformMinioUrl(minioUrl)).toBe(expected);
+    const expected = `http://${testHost}:9000/health-records/test.jpg`;
+    expect(transformMinioUrl(minioUrl, testHost)).toBe(expected);
   });
 
   it('should handle minio URL with bucket prefix', () => {
     const minioUrl = 'minio://images/photo.jpg';
-    const expected = `${API_CONFIG.MINIO_BASE_URL}images/photo.jpg`;
-    expect(transformMinioUrl(minioUrl)).toBe(expected);
+    const expected = `http://${testHost}:9000/health-records/images/photo.jpg`;
+    expect(transformMinioUrl(minioUrl, testHost)).toBe(expected);
   });
 });

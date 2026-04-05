@@ -85,6 +85,8 @@
 - **体现能力**：方法论沉淀、工作流设计、测试资产治理、工程规范建设。
 - **入口**：
   - [`.agents/workflows/test-lifecycle.md`](./.agents/workflows/test-lifecycle.md)
+  - [`.agents/workflows/regression-test.md`](./.agents/workflows/regression-test.md)
+  - [`.agents/assets/bug-patterns.md`](./.agents/assets/bug-patterns.md)
   - [`docs/plans/2026-03-25-test-skills-governance-plan.md`](./docs/plans/2026-03-25-test-skills-governance-plan.md)
 
 ---
@@ -183,9 +185,27 @@ Workflows
   目标：把需求分析、可追溯测试架构、测试策略、正式用例与最终复核串成闭环
   入口文档：[`docs/user_guides/test_lifecycle_guide.md`](./docs/user_guides/test_lifecycle_guide.md)
 
+- `/regression-test`（v2.6 新增）
+  目标：把已有代码变更从审查、Bug 修复（TDD）、全链路测试到文档对齐串成闭环
+  入口文档：[`.agents/workflows/regression-test.md`](./.agents/workflows/regression-test.md)
+
 - `/bug-diagnostic-flow`
-  目标：把现场问题从“现象描述”推进到“隔离分析 + BUG-001 草稿”
+  目标：把现场问题从"现象描述"推进到"隔离分析 + BUG-001 草稿"
   入口文档：[`docs/user_guides/bug_diagnostic_flow_guide.md`](./docs/user_guides/bug_diagnostic_flow_guide.md)
+
+---
+
+## 外挂资产（Assets）
+
+> 与 workflows（流程编排）分离，存放数据/知识/模式库。
+
+- **Bug 模式库**（v2.6 新增）
+  目标：收录真实 Bug 模式，供 Code Review 审查清单、ESLint 规则、pre-commit 检查消费
+  入口文档：[`.agents/assets/bug-patterns.md`](./.agents/assets/bug-patterns.md)
+  当前收录：18 个模式（BP-001 ~ BP-018），覆盖代码级与系统级
+  配套自动化：
+  - ESLint 自定义规则 `custom/no-identical-ternary` 拦截三元表达式陷阱
+  - pre-commit hook 自动运行全量测试（~4.5s / 351 个用例）
 
 ---
 
@@ -221,7 +241,14 @@ Workflows
 
 ```text
 qa-prompts/
-├── .agents/workflows/          # 工作流编排定义
+├── .agents/
+│   ├── workflows/          # 工作流编排定义
+│   │   ├── test-lifecycle.md       # 从 0 到 1 新建项目
+│   │   ├── regression-test.md      # 已有代码回归测试 (v2.6 新增)
+│   │   ├── health-record-app-delivery.md
+│   │   └── bug-diagnostic-flow.md
+│   └── assets/             # 外挂文件（数据/知识/模式库）
+│       └── bug-patterns.md         # Bug 模式库 (v2.6 新增)
 ├── skills/                     # 单点能力技能库
 ├── templates/                  # 标准化测试与缺陷模板
 ├── docs/

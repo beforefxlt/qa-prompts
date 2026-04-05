@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { documentService } from '../api/services';
-import { API_CONFIG } from '../constants/api';
+import { getServerHost, getApiBaseUrl } from '../config/serverConfig';
 
 export default function UploadPage() {
   const router = useRouter();
@@ -69,8 +69,9 @@ export default function UploadPage() {
 
       setProgress(30);
 
+      const host = await getServerHost();
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}/api/v1/documents/upload`,
+        `${getApiBaseUrl(host)}/api/v1/documents/upload`,
         {
           method: 'POST',
           body: formData,
